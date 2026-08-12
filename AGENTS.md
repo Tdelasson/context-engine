@@ -218,7 +218,38 @@ When introducing a dependency, consider:
 
 ---
 
-# 7. AI / LLM Development Rules
+# 7. Development Validation
+
+All Python code must pass the project's development checks before a task is considered complete.
+
+The primary validation tools are:
+
+- `pytest` — automated tests
+- `ruff check .` — linting
+- `ruff format --check .` — formatting validation
+- `mypy src/` — static type checking
+- `pre-commit run --all-files` — complete local validation
+
+AI agents should run the relevant validation commands after making changes.
+
+Before considering a task complete, run:
+
+pre-commit run --all-files
+
+Do not bypass validation using:
+git commit --no-verify
+
+Do not disable, weaken, or remove validation rules simply to make a change pass.
+
+If a validation check fails:
+
+Investigate the underlying cause.
+Fix the implementation when appropriate.
+Update the tests if the expected behavior has changed.
+Re-run the validation.
+Report unresolved failures rather than hiding them.
+
+# 8. AI / LLM Development Rules
 
 LLM behavior must not be assumed to be deterministic unless explicitly configured and verified.
 
@@ -241,7 +272,7 @@ Do not optimize an AI component based solely on subjective output quality when m
 
 ---
 
-# 8. Agent and Tool Rules
+# 9. Agent and Tool Rules
 
 Tools are the controlled interface between agents and external systems.
 
@@ -270,7 +301,7 @@ Never bypass the tool/policy layer simply because doing so is easier.
 
 ---
 
-# 9. RAG and Retrieval Rules
+# 10. RAG and Retrieval Rules
 
 Retrieval quality should be measured rather than assumed.
 
@@ -293,7 +324,7 @@ Do not judge a retrieval strategy solely by whether a few manually tested querie
 
 ---
 
-# 10. Model and Inference Rules
+# 11. Model and Inference Rules
 
 Model-related changes should consider:
 
@@ -314,7 +345,7 @@ The goal is an effective local system, not simply the largest possible model.
 
 ---
 
-# 11. Testing
+# 12. Testing
 
 At minimum, changes should include appropriate tests for:
 
@@ -331,9 +362,13 @@ Tests should be runnable locally.
 
 Before opening a pull request, run the relevant test suite.
 
+The local test suite must pass before completing a task.
+
+Tests should normally be run through the project's configured development environment rather than relying on globally installed tools.
+
 ---
 
-# 12. Git and Branching
+# 13. Git and Branching
 
 Never commit directly to `main`.
 
@@ -356,7 +391,7 @@ Do not rewrite Git history or force-push shared branches unless explicitly reque
 
 ---
 
-# 13. Pull Requests
+# 14. Pull Requests
 
 Every meaningful feature or fix should go through a pull request.
 
@@ -375,7 +410,7 @@ Avoid combining unrelated changes into a single PR.
 
 ---
 
-# 14. Architectural Changes
+# 15. Architectural Changes
 
 Do not make significant architectural changes silently.
 
@@ -403,7 +438,7 @@ ADRs should explain:
 
 ---
 
-# 15. Security and Secrets
+# 16. Security and Secrets
 
 Never commit:
 
@@ -422,7 +457,7 @@ Treat external API access as an explicit capability.
 
 ---
 
-# 16. Agent Autonomy
+# 17. Agent Autonomy
 
 AI agents may make implementation decisions within the scope of their assigned task.
 
@@ -442,24 +477,26 @@ When a task requires a decision outside its defined scope, stop and request clar
 
 ---
 
-# 17. Completion Criteria
+# 18. Completion Criteria
 
 A task is not complete simply because the code works locally.
 
 Before considering a task complete:
 
-* [ ] Implementation is complete
-* [ ] Tests are added or updated
-* [ ] Relevant tests pass
-* [ ] Linting/type checks pass where applicable
-* [ ] The diff has been reviewed
-* [ ] Documentation is updated if necessary
-* [ ] No secrets or sensitive data were introduced
-* [ ] The implementation follows the project's architecture
+- [ ] Implementation is complete
+- [ ] Tests are added or updated
+- [ ] Relevant tests pass
+- [ ] Ruff checks pass
+- [ ] Mypy passes where applicable
+- [ ] Pre-commit checks pass
+- [ ] The diff has been reviewed
+- [ ] Documentation is updated if necessary
+- [ ] No secrets or sensitive data were introduced
+- [ ] The implementation follows the project's architecture
 
 ---
 
-# 18. Working Style for AI Agents
+# 19. Working Style for AI Agents
 
 Be concise and explicit.
 
