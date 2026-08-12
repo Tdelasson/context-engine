@@ -1,16 +1,7 @@
 """Deterministic runtime orchestration for a single agent execution."""
 
-from typing import Protocol
-
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import transition_agent_state
-
-
-class AgentLifecycleController(Protocol):
-    """Provider-independent source of the next runtime transition."""
-
-    def next_status(self, state: AgentExecutionState) -> AgentExecutionStatus:
-        """Return the next desired status for the current state."""
 
 
 class AgentRuntime:
@@ -44,9 +35,3 @@ class AgentRuntime:
     def fail(self) -> AgentExecutionState:
         """Attempt to terminate execution as failed."""
         return self.transition_to(AgentExecutionStatus.FAILED)
-
-    def run(self, controller: AgentLifecycleController) -> AgentExecutionState:
-        """Advance deterministically until a terminal state is reached."""
-        while not self.is_terminal:
-            self.transition_to(controller.next_status(self._state))
-        return self._state
