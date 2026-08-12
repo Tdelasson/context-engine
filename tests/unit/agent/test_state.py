@@ -37,6 +37,27 @@ def test_agent_execution_state_is_immutable() -> None:
         state.status = AgentExecutionStatus.THINK  # type: ignore[misc]
 
 
+def test_allowed_transitions_graph_is_explicit_and_complete() -> None:
+    assert ALLOWED_TRANSITIONS == {
+        AgentExecutionStatus.START: frozenset({AgentExecutionStatus.CONTEXT}),
+        AgentExecutionStatus.CONTEXT: frozenset({AgentExecutionStatus.THINK}),
+        AgentExecutionStatus.THINK: frozenset({AgentExecutionStatus.ACTION_PROPOSED}),
+        AgentExecutionStatus.ACTION_PROPOSED: frozenset({AgentExecutionStatus.RUNTIME_VALIDATE}),
+        AgentExecutionStatus.RUNTIME_VALIDATE: frozenset(
+            {
+                AgentExecutionStatus.TOOL_CALL,
+                AgentExecutionStatus.RESPOND,
+                AgentExecutionStatus.THINK,
+                AgentExecutionStatus.FAILED,
+            }
+        ),
+        AgentExecutionStatus.TOOL_CALL: frozenset({AgentExecutionStatus.THINK}),
+        AgentExecutionStatus.RESPOND: frozenset({AgentExecutionStatus.COMPLETED}),
+        AgentExecutionStatus.COMPLETED: frozenset(),
+        AgentExecutionStatus.FAILED: frozenset(),
+    }
+
+
 @pytest.mark.parametrize(
     ("from_status", "to_status"),
     [
