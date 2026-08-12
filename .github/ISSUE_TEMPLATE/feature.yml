@@ -1,0 +1,104 @@
+name: Feature
+description: Define a new feature or engineering task for Context Engine.
+title: "[Feature]: "
+labels:
+  - feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Context Engine Feature
+
+        Describe the engineering problem and the desired outcome.
+        Keep the scope focused and implementation-oriented.
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should this task accomplish?
+      placeholder: |
+        Define the concrete outcome this task should achieve.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why is this needed? Include relevant project or architectural context.
+      placeholder: |
+        Explain the problem, motivation, and relevant context.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What should be included in this task?
+      placeholder: |
+        - ...
+        - ...
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: What architectural, technical, or project constraints must be respected?
+      placeholder: |
+        - Follow existing architecture
+        - Maintain provider independence
+        - Preserve deterministic execution
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: How do we determine that the task is complete?
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing Requirements
+      description: What tests should be added or updated?
+      placeholder: |
+        - Unit tests for ...
+        - Integration tests for ...
+        - Edge cases for ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Relevant Documentation
+      description: Which documentation should the agent read before implementation?
+      placeholder: |
+        - docs/architecture/overview.md
+        - docs/product/prd.md
+        - ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Optional implementation hints, references, or considerations.
+      placeholder: |
+        Anything else that may help implement this task.
+    validations:
+      required: false
