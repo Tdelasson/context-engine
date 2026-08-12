@@ -14,7 +14,6 @@ class AgentExecutionStatus(StrEnum):
     RUNTIME_VALIDATE = "runtime_validate"
     TOOL_CALL = "tool_call"
     RESPOND = "respond"
-    RETRY = "retry"
     COMPLETED = "completed"
     FAILED = "failed"
 
