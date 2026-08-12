@@ -253,6 +253,12 @@ The LLM does not directly determine state transitions.
 
 The runtime does.
 
+In implementation, transition validation is runtime-owned and deterministic:
+
+* `AgentExecutionState` is a passive immutable state record.
+* allowed status transitions are defined explicitly in a runtime transition map.
+* invalid transitions fail explicitly, including all transitions from terminal states.
+
 ## 5.2 Fixed Runtime Actions
 
 The Agent Runtime owns a closed set of action types.
