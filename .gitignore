@@ -2,6 +2,7 @@
 desktop.ini
 Thumbs.db
 ehthumbs.db
+src/context_engine.egg-info/
 
 # Environment variables
 .env
