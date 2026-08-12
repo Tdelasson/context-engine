@@ -2,7 +2,14 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from context_engine.agent import AgentExecutionState, AgentExecutionStatus
+from context_engine.agent import (
+    ALLOWED_TRANSITIONS,
+    AgentExecutionState,
+    AgentExecutionStatus,
+    InvalidAgentStateTransitionError,
+    can_transition,
+    transition_agent_state,
+)
 
 
 def test_agent_execution_status_values_are_explicit() -> None:
@@ -28,3 +35,66 @@ def test_agent_execution_state_is_immutable() -> None:
     state = AgentExecutionState(status=AgentExecutionStatus.START)
     with pytest.raises(FrozenInstanceError):
         state.status = AgentExecutionStatus.THINK  # type: ignore[misc]
+
+
+@pytest.mark.parametrize(
+    ("from_status", "to_status"),
+    [
+        (from_status, to_status)
+        for from_status, to_statuses in ALLOWED_TRANSITIONS.items()
+        for to_status in to_statuses
+    ],
+)  # type: ignore[misc]
+def test_runtime_allows_every_explicit_transition(
+    from_status: AgentExecutionStatus, to_status: AgentExecutionStatus
+) -> None:
+    assert can_transition(from_status, to_status) is True
+
+
+def test_transition_agent_state_returns_new_state_for_valid_transition() -> None:
+    state = AgentExecutionState(status=AgentExecutionStatus.START)
+
+    transitioned = transition_agent_state(state, AgentExecutionStatus.CONTEXT)
+
+    assert transitioned is not state
+    assert transitioned == AgentExecutionState(status=AgentExecutionStatus.CONTEXT)
+    assert state == AgentExecutionState(status=AgentExecutionStatus.START)
+
+
+@pytest.mark.parametrize(
+    ("from_status", "to_status"),
+    [
+        (AgentExecutionStatus.START, AgentExecutionStatus.TOOL_CALL),
+        (AgentExecutionStatus.THINK, AgentExecutionStatus.COMPLETED),
+        (AgentExecutionStatus.ACTION_PROPOSED, AgentExecutionStatus.THINK),
+    ],
+)  # type: ignore[misc]
+def test_runtime_rejects_invalid_non_terminal_transitions(
+    from_status: AgentExecutionStatus, to_status: AgentExecutionStatus
+) -> None:
+    state = AgentExecutionState(status=from_status)
+
+    assert can_transition(from_status, to_status) is False
+    with pytest.raises(
+        InvalidAgentStateTransitionError,
+        match=f"{from_status.value} -> {to_status.value}",
+    ):
+        transition_agent_state(state, to_status)
+
+
+@pytest.mark.parametrize(
+    "terminal_status",
+    [AgentExecutionStatus.COMPLETED, AgentExecutionStatus.FAILED],
+)  # type: ignore[misc]
+def test_runtime_rejects_all_transitions_from_terminal_states(
+    terminal_status: AgentExecutionStatus,
+) -> None:
+    state = AgentExecutionState(status=terminal_status)
+
+    for next_status in AgentExecutionStatus:
+        assert can_transition(terminal_status, next_status) is False
+        with pytest.raises(
+            InvalidAgentStateTransitionError,
+            match=f"{terminal_status.value} -> {next_status.value}",
+        ):
+            transition_agent_state(state, next_status)
