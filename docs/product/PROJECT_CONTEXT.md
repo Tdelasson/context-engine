@@ -25,6 +25,13 @@ Cursor is used as the primary local AI IDE.
 
 GitHub AI Agents are used for issue-driven implementation.
 
+## Source of truth
+
+- Product requirements: `docs/product/prd.md`
+- Roadmap: `docs/product/roadmap.md`
+- Architecture: `docs/architecture/overview.md`
+- AI agent rules: `AGENTS.md
+
 ## Core architecture decisions
 
 - Agent Runtime owns execution state.
