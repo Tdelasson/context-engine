@@ -68,11 +68,13 @@ class AgentRuntime:
         max_output_tokens: int | None = None,
         temperature: float | None = None,
     ) -> ModelResponse:
-        """Generate and interpret a model response for the THINK -> ACTION_PROPOSED step."""
+        """Generate a model response for the THINK -> ACTION_PROPOSED runtime step."""
         if self._model_gateway is None:
             raise AgentRuntimeModelInteractionError(
                 "Model gateway is required for runtime model interaction."
             )
+
+        next_state = transition_agent_state(self._state, AgentExecutionStatus.ACTION_PROPOSED)
 
         request = self._build_model_request(
             model_id=model_id,
@@ -89,7 +91,7 @@ class AgentRuntime:
                 "Model gateway failed during runtime model interaction."
             ) from exc
 
-        self._state = transition_agent_state(self._state, AgentExecutionStatus.ACTION_PROPOSED)
+        self._state = next_state
         return response
 
     def _build_model_request(

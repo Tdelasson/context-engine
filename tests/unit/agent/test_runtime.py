@@ -109,6 +109,19 @@ def test_runtime_propose_action_translates_gateway_failure_into_runtime_boundary
     assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.THINK)
 
 
+def test_runtime_propose_action_invalid_state_raises_and_does_not_call_gateway() -> None:
+    gateway = _RecordingStubModelGateway()
+    runtime = AgentRuntime(model_gateway=gateway)
+
+    with pytest.raises(
+        InvalidAgentStateTransitionError,
+        match=f"{AgentExecutionStatus.START.value} -> {AgentExecutionStatus.ACTION_PROPOSED.value}",
+    ):
+        runtime.propose_action(model_id="mock-model", user_prompt="hello")
+
+    assert gateway.requests == []
+
+
 def test_runtime_progresses_through_lifecycle_to_completed() -> None:
     runtime = AgentRuntime()
 
