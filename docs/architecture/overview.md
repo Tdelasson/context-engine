@@ -665,6 +665,12 @@ explicit runtime transition
 The model response does not directly mutate runtime state. The runtime remains the owner
 of state transitions.
 
+Decision kinds are runtime-interpreted into valid post-validation transitions:
+
+* `respond` -> `RESPOND`
+* `retry` -> `THINK`
+* `fail` -> `FAILED`
+
 Model failures are represented through explicit gateway errors:
 
 * `ModelGatewayRequestError` for invalid request boundary conditions
