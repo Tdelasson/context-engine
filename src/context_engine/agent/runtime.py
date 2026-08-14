@@ -86,10 +86,16 @@ class AgentRuntime:
         """Attempt to terminate execution as failed."""
         return self.transition_to(AgentExecutionStatus.FAILED)
 
-    def apply_model_decision(self, decision: ModelDecision) -> AgentExecutionState:
+    def apply_model_decision(
+        self,
+        decision: ModelDecision,
+        *,
+        from_state: AgentExecutionState | None = None,
+    ) -> AgentExecutionState:
         """Apply a decision through runtime-owned validation transitions."""
+        decision_state = self._state if from_state is None else from_state
         runtime_validated_state = transition_agent_state(
-            self._state, AgentExecutionStatus.RUNTIME_VALIDATE
+            decision_state, AgentExecutionStatus.RUNTIME_VALIDATE
         )
         target_status = self._target_status_for_decision(decision)
         self._state = transition_agent_state(runtime_validated_state, target_status)
@@ -110,7 +116,9 @@ class AgentRuntime:
                 "Model gateway is required for runtime model interaction."
             )
 
-        self._state = transition_agent_state(self._state, AgentExecutionStatus.ACTION_PROPOSED)
+        action_proposed_state = transition_agent_state(
+            self._state, AgentExecutionStatus.ACTION_PROPOSED
+        )
 
         request = self._build_model_request(
             model_id=model_id,
@@ -128,7 +136,7 @@ class AgentRuntime:
             ) from exc
 
         decision = interpret_model_response(response)
-        self.apply_model_decision(decision)
+        self.apply_model_decision(decision, from_state=action_proposed_state)
         return decision
 
     def run(
@@ -152,7 +160,10 @@ class AgentRuntime:
                 self.transition_to(AgentExecutionStatus.CONTEXT)
                 continue
 
-            if self._state.status is AgentExecutionStatus.CONTEXT:
+            if self._state.status in {
+                AgentExecutionStatus.CONTEXT,
+                AgentExecutionStatus.TOOL_CALL,
+            }:
                 self.transition_to(AgentExecutionStatus.THINK)
                 continue
 
@@ -237,10 +248,6 @@ class AgentRuntime:
                     ),
                     model_iterations=model_iterations,
                 )
-
-            if self._state.status is AgentExecutionStatus.TOOL_CALL:
-                self.transition_to(AgentExecutionStatus.THINK)
-                continue
 
             msg = f"Unsupported runtime execution state: {self._state.status.value}"
             raise AgentRuntimeModelInteractionError(msg)
