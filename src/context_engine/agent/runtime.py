@@ -1,8 +1,8 @@
 """Deterministic runtime orchestration for a single agent execution."""
 
+from context_engine.agent.decision import ModelDecision, interpret_model_response
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import transition_agent_state
-from context_engine.agent.decision import ModelDecision, interpret_model_response
 from context_engine.models import (
     ModelGateway,
     ModelGatewayError,
