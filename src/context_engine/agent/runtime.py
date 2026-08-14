@@ -2,12 +2,12 @@
 
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import transition_agent_state
+from context_engine.agent.decision import ModelDecision, interpret_model_response
 from context_engine.models import (
     ModelGateway,
     ModelGatewayError,
     ModelMessage,
     ModelRequest,
-    ModelResponse,
     ModelRole,
     normalize_messages,
 )
@@ -67,8 +67,8 @@ class AgentRuntime:
         system_prompt: str | None = None,
         max_output_tokens: int | None = None,
         temperature: float | None = None,
-    ) -> ModelResponse:
-        """Generate a model response for the THINK -> ACTION_PROPOSED runtime step."""
+    ) -> ModelDecision:
+        """Generate and interpret a model decision for THINK -> ACTION_PROPOSED."""
         if self._model_gateway is None:
             raise AgentRuntimeModelInteractionError(
                 "Model gateway is required for runtime model interaction."
@@ -91,8 +91,9 @@ class AgentRuntime:
                 "Model gateway failed during runtime model interaction."
             ) from exc
 
+        decision = interpret_model_response(response)
         self._state = next_state
-        return response
+        return decision
 
     def _build_model_request(
         self,

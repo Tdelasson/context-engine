@@ -626,8 +626,8 @@ Typed Runtime Input
 
 ## 9.7 Runtime Model Contract (M2 Foundation)
 
-The current implementation establishes a provider-independent request/response boundary
-for runtime-to-model interaction:
+The current implementation establishes explicit provider-independent boundaries for
+runtime-to-model interaction and runtime decision interpretation:
 
 ```text
 ModelRequest
@@ -641,10 +641,29 @@ ModelResponse
   - output_text
   - finish_reason
   - usage (optional)
+
+ModelDecision
+  - kind: respond | retry | fail
+  - proposed_response (optional, for respond)
 ```
 
 The runtime depends on a `ModelGateway` interface (`generate(request) -> response`)
 rather than any provider SDK.
+
+Runtime interpretation is explicit and deterministic:
+
+```text
+ModelResponse
+      ↓
+interpret_model_response(...)
+      ↓
+ModelDecision
+      ↓
+explicit runtime transition
+```
+
+The model response does not directly mutate runtime state. The runtime remains the owner
+of state transitions.
 
 Model failures are represented through explicit gateway errors:
 
