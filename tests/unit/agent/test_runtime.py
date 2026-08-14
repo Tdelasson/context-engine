@@ -4,11 +4,15 @@ from context_engine.agent import (
     AgentExecutionState,
     AgentExecutionStatus,
     AgentRuntime,
+    AgentRuntimeExecutionOutcome,
     AgentRuntimeModelInteractionError,
     InvalidAgentStateTransitionError,
     ModelDecision,
     ModelDecisionInterpretationError,
     ModelDecisionKind,
+)
+from context_engine.agent.transitions import (
+    transition_agent_state as runtime_transition_agent_state,
 )
 from context_engine.models import (
     ModelFinishReason,
@@ -53,6 +57,36 @@ class _InvalidFinishReasonStubModelGateway:
             output_text="invalid",
             finish_reason="invalid",  # type: ignore[arg-type]
         )
+
+
+class _SequenceStubModelGateway:
+    def __init__(self, responses: list[ModelResponse]) -> None:
+        self.requests: list[ModelRequest] = []
+        self._responses = responses
+
+    def generate(self, request: ModelRequest) -> ModelResponse:
+        self.requests.append(request)
+        response = self._responses.pop(0)
+        return ModelResponse(
+            model_id=request.model_id,
+            output_text=response.output_text,
+            finish_reason=response.finish_reason,
+        )
+
+
+def _capture_runtime_transitions(monkeypatch: pytest.MonkeyPatch) -> list[AgentExecutionStatus]:
+    transitions: list[AgentExecutionStatus] = []
+    original_transition = runtime_transition_agent_state
+
+    def recording_transition(
+        state: AgentExecutionState,
+        to_status: AgentExecutionStatus,
+    ) -> AgentExecutionState:
+        transitions.append(to_status)
+        return original_transition(state, to_status)
+
+    monkeypatch.setattr("context_engine.agent.runtime.transition_agent_state", recording_transition)
+    return transitions
 
 
 def test_runtime_starts_in_start() -> None:
@@ -154,7 +188,7 @@ def test_runtime_propose_action_translates_gateway_failure_into_runtime_boundary
     assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.THINK)
 
 
-def test_runtime_propose_action_interpretation_error_keeps_runtime_in_action_proposed() -> None:
+def test_runtime_propose_action_interpretation_error_keeps_runtime_in_think() -> None:
     runtime = AgentRuntime(model_gateway=_InvalidFinishReasonStubModelGateway())
     runtime.transition_to(AgentExecutionStatus.CONTEXT)
     runtime.transition_to(AgentExecutionStatus.THINK)
@@ -162,7 +196,7 @@ def test_runtime_propose_action_interpretation_error_keeps_runtime_in_action_pro
     with pytest.raises(ModelDecisionInterpretationError, match="Unsupported model finish reason"):
         runtime.propose_action(model_id="mock-model", user_prompt="hello")
 
-    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.ACTION_PROPOSED)
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.THINK)
 
 
 @pytest.mark.parametrize(
@@ -278,3 +312,179 @@ def test_runtime_invalid_transition_is_rejected_by_transition_system() -> None:
         match=f"{AgentExecutionStatus.START.value} -> {AgentExecutionStatus.THINK.value}",
     ):
         runtime.transition_to(AgentExecutionStatus.THINK)
+
+
+def test_runtime_run_single_pass_reaches_completed_and_returns_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="final answer",
+                finish_reason=ModelFinishReason.STOP,
+            )
+        ]
+    )
+    runtime = AgentRuntime(model_gateway=gateway)
+
+    result = runtime.run(model_id="mock-model", user_prompt="hello")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert result.proposed_response == "final answer"
+    assert result.model_iterations == 1
+    assert result.terminal_state == AgentExecutionState(status=AgentExecutionStatus.COMPLETED)
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.COMPLETED)
+    assert len(gateway.requests) == 1
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.RESPOND,
+        AgentExecutionStatus.COMPLETED,
+    ]
+
+
+def test_runtime_run_retry_then_respond_retries_deterministically(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="partial",
+                finish_reason=ModelFinishReason.LENGTH,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="final answer",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
+    )
+    runtime = AgentRuntime(model_gateway=gateway)
+
+    result = runtime.run(model_id="mock-model", user_prompt="hello", max_model_iterations=3)
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert result.proposed_response == "final answer"
+    assert result.model_iterations == 2
+    assert result.terminal_state == AgentExecutionState(status=AgentExecutionStatus.COMPLETED)
+    assert len(gateway.requests) == 2
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.RESPOND,
+        AgentExecutionStatus.COMPLETED,
+    ]
+
+
+def test_runtime_run_fail_decision_reaches_failed_terminal_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="cannot continue",
+                finish_reason=ModelFinishReason.OTHER,
+            )
+        ]
+    )
+    runtime = AgentRuntime(model_gateway=gateway)
+
+    result = runtime.run(model_id="mock-model", user_prompt="hello")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.FAILED
+    assert result.proposed_response is None
+    assert result.model_iterations == 1
+    assert result.terminal_state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.FAILED,
+    ]
+
+
+def test_runtime_run_step_limit_fails_deterministically(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="partial-1",
+                finish_reason=ModelFinishReason.LENGTH,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="partial-2",
+                finish_reason=ModelFinishReason.LENGTH,
+            ),
+        ]
+    )
+    runtime = AgentRuntime(model_gateway=gateway)
+
+    result = runtime.run(model_id="mock-model", user_prompt="hello", max_model_iterations=2)
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.LIMIT_REACHED
+    assert result.error_message is not None
+    assert "exceeded max model iterations" in result.error_message
+    assert result.model_iterations == 2
+    assert result.terminal_state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
+    assert len(gateway.requests) == 2
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.FAILED,
+    ]
+
+
+def test_runtime_run_gateway_failure_returns_failed_result_and_terminal_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    runtime = AgentRuntime(model_gateway=_FailingStubModelGateway())
+
+    result = runtime.run(model_id="mock-model", user_prompt="hello")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.FAILED
+    assert result.error_message is not None
+    assert "Model gateway failed during runtime model interaction" in result.error_message
+    assert result.model_iterations == 1
+    assert result.terminal_state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.FAILED,
+    ]
+
+
+def test_runtime_run_rejects_non_positive_max_model_iterations() -> None:
+    runtime = AgentRuntime(model_gateway=_RecordingStubModelGateway())
+
+    with pytest.raises(ValueError, match="max_model_iterations must be >= 1"):
+        runtime.run(model_id="mock-model", user_prompt="hello", max_model_iterations=0)

@@ -1,7 +1,11 @@
 """Deterministic runtime orchestration for a single agent execution."""
 
+from dataclasses import dataclass
+from enum import StrEnum
+
 from context_engine.agent.decision import (
     ModelDecision,
+    ModelDecisionInterpretationError,
     ModelDecisionKind,
     interpret_model_response,
 )
@@ -19,6 +23,25 @@ from context_engine.models import (
 
 class AgentRuntimeModelInteractionError(RuntimeError):
     """Raised when runtime-model interaction fails at the runtime boundary."""
+
+
+class AgentRuntimeExecutionOutcome(StrEnum):
+    """Terminal outcomes of a deterministic runtime execution loop."""
+
+    RESPONDED = "responded"
+    FAILED = "failed"
+    LIMIT_REACHED = "limit_reached"
+
+
+@dataclass(frozen=True, slots=True)
+class AgentRuntimeExecutionResult:
+    """Typed terminal result returned by runtime execution."""
+
+    outcome: AgentRuntimeExecutionOutcome
+    terminal_state: AgentExecutionState
+    proposed_response: str | None = None
+    error_message: str | None = None
+    model_iterations: int = 0
 
 
 class AgentRuntime:
@@ -63,10 +86,16 @@ class AgentRuntime:
         """Attempt to terminate execution as failed."""
         return self.transition_to(AgentExecutionStatus.FAILED)
 
-    def apply_model_decision(self, decision: ModelDecision) -> AgentExecutionState:
+    def apply_model_decision(
+        self,
+        decision: ModelDecision,
+        *,
+        from_state: AgentExecutionState | None = None,
+    ) -> AgentExecutionState:
         """Apply a decision through runtime-owned validation transitions."""
+        decision_state = self._state if from_state is None else from_state
         runtime_validated_state = transition_agent_state(
-            self._state, AgentExecutionStatus.RUNTIME_VALIDATE
+            decision_state, AgentExecutionStatus.RUNTIME_VALIDATE
         )
         target_status = self._target_status_for_decision(decision)
         self._state = transition_agent_state(runtime_validated_state, target_status)
@@ -87,7 +116,9 @@ class AgentRuntime:
                 "Model gateway is required for runtime model interaction."
             )
 
-        next_state = transition_agent_state(self._state, AgentExecutionStatus.ACTION_PROPOSED)
+        action_proposed_state = transition_agent_state(
+            self._state, AgentExecutionStatus.ACTION_PROPOSED
+        )
 
         request = self._build_model_request(
             model_id=model_id,
@@ -104,10 +135,135 @@ class AgentRuntime:
                 "Model gateway failed during runtime model interaction."
             ) from exc
 
-        self._state = next_state
         decision = interpret_model_response(response)
-        self.apply_model_decision(decision)
+        self.apply_model_decision(decision, from_state=action_proposed_state)
         return decision
+
+    def run(
+        self,
+        *,
+        model_id: str,
+        user_prompt: str,
+        system_prompt: str | None = None,
+        max_output_tokens: int | None = None,
+        temperature: float | None = None,
+        max_model_iterations: int = 8,
+    ) -> AgentRuntimeExecutionResult:
+        """Run the deterministic runtime loop until a terminal state is reached."""
+        if max_model_iterations < 1:
+            raise ValueError("max_model_iterations must be >= 1.")
+
+        model_iterations = 0
+
+        while not self.is_terminal:
+            if self._state.status is AgentExecutionStatus.START:
+                self.transition_to(AgentExecutionStatus.CONTEXT)
+                continue
+
+            if self._state.status in {
+                AgentExecutionStatus.CONTEXT,
+                AgentExecutionStatus.TOOL_CALL,
+            }:
+                self.transition_to(AgentExecutionStatus.THINK)
+                continue
+
+            if self._state.status is AgentExecutionStatus.THINK:
+                if model_iterations >= max_model_iterations:
+                    self.transition_to(AgentExecutionStatus.ACTION_PROPOSED)
+                    self.transition_to(AgentExecutionStatus.RUNTIME_VALIDATE)
+                    self.fail()
+                    return AgentRuntimeExecutionResult(
+                        outcome=AgentRuntimeExecutionOutcome.LIMIT_REACHED,
+                        terminal_state=self._state,
+                        error_message=(
+                            "Agent runtime exceeded max model iterations before reaching "
+                            "a terminal response."
+                        ),
+                        model_iterations=model_iterations,
+                    )
+
+                model_iterations += 1
+                try:
+                    decision = self.propose_action(
+                        model_id=model_id,
+                        user_prompt=user_prompt,
+                        system_prompt=system_prompt,
+                        max_output_tokens=max_output_tokens,
+                        temperature=temperature,
+                    )
+                except (AgentRuntimeModelInteractionError, ModelDecisionInterpretationError) as exc:
+                    self._transition_to_failed_terminal()
+                    return AgentRuntimeExecutionResult(
+                        outcome=AgentRuntimeExecutionOutcome.FAILED,
+                        terminal_state=self._state,
+                        error_message=str(exc),
+                        model_iterations=model_iterations,
+                    )
+
+                if decision.kind is ModelDecisionKind.RESPOND:
+                    self.complete()
+                    return AgentRuntimeExecutionResult(
+                        outcome=AgentRuntimeExecutionOutcome.RESPONDED,
+                        terminal_state=self._state,
+                        proposed_response=decision.proposed_response,
+                        model_iterations=model_iterations,
+                    )
+
+                if decision.kind is ModelDecisionKind.FAIL:
+                    return AgentRuntimeExecutionResult(
+                        outcome=AgentRuntimeExecutionOutcome.FAILED,
+                        terminal_state=self._state,
+                        model_iterations=model_iterations,
+                    )
+
+                continue
+
+            if self._state.status is AgentExecutionStatus.RESPOND:
+                self.complete()
+                return AgentRuntimeExecutionResult(
+                    outcome=AgentRuntimeExecutionOutcome.RESPONDED,
+                    terminal_state=self._state,
+                    model_iterations=model_iterations,
+                )
+
+            if self._state.status is AgentExecutionStatus.ACTION_PROPOSED:
+                self._transition_to_failed_terminal()
+                return AgentRuntimeExecutionResult(
+                    outcome=AgentRuntimeExecutionOutcome.FAILED,
+                    terminal_state=self._state,
+                    error_message=(
+                        "Runtime execution encountered ACTION_PROPOSED without a model decision."
+                    ),
+                    model_iterations=model_iterations,
+                )
+
+            if self._state.status is AgentExecutionStatus.RUNTIME_VALIDATE:
+                self._transition_to_failed_terminal()
+                return AgentRuntimeExecutionResult(
+                    outcome=AgentRuntimeExecutionOutcome.FAILED,
+                    terminal_state=self._state,
+                    error_message=(
+                        "Runtime execution encountered RUNTIME_VALIDATE without a deterministic "
+                        "next action."
+                    ),
+                    model_iterations=model_iterations,
+                )
+
+            msg = f"Unsupported runtime execution state: {self._state.status.value}"
+            raise AgentRuntimeModelInteractionError(msg)
+
+        if self._state.status is AgentExecutionStatus.COMPLETED:
+            return AgentRuntimeExecutionResult(
+                outcome=AgentRuntimeExecutionOutcome.RESPONDED,
+                terminal_state=self._state,
+                model_iterations=model_iterations,
+            )
+
+        return AgentRuntimeExecutionResult(
+            outcome=AgentRuntimeExecutionOutcome.FAILED,
+            terminal_state=self._state,
+            model_iterations=model_iterations,
+        )
 
     def _target_status_for_decision(self, decision: ModelDecision) -> AgentExecutionStatus:
         if decision.kind is ModelDecisionKind.RESPOND:
@@ -117,6 +273,19 @@ class AgentRuntime:
         if decision.kind is ModelDecisionKind.FAIL:
             return AgentExecutionStatus.FAILED
         msg = f"Unsupported model decision kind for runtime transition: {decision.kind!r}"
+        raise AgentRuntimeModelInteractionError(msg)
+
+    def _transition_to_failed_terminal(self) -> AgentExecutionState:
+        if self._state.status is AgentExecutionStatus.THINK:
+            self.transition_to(AgentExecutionStatus.ACTION_PROPOSED)
+        if self._state.status is AgentExecutionStatus.ACTION_PROPOSED:
+            self.transition_to(AgentExecutionStatus.RUNTIME_VALIDATE)
+        if self._state.status is AgentExecutionStatus.RUNTIME_VALIDATE:
+            return self.fail()
+
+        msg = (
+            f"Cannot transition runtime to FAILED from current status: {self._state.status.value}."
+        )
         raise AgentRuntimeModelInteractionError(msg)
 
     def _build_model_request(
