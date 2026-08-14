@@ -2,18 +2,29 @@
 
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import transition_agent_state
+from context_engine.models import ModelGateway
 
 
 class AgentRuntime:
     """Owns execution state and applies validated transitions deterministically."""
 
-    def __init__(self, initial_state: AgentExecutionState | None = None) -> None:
+    def __init__(
+        self,
+        initial_state: AgentExecutionState | None = None,
+        model_gateway: ModelGateway | None = None,
+    ) -> None:
         self._state = initial_state or AgentExecutionState(status=AgentExecutionStatus.START)
+        self._model_gateway = model_gateway
 
     @property
     def state(self) -> AgentExecutionState:
         """Return the current immutable execution state."""
         return self._state
+
+    @property
+    def model_gateway(self) -> ModelGateway | None:
+        """Return the runtime's provider-independent model gateway dependency."""
+        return self._model_gateway
 
     @property
     def is_terminal(self) -> bool:

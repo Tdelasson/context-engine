@@ -624,6 +624,35 @@ Schema Validation
 Typed Runtime Input
 ```
 
+## 9.7 Runtime Model Contract (M2 Foundation)
+
+The current implementation establishes a provider-independent request/response boundary
+for runtime-to-model interaction:
+
+```text
+ModelRequest
+  - model_id
+  - messages[(role, content)]
+  - max_output_tokens (optional)
+  - temperature (optional)
+
+ModelResponse
+  - model_id
+  - output_text
+  - finish_reason
+  - usage (optional)
+```
+
+The runtime depends on a `ModelGateway` interface (`generate(request) -> response`)
+rather than any provider SDK.
+
+Model failures are represented through explicit gateway errors:
+
+* `ModelGatewayRequestError` for invalid request boundary conditions
+* `ModelGatewayExecutionError` for provider execution failures
+
+Concrete model provider integrations remain out of scope for this stage.
+
 ---
 
 # 10. Storage Architecture

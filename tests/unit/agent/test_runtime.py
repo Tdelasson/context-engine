@@ -6,12 +6,46 @@ from context_engine.agent import (
     AgentRuntime,
     InvalidAgentStateTransitionError,
 )
+from context_engine.models import (
+    ModelFinishReason,
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    ModelRole,
+)
+
+
+class _StubModelGateway:
+    def generate(self, request: ModelRequest) -> ModelResponse:
+        return ModelResponse(
+            model_id=request.model_id,
+            output_text="stub",
+            finish_reason=ModelFinishReason.STOP,
+        )
 
 
 def test_runtime_starts_in_start() -> None:
     runtime = AgentRuntime()
 
     assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.START)
+
+
+def test_runtime_can_depend_on_provider_independent_model_gateway() -> None:
+    gateway = _StubModelGateway()
+    runtime = AgentRuntime(model_gateway=gateway)
+
+    assert runtime.model_gateway is gateway
+    assert runtime.model_gateway is not None
+    assert runtime.model_gateway.generate(
+        ModelRequest(
+            model_id="mock-model",
+            messages=(ModelMessage(role=ModelRole.USER, content="hello"),),
+        )
+    ) == ModelResponse(
+        model_id="mock-model",
+        output_text="stub",
+        finish_reason=ModelFinishReason.STOP,
+    )
 
 
 def test_runtime_progresses_through_lifecycle_to_completed() -> None:
