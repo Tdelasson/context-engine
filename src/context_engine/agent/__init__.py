@@ -6,7 +6,12 @@ from context_engine.agent.decision import (
     ModelDecisionKind,
     interpret_model_response,
 )
-from context_engine.agent.runtime import AgentRuntime, AgentRuntimeModelInteractionError
+from context_engine.agent.runtime import (
+    AgentRuntime,
+    AgentRuntimeExecutionOutcome,
+    AgentRuntimeExecutionResult,
+    AgentRuntimeModelInteractionError,
+)
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import (
     ALLOWED_TRANSITIONS,
@@ -20,6 +25,8 @@ __all__ = [
     "AgentExecutionState",
     "AgentExecutionStatus",
     "AgentRuntime",
+    "AgentRuntimeExecutionOutcome",
+    "AgentRuntimeExecutionResult",
     "AgentRuntimeModelInteractionError",
     "ModelDecision",
     "ModelDecisionInterpretationError",

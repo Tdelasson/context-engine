@@ -678,6 +678,42 @@ Model failures are represented through explicit gateway errors:
 
 Concrete model provider integrations remain out of scope for this stage.
 
+## 9.8 Deterministic Runtime Execution Loop (M2)
+
+The runtime now exposes an explicit bounded execution loop that orchestrates
+the existing state machine and provider-independent model boundaries.
+
+Conceptually:
+
+```text
+START
+  ↓
+CONTEXT
+  ↓
+THINK
+  ↓
+ACTION_PROPOSED
+  ↓
+ModelGateway.generate(...)
+  ↓
+interpret_model_response(...)
+  ↓
+ModelDecision
+  ├── respond → RESPOND → COMPLETED
+  ├── retry   → THINK    → loop (bounded)
+  └── fail    → FAILED
+```
+
+The loop remains deterministic:
+
+* state transitions are still applied through the runtime transition map;
+* the model does not directly mutate runtime state;
+* retries are bounded by an explicit maximum model-iteration limit;
+* exceeding the iteration limit yields a typed `limit_reached` runtime outcome
+  and transitions to terminal `FAILED`;
+* gateway or decision-interpretation failures are converted into deterministic
+  runtime terminal failures.
+
 ---
 
 # 10. Storage Architecture
