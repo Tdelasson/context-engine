@@ -110,20 +110,21 @@ def test_runtime_propose_action_builds_typed_request_and_transitions() -> None:
         kind=ModelDecisionKind.RESPOND,
         proposed_response="stub",
     )
-    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.ACTION_PROPOSED)
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.RESPOND)
 
 
 @pytest.mark.parametrize(
-    ("finish_reason", "expected_kind"),
+    ("finish_reason", "expected_kind", "expected_status"),
     [
-        (ModelFinishReason.STOP, ModelDecisionKind.RESPOND),
-        (ModelFinishReason.LENGTH, ModelDecisionKind.RETRY),
-        (ModelFinishReason.OTHER, ModelDecisionKind.FAIL),
+        (ModelFinishReason.STOP, ModelDecisionKind.RESPOND, AgentExecutionStatus.RESPOND),
+        (ModelFinishReason.LENGTH, ModelDecisionKind.RETRY, AgentExecutionStatus.THINK),
+        (ModelFinishReason.OTHER, ModelDecisionKind.FAIL, AgentExecutionStatus.FAILED),
     ],
 )  # type: ignore[misc]
-def test_runtime_propose_action_returns_interpreted_decision(
+def test_runtime_propose_action_maps_decision_to_runtime_state(
     finish_reason: ModelFinishReason,
     expected_kind: ModelDecisionKind,
+    expected_status: AgentExecutionStatus,
 ) -> None:
     gateway = _RecordingStubModelGateway(output_text="payload", finish_reason=finish_reason)
     runtime = AgentRuntime(model_gateway=gateway)
@@ -136,7 +137,7 @@ def test_runtime_propose_action_returns_interpreted_decision(
     assert decision.proposed_response == (
         "payload" if expected_kind is ModelDecisionKind.RESPOND else None
     )
-    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.ACTION_PROPOSED)
+    assert runtime.state == AgentExecutionState(status=expected_status)
 
 
 def test_runtime_propose_action_translates_gateway_failure_into_runtime_boundary_error() -> None:
@@ -153,7 +154,7 @@ def test_runtime_propose_action_translates_gateway_failure_into_runtime_boundary
     assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.THINK)
 
 
-def test_runtime_propose_action_interpretation_error_keeps_runtime_in_think() -> None:
+def test_runtime_propose_action_interpretation_error_keeps_runtime_in_action_proposed() -> None:
     runtime = AgentRuntime(model_gateway=_InvalidFinishReasonStubModelGateway())
     runtime.transition_to(AgentExecutionStatus.CONTEXT)
     runtime.transition_to(AgentExecutionStatus.THINK)
@@ -161,7 +162,7 @@ def test_runtime_propose_action_interpretation_error_keeps_runtime_in_think() ->
     with pytest.raises(ModelDecisionInterpretationError, match="Unsupported model finish reason"):
         runtime.propose_action(model_id="mock-model", user_prompt="hello")
 
-    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.THINK)
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.ACTION_PROPOSED)
 
 
 @pytest.mark.parametrize(

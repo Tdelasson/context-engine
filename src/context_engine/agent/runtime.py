@@ -104,8 +104,9 @@ class AgentRuntime:
                 "Model gateway failed during runtime model interaction."
             ) from exc
 
-        decision = interpret_model_response(response)
         self._state = next_state
+        decision = interpret_model_response(response)
+        self.apply_model_decision(decision)
         return decision
 
     def _target_status_for_decision(self, decision: ModelDecision) -> AgentExecutionStatus:
