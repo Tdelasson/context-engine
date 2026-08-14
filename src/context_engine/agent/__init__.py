@@ -1,6 +1,6 @@
 """Agent runtime package."""
 
-from context_engine.agent.runtime import AgentRuntime
+from context_engine.agent.runtime import AgentRuntime, AgentRuntimeModelInteractionError
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import (
     ALLOWED_TRANSITIONS,
@@ -14,6 +14,7 @@ __all__ = [
     "AgentExecutionState",
     "AgentExecutionStatus",
     "AgentRuntime",
+    "AgentRuntimeModelInteractionError",
     "InvalidAgentStateTransitionError",
     "can_transition",
     "transition_agent_state",

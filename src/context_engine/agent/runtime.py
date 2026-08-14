@@ -2,7 +2,19 @@
 
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import transition_agent_state
-from context_engine.models import ModelGateway
+from context_engine.models import (
+    ModelGateway,
+    ModelGatewayError,
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    ModelRole,
+    normalize_messages,
+)
+
+
+class AgentRuntimeModelInteractionError(RuntimeError):
+    """Raised when runtime-model interaction fails at the runtime boundary."""
 
 
 class AgentRuntime:
@@ -46,3 +58,61 @@ class AgentRuntime:
     def fail(self) -> AgentExecutionState:
         """Attempt to terminate execution as failed."""
         return self.transition_to(AgentExecutionStatus.FAILED)
+
+    def propose_action(
+        self,
+        *,
+        model_id: str,
+        user_prompt: str,
+        system_prompt: str | None = None,
+        max_output_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> ModelResponse:
+        """Generate a model response for the THINK -> ACTION_PROPOSED runtime step."""
+        if self._model_gateway is None:
+            raise AgentRuntimeModelInteractionError(
+                "Model gateway is required for runtime model interaction."
+            )
+
+        next_state = transition_agent_state(self._state, AgentExecutionStatus.ACTION_PROPOSED)
+
+        request = self._build_model_request(
+            model_id=model_id,
+            user_prompt=user_prompt,
+            system_prompt=system_prompt,
+            max_output_tokens=max_output_tokens,
+            temperature=temperature,
+        )
+
+        try:
+            response = self._model_gateway.generate(request)
+        except ModelGatewayError as exc:
+            raise AgentRuntimeModelInteractionError(
+                "Model gateway failed during runtime model interaction."
+            ) from exc
+
+        self._state = next_state
+        return response
+
+    def _build_model_request(
+        self,
+        *,
+        model_id: str,
+        user_prompt: str,
+        system_prompt: str | None,
+        max_output_tokens: int | None,
+        temperature: float | None,
+    ) -> ModelRequest:
+        messages: list[ModelMessage] = []
+
+        if system_prompt is not None:
+            messages.append(ModelMessage(role=ModelRole.SYSTEM, content=system_prompt))
+
+        messages.append(ModelMessage(role=ModelRole.USER, content=user_prompt))
+
+        return ModelRequest(
+            model_id=model_id,
+            messages=normalize_messages(messages),
+            max_output_tokens=max_output_tokens,
+            temperature=temperature,
+        )
