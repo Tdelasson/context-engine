@@ -1,5 +1,10 @@
 """Deterministic runtime orchestration for a single agent execution."""
 
+from context_engine.agent.decision import (
+    ModelDecision,
+    ModelDecisionKind,
+    interpret_model_response,
+)
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import transition_agent_state
 from context_engine.models import (
@@ -7,7 +12,6 @@ from context_engine.models import (
     ModelGatewayError,
     ModelMessage,
     ModelRequest,
-    ModelResponse,
     ModelRole,
     normalize_messages,
 )
@@ -59,6 +63,15 @@ class AgentRuntime:
         """Attempt to terminate execution as failed."""
         return self.transition_to(AgentExecutionStatus.FAILED)
 
+    def apply_model_decision(self, decision: ModelDecision) -> AgentExecutionState:
+        """Apply a decision through runtime-owned validation transitions."""
+        runtime_validated_state = transition_agent_state(
+            self._state, AgentExecutionStatus.RUNTIME_VALIDATE
+        )
+        target_status = self._target_status_for_decision(decision)
+        self._state = transition_agent_state(runtime_validated_state, target_status)
+        return self._state
+
     def propose_action(
         self,
         *,
@@ -67,8 +80,8 @@ class AgentRuntime:
         system_prompt: str | None = None,
         max_output_tokens: int | None = None,
         temperature: float | None = None,
-    ) -> ModelResponse:
-        """Generate a model response for the THINK -> ACTION_PROPOSED runtime step."""
+    ) -> ModelDecision:
+        """Generate and interpret a model decision for THINK -> ACTION_PROPOSED."""
         if self._model_gateway is None:
             raise AgentRuntimeModelInteractionError(
                 "Model gateway is required for runtime model interaction."
@@ -92,7 +105,19 @@ class AgentRuntime:
             ) from exc
 
         self._state = next_state
-        return response
+        decision = interpret_model_response(response)
+        self.apply_model_decision(decision)
+        return decision
+
+    def _target_status_for_decision(self, decision: ModelDecision) -> AgentExecutionStatus:
+        if decision.kind is ModelDecisionKind.RESPOND:
+            return AgentExecutionStatus.RESPOND
+        if decision.kind is ModelDecisionKind.RETRY:
+            return AgentExecutionStatus.THINK
+        if decision.kind is ModelDecisionKind.FAIL:
+            return AgentExecutionStatus.FAILED
+        msg = f"Unsupported model decision kind for runtime transition: {decision.kind!r}"
+        raise AgentRuntimeModelInteractionError(msg)
 
     def _build_model_request(
         self,
