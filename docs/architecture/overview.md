@@ -676,7 +676,23 @@ Model failures are represented through explicit gateway errors:
 * `ModelGatewayRequestError` for invalid request boundary conditions
 * `ModelGatewayExecutionError` for provider execution failures
 
-Concrete model provider integrations remain out of scope for this stage.
+The first concrete provider integration is `OllamaModelGateway`, which remains
+fully behind the `ModelGateway` interface:
+
+```text
+AgentRuntime
+      ↓
+ModelGateway
+      ↓
+OllamaModelGateway
+      ↓
+Ollama HTTP API
+      ↓
+Local LLM
+```
+
+Provider-specific request/response payloads are translated at the gateway boundary.
+`AgentRuntime` remains provider-independent and does not import Ollama-specific types.
 
 ## 9.8 Deterministic Runtime Execution Loop (M2)
 

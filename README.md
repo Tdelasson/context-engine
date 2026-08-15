@@ -45,6 +45,25 @@ Context-Aware DJ
 
 ...
 
+## Local Ollama Verification (Optional)
+
+You can verify the runtime/provider boundary with a local Ollama instance.
+
+1. Install and run Ollama locally.
+2. Pull a local model, for example: `ollama pull llama3.2`.
+3. Run the optional integration test:
+
+```bash
+CONTEXT_ENGINE_RUN_OLLAMA_INTEGRATION=1 \
+CONTEXT_ENGINE_OLLAMA_MODEL=llama3.2 \
+pytest tests/integration/test_ollama_runtime_integration.py
+```
+
+Optional environment variables:
+
+- `CONTEXT_ENGINE_OLLAMA_BASE_URL` (default: `http://localhost:11434`)
+- `CONTEXT_ENGINE_OLLAMA_TIMEOUT_SECONDS` (default: `30`)
+
 ## License
 
 ...
