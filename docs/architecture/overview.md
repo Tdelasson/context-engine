@@ -458,6 +458,29 @@ spotify.add_tracks
 
 These tools are controlled by the Context Engine Tool Runtime.
 
+## 8.1.1 Deterministic Execution Contract (MVP Foundation)
+
+The Tool Runtime executes requests through an explicit typed boundary:
+
+```text
+ToolInvocation
+     ↓
+Tool Registry lookup
+     ↓
+Input schema validation
+     ↓
+Tool.execute()
+     ↓
+ToolResult
+```
+
+Deterministic behavior requirements:
+
+* unknown/unregistered tool names are rejected by registry lookup,
+* invocation input is validated against the declared tool schema before execution,
+* invalid input does not execute tool code,
+* execution failures are returned as structured runtime-owned error results.
+
 ## 8.2 Security Boundary
 
 Tool metadata is not trusted as a security boundary.
