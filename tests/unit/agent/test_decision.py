@@ -64,3 +64,30 @@ def test_interpret_model_response_rejects_unsupported_finish_reason() -> None:
         match="Unsupported model finish reason",
     ):
         interpret_model_response(response)
+
+
+def test_model_decision_tool_call_requires_tool_name_and_arguments() -> None:
+    with pytest.raises(ValueError, match="tool_name is required"):
+        ModelDecision(kind=ModelDecisionKind.TOOL_CALL, tool_arguments=(("a", 1),))
+
+    with pytest.raises(ValueError, match="tool_arguments are required"):
+        ModelDecision(kind=ModelDecisionKind.TOOL_CALL, tool_name="add")
+
+
+def test_model_decision_tool_call_factory_normalizes_arguments() -> None:
+    decision = ModelDecision.tool_call(tool_name="add", arguments={"b": 3, "a": 2})
+
+    assert decision.kind is ModelDecisionKind.TOOL_CALL
+    assert decision.tool_name == "add"
+    assert decision.tool_arguments == (("a", 2), ("b", 3))
+    assert decision.tool_arguments_as_mapping() == {"a": 2, "b": 3}
+
+
+def test_model_decision_non_tool_call_rejects_tool_fields() -> None:
+    with pytest.raises(ValueError, match="only valid for TOOL_CALL"):
+        ModelDecision(
+            kind=ModelDecisionKind.RESPOND,
+            proposed_response="done",
+            tool_name="add",
+            tool_arguments=(("a", 2), ("b", 3)),
+        )

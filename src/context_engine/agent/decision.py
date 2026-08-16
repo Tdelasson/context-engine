@@ -1,9 +1,11 @@
 """Provider-independent model decision boundary for agent runtime semantics."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
 from context_engine.models import ModelFinishReason, ModelResponse
+from context_engine.tools import normalize_tool_arguments
 
 
 class ModelDecisionKind(StrEnum):
@@ -12,6 +14,7 @@ class ModelDecisionKind(StrEnum):
     RESPOND = "respond"
     RETRY = "retry"
     FAIL = "fail"
+    TOOL_CALL = "tool_call"
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,6 +23,32 @@ class ModelDecision:
 
     kind: ModelDecisionKind
     proposed_response: str | None = None
+    tool_name: str | None = None
+    tool_arguments: tuple[tuple[str, object], ...] | None = None
+
+    @classmethod
+    def tool_call(cls, tool_name: str, arguments: Mapping[str, object]) -> "ModelDecision":
+        """Construct a typed tool-call model decision with normalized arguments."""
+        return cls(
+            kind=ModelDecisionKind.TOOL_CALL,
+            tool_name=tool_name,
+            tool_arguments=normalize_tool_arguments(arguments),
+        )
+
+    def tool_arguments_as_mapping(self) -> dict[str, object]:
+        """Return typed tool-call arguments as a mutable mapping."""
+        return {} if self.tool_arguments is None else dict(self.tool_arguments)
+
+    def __post_init__(self) -> None:
+        if self.kind is ModelDecisionKind.TOOL_CALL:
+            if self.tool_name is None:
+                raise ValueError("tool_name is required for TOOL_CALL decisions.")
+            if self.tool_arguments is None:
+                raise ValueError("tool_arguments are required for TOOL_CALL decisions.")
+            return
+
+        if self.tool_name is not None or self.tool_arguments is not None:
+            raise ValueError("tool_name/tool_arguments are only valid for TOOL_CALL decisions.")
 
 
 class ModelDecisionInterpretationError(ValueError):

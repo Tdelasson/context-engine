@@ -1,7 +1,9 @@
 """Deterministic runtime orchestration for a single agent execution."""
 
+import json
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Protocol, runtime_checkable
 
 from context_engine.agent.decision import (
     ModelDecision,
@@ -19,6 +21,15 @@ from context_engine.models import (
     ModelRole,
     normalize_messages,
 )
+from context_engine.tools import ToolInvocation, ToolResult, ToolResultStatus, ToolRuntimeError
+
+
+@runtime_checkable
+class AgentToolRuntime(Protocol):
+    """Provider-independent tool runtime boundary used by the agent runtime."""
+
+    def execute(self, invocation: ToolInvocation) -> ToolResult:
+        """Execute one validated tool invocation."""
 
 
 class AgentRuntimeModelInteractionError(RuntimeError):
@@ -51,9 +62,12 @@ class AgentRuntime:
         self,
         initial_state: AgentExecutionState | None = None,
         model_gateway: ModelGateway | None = None,
+        tool_runtime: AgentToolRuntime | None = None,
     ) -> None:
         self._state = initial_state or AgentExecutionState(status=AgentExecutionStatus.START)
         self._model_gateway = model_gateway
+        self._tool_runtime = tool_runtime
+        self._tool_results: list[ToolResult] = []
 
     @property
     def state(self) -> AgentExecutionState:
@@ -64,6 +78,16 @@ class AgentRuntime:
     def model_gateway(self) -> ModelGateway | None:
         """Return the runtime's provider-independent model gateway dependency."""
         return self._model_gateway
+
+    @property
+    def tool_runtime(self) -> AgentToolRuntime | None:
+        """Return the runtime's provider-independent tool runtime dependency."""
+        return self._tool_runtime
+
+    @property
+    def tool_results(self) -> tuple[ToolResult, ...]:
+        """Return structured immutable tool results captured during execution."""
+        return tuple(self._tool_results)
 
     @property
     def is_terminal(self) -> bool:
@@ -216,6 +240,29 @@ class AgentRuntime:
                         model_iterations=model_iterations,
                     )
 
+                if decision.kind is ModelDecisionKind.TOOL_CALL:
+                    try:
+                        tool_result = self._execute_tool_call(decision)
+                    except AgentRuntimeModelInteractionError as exc:
+                        self._transition_to_failed_from_tool_call()
+                        return AgentRuntimeExecutionResult(
+                            outcome=AgentRuntimeExecutionOutcome.FAILED,
+                            terminal_state=self._state,
+                            error_message=str(exc),
+                            model_iterations=model_iterations,
+                        )
+                    self._tool_results.append(tool_result)
+                    if tool_result.status is not ToolResultStatus.SUCCESS:
+                        self._transition_to_failed_from_tool_call()
+                        return AgentRuntimeExecutionResult(
+                            outcome=AgentRuntimeExecutionOutcome.FAILED,
+                            terminal_state=self._state,
+                            error_message=self._tool_error_message(tool_result),
+                            model_iterations=model_iterations,
+                        )
+                    self.transition_to(AgentExecutionStatus.THINK)
+                    continue
+
                 continue
 
             if self._state.status is AgentExecutionStatus.RESPOND:
@@ -268,6 +315,8 @@ class AgentRuntime:
     def _target_status_for_decision(self, decision: ModelDecision) -> AgentExecutionStatus:
         if decision.kind is ModelDecisionKind.RESPOND:
             return AgentExecutionStatus.RESPOND
+        if decision.kind is ModelDecisionKind.TOOL_CALL:
+            return AgentExecutionStatus.TOOL_CALL
         if decision.kind is ModelDecisionKind.RETRY:
             return AgentExecutionStatus.THINK
         if decision.kind is ModelDecisionKind.FAIL:
@@ -302,6 +351,14 @@ class AgentRuntime:
         if system_prompt is not None:
             messages.append(ModelMessage(role=ModelRole.SYSTEM, content=system_prompt))
 
+        if self._tool_results:
+            messages.append(
+                ModelMessage(
+                    role=ModelRole.SYSTEM,
+                    content=self._build_tool_observation_content(),
+                )
+            )
+
         messages.append(ModelMessage(role=ModelRole.USER, content=user_prompt))
 
         return ModelRequest(
@@ -310,3 +367,62 @@ class AgentRuntime:
             max_output_tokens=max_output_tokens,
             temperature=temperature,
         )
+
+    def _execute_tool_call(self, decision: ModelDecision) -> ToolResult:
+        if self._tool_runtime is None:
+            raise AgentRuntimeModelInteractionError(
+                "Tool runtime is required to execute TOOL_CALL decisions."
+            )
+        if decision.tool_name is None:
+            raise AgentRuntimeModelInteractionError(
+                "TOOL_CALL decision is missing required tool_name."
+            )
+
+        invocation = ToolInvocation(
+            tool_name=decision.tool_name,
+            arguments=decision.tool_arguments or tuple(),
+        )
+
+        try:
+            return self._tool_runtime.execute(invocation)
+        except ToolRuntimeError as exc:
+            raise AgentRuntimeModelInteractionError(
+                f"Tool runtime rejected invocation: {exc}"
+            ) from exc
+
+    def _transition_to_failed_from_tool_call(self) -> AgentExecutionState:
+        if self._state.status is not AgentExecutionStatus.TOOL_CALL:
+            msg = (
+                f"Cannot transition runtime to FAILED from current status: "
+                f"{self._state.status.value}."
+            )
+            raise AgentRuntimeModelInteractionError(msg)
+
+        self.transition_to(AgentExecutionStatus.THINK)
+        return self._transition_to_failed_terminal()
+
+    def _build_tool_observation_content(self) -> str:
+        serialized_results: list[dict[str, object]] = []
+        for result in self._tool_results:
+            entry: dict[str, object] = {
+                "tool_name": result.invocation.tool_name,
+                "arguments": result.invocation.arguments_as_mapping(),
+                "status": result.status.value,
+            }
+            if result.status.value == "success":
+                entry["output"] = result.output_as_mapping()
+            if result.error is not None:
+                entry["error"] = {
+                    "error_type": result.error.error_type,
+                    "message": result.error.message,
+                }
+            serialized_results.append(entry)
+        return json.dumps({"tool_results": serialized_results}, sort_keys=True)
+
+    def _tool_error_message(self, result: ToolResult) -> str:
+        if result.error is not None:
+            return (
+                f"Tool execution failed for {result.invocation.tool_name}: "
+                f"{result.error.error_type}: {result.error.message}"
+            )
+        return f"Tool execution failed for {result.invocation.tool_name}"

@@ -11,6 +11,7 @@ from context_engine.agent.runtime import (
     AgentRuntimeExecutionOutcome,
     AgentRuntimeExecutionResult,
     AgentRuntimeModelInteractionError,
+    AgentToolRuntime,
 )
 from context_engine.agent.state import AgentExecutionState, AgentExecutionStatus
 from context_engine.agent.transitions import (
@@ -24,6 +25,7 @@ __all__ = [
     "ALLOWED_TRANSITIONS",
     "AgentExecutionState",
     "AgentExecutionStatus",
+    "AgentToolRuntime",
     "AgentRuntime",
     "AgentRuntimeExecutionOutcome",
     "AgentRuntimeExecutionResult",
