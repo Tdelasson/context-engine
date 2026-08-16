@@ -8,9 +8,7 @@ def main() -> None:
     gateway = OllamaModelGateway(
         base_url="http://localhost:11434",
         model_name="llama3.2",
-        timeout_seconds=float(
-            os.getenv("CONTEXT_ENGINE_OLLAMA_TIMEOUT_SECONDS", "30")
-        ),
+        timeout_seconds=float(os.getenv("CONTEXT_ENGINE_OLLAMA_TIMEOUT_SECONDS", "30")),
     )
 
     runtime = AgentRuntime(model_gateway=gateway)
