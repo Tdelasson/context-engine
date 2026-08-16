@@ -30,7 +30,11 @@ class _AddTool:
     def execute(self, invocation: ToolInvocation) -> dict[str, object]:
         self.was_executed = True
         arguments = invocation.arguments_as_mapping()
-        return {"value": arguments["a"] + arguments["b"]}
+        a = arguments["a"]
+        b = arguments["b"]
+        if not isinstance(a, int) or not isinstance(b, int):
+            raise RuntimeError("validated add tool received invalid argument types")
+        return {"value": a + b}
 
 
 class _FailingTool:
