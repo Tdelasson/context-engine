@@ -15,6 +15,7 @@ from context_engine.models.gateway import (
     ModelUsage,
     normalize_messages,
 )
+from context_engine.models.ollama import OllamaModelGateway
 
 __all__ = [
     "ModelFinishReason",
@@ -27,5 +28,6 @@ __all__ = [
     "ModelResponse",
     "ModelRole",
     "ModelUsage",
+    "OllamaModelGateway",
     "normalize_messages",
 ]
