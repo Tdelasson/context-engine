@@ -6,7 +6,9 @@ from context_engine.agent import AgentRuntime, AgentRuntimeExecutionOutcome
 from context_engine.models import (
     ModelMessage,
     ModelRequest,
+    ModelResponse,
     ModelRole,
+    ModelToolCall,
     ModelToolDefinition,
     OllamaModelGateway,
 )
@@ -52,6 +54,16 @@ class _AddTool:
         if not isinstance(a, int) or not isinstance(b, int):
             raise RuntimeError("validated add tool received invalid argument types")
         return {"value": a + b}
+
+
+class _RecordingGateway:
+    def __init__(self, gateway: OllamaModelGateway) -> None:
+        self._gateway = gateway
+        self.requests: list[ModelRequest] = []
+
+    def generate(self, request: ModelRequest) -> ModelResponse:
+        self.requests.append(request)
+        return self._gateway.generate(request)
 
 
 def test_ollama_can_return_structured_tool_call_for_available_tool() -> None:
@@ -103,7 +115,8 @@ def test_runtime_end_to_end_model_tool_call_then_respond_with_local_ollama() -> 
 
     registry = ToolRegistry()
     registry.register(_AddTool())
-    runtime = AgentRuntime(model_gateway=gateway, tool_runtime=ToolRuntime(registry))
+    recording_gateway = _RecordingGateway(gateway)
+    runtime = AgentRuntime(model_gateway=recording_gateway, tool_runtime=ToolRuntime(registry))
 
     result = runtime.run(
         model_id=model_name,
@@ -121,3 +134,18 @@ def test_runtime_end_to_end_model_tool_call_then_respond_with_local_ollama() -> 
     assert len(runtime.tool_results) == 1
     assert runtime.tool_results[0].invocation.tool_name == "add"
     assert runtime.tool_results[0].output_as_mapping() == {"value": 5}
+    assert len(recording_gateway.requests) >= 2
+    second_request_messages = recording_gateway.requests[1].messages
+    assert [message.role for message in second_request_messages[:4]] == [
+        ModelRole.SYSTEM,
+        ModelRole.USER,
+        ModelRole.ASSISTANT,
+        ModelRole.TOOL,
+    ]
+    assert second_request_messages[2].tool_call == ModelToolCall.from_mapping(
+        tool_name="add",
+        arguments={"a": 2, "b": 3},
+        tool_call_id="call-1",
+    )
+    assert second_request_messages[3].tool_result is not None
+    assert second_request_messages[3].tool_result.output_as_mapping() == {"value": 5}

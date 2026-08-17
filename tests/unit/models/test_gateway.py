@@ -10,6 +10,8 @@ from context_engine.models import (
     ModelRole,
     ModelToolCall,
     ModelToolDefinition,
+    ModelToolResult,
+    ModelToolResultStatus,
     ModelUsage,
     normalize_messages,
     normalize_model_tools,
@@ -103,6 +105,39 @@ def test_model_response_can_represent_provider_independent_tool_call() -> None:
     assert response.tool_call is not None
     assert response.tool_call.tool_name == "add"
     assert response.tool_call.arguments_as_mapping() == {"a": 2, "b": 3}
+
+
+def test_model_message_can_serialize_assistant_tool_call() -> None:
+    message = ModelMessage(
+        role=ModelRole.ASSISTANT,
+        tool_call=ModelToolCall.from_mapping(
+            tool_name="add",
+            arguments={"b": 3, "a": 2},
+            tool_call_id="call-1",
+        ),
+    )
+
+    assert message.tool_call is not None
+    assert message.tool_call.tool_name == "add"
+    assert message.tool_call.tool_call_id == "call-1"
+    assert message.tool_call.arguments_as_mapping() == {"a": 2, "b": 3}
+
+
+def test_model_message_can_serialize_tool_result_message() -> None:
+    message = ModelMessage(
+        role=ModelRole.TOOL,
+        tool_result=ModelToolResult.success(
+            tool_name="add",
+            output={"value": 5},
+            tool_call_id="call-1",
+        ),
+    )
+
+    assert message.tool_result is not None
+    assert message.tool_result.status is ModelToolResultStatus.SUCCESS
+    assert message.tool_result.tool_name == "add"
+    assert message.tool_result.tool_call_id == "call-1"
+    assert message.tool_result.output_as_mapping() == {"value": 5}
 
 
 def test_gateway_failure_uses_explicit_error_boundary() -> None:

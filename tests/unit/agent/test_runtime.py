@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from context_engine.agent import (
@@ -23,6 +21,8 @@ from context_engine.models import (
     ModelRequest,
     ModelResponse,
     ModelRole,
+    ModelToolCall,
+    ModelToolResultStatus,
     normalize_messages,
 )
 from context_engine.tools import (
@@ -81,6 +81,7 @@ class _SequenceStubModelGateway:
             model_id=request.model_id,
             output_text=response.output_text,
             finish_reason=response.finish_reason,
+            tool_call=response.tool_call,
         )
 
 
@@ -624,18 +625,20 @@ def test_runtime_run_tool_call_then_respond_completes_with_structured_tool_obser
     assert tool_result.status is ToolResultStatus.SUCCESS
     assert tool_result.output_as_mapping() == {"value": 5}
     second_request = gateway.requests[1]
-    assert len(second_request.messages) == 2
-    tool_observation_payload = json.loads(second_request.messages[0].content)
-    assert tool_observation_payload == {
-        "tool_results": [
-            {
-                "arguments": {"a": 2, "b": 3},
-                "output": {"value": 5},
-                "status": "success",
-                "tool_name": "add",
-            }
-        ]
-    }
+    assert len(second_request.messages) == 3
+    assert second_request.messages[0] == ModelMessage(role=ModelRole.USER, content="What is 2+3?")
+    assert second_request.messages[1].role is ModelRole.ASSISTANT
+    assert second_request.messages[1].tool_call == ModelToolCall.from_mapping(
+        tool_name="add",
+        arguments={"a": 2, "b": 3},
+        tool_call_id="call-1",
+    )
+    assert second_request.messages[2].role is ModelRole.TOOL
+    assert second_request.messages[2].tool_result is not None
+    assert second_request.messages[2].tool_result.status is ModelToolResultStatus.SUCCESS
+    assert second_request.messages[2].tool_result.tool_name == "add"
+    assert second_request.messages[2].tool_result.tool_call_id == "call-1"
+    assert second_request.messages[2].tool_result.output_as_mapping() == {"value": 5}
     assert transitions == [
         AgentExecutionStatus.CONTEXT,
         AgentExecutionStatus.THINK,
@@ -648,6 +651,52 @@ def test_runtime_run_tool_call_then_respond_completes_with_structured_tool_obser
         AgentExecutionStatus.RESPOND,
         AgentExecutionStatus.COMPLETED,
     ]
+
+
+def test_runtime_preserves_system_and_user_messages_across_tool_iterations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_interpret_model_decisions(
+        monkeypatch,
+        [
+            ModelDecision.tool_call(tool_name="add", arguments={"a": 2, "b": 3}),
+            ModelDecision(kind=ModelDecisionKind.RESPOND, proposed_response="The answer is 5"),
+        ],
+    )
+    registry = ToolRegistry()
+    registry.register(_AddTool())
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="respond",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
+    )
+    runtime = AgentRuntime(model_gateway=gateway, tool_runtime=ToolRuntime(registry))
+
+    runtime.run(
+        model_id="mock-model",
+        user_prompt="What is 2+3?",
+        system_prompt="Use tools when available.",
+    )
+
+    assert len(gateway.requests) == 2
+    second_request = gateway.requests[1]
+    assert [message.role for message in second_request.messages] == [
+        ModelRole.SYSTEM,
+        ModelRole.USER,
+        ModelRole.ASSISTANT,
+        ModelRole.TOOL,
+    ]
+    assert second_request.messages[0].content == "Use tools when available."
+    assert second_request.messages[1].content == "What is 2+3?"
 
 
 def test_runtime_run_tool_call_unknown_tool_fails_through_runtime_state_machine(

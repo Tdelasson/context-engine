@@ -13,7 +13,9 @@ from context_engine.models import (
     ModelRequest,
     ModelResponse,
     ModelRole,
+    ModelToolCall,
     ModelToolDefinition,
+    ModelToolResult,
     ModelUsage,
     OllamaModelGateway,
     normalize_messages,
@@ -188,6 +190,73 @@ def test_ollama_gateway_translates_provider_independent_tools(
     ]
 
 
+def test_ollama_gateway_translates_assistant_tool_call_and_tool_result_messages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_request_payload: dict[str, object] = {}
+
+    def fake_urlopen(request: object, timeout: float) -> _FakeHTTPResponse:
+        del timeout
+        data = getattr(request, "data")
+        captured_request_payload.update(json.loads(data.decode("utf-8")))
+        return _FakeHTTPResponse(
+            json.dumps({"message": {"content": "done"}, "done_reason": "stop"}).encode("utf-8")
+        )
+
+    monkeypatch.setattr("context_engine.models.ollama.urlopen", fake_urlopen)
+    gateway = OllamaModelGateway()
+    gateway.generate(
+        ModelRequest(
+            model_id="llama3.2",
+            messages=(
+                ModelMessage(role=ModelRole.SYSTEM, content="Use tools."),
+                ModelMessage(role=ModelRole.USER, content="What is 2+3?"),
+                ModelMessage(
+                    role=ModelRole.ASSISTANT,
+                    tool_call=ModelToolCall.from_mapping(
+                        tool_name="add",
+                        arguments={"a": 2, "b": 3},
+                        tool_call_id="call-1",
+                    ),
+                ),
+                ModelMessage(
+                    role=ModelRole.TOOL,
+                    tool_result=ModelToolResult.success(
+                        tool_name="add",
+                        output={"value": 5},
+                        tool_call_id="call-1",
+                    ),
+                ),
+            ),
+        )
+    )
+
+    assert captured_request_payload["messages"] == [
+        {"role": "system", "content": "Use tools."},
+        {"role": "user", "content": "What is 2+3?"},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {"function": {"name": "add", "arguments": {"a": 2, "b": 3}, "id": "call-1"}}
+            ],
+        },
+        {
+            "role": "tool",
+            "content": json.dumps(
+                {
+                    "output": {"value": 5},
+                    "status": "success",
+                    "tool_call_id": "call-1",
+                    "tool_name": "add",
+                },
+                sort_keys=True,
+            ),
+            "name": "add",
+        },
+    ]
+
+
 def test_ollama_gateway_translates_tool_call_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -227,6 +296,7 @@ def test_ollama_gateway_translates_tool_call_response(
     assert response.finish_reason is ModelFinishReason.STOP
     assert response.tool_call is not None
     assert response.tool_call.tool_name == "add"
+    assert response.tool_call.tool_call_id is None
     assert response.tool_call.arguments_as_mapping() == {"a": 2, "b": 3}
 
 
@@ -328,6 +398,17 @@ def test_ollama_gateway_wraps_connection_and_timeout_failures(
                 }
             ).encode("utf-8"),
             "arguments string must be valid JSON object",
+        ),
+        (
+            json.dumps(
+                {
+                    "message": {
+                        "content": "",
+                        "tool_calls": [{"function": {"name": "add", "arguments": {}, "id": 123}}],
+                    }
+                }
+            ).encode("utf-8"),
+            "tool call id must be a string",
         ),
     ],
 )  # type: ignore[misc]
