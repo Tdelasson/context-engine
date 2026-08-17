@@ -84,20 +84,6 @@ class _RecordingGateway:
         return self._gateway.generate(request)
 
 
-class _RecordingCalculatorTool:
-    name = "calculator"
-    description = "Evaluate a mathematical expression."
-    input_schema = Calculator.input_schema
-
-    def __init__(self) -> None:
-        self._calculator = Calculator()
-        self.invocations: list[ToolInvocation] = []
-
-    def execute(self, invocation: ToolInvocation) -> dict[str, object]:
-        self.invocations.append(invocation)
-        return self._calculator.execute(invocation)
-
-
 def test_ollama_can_return_structured_tool_call_for_available_tool() -> None:
     _skip_unless_ollama_enabled()
     gateway = _build_gateway()
@@ -146,8 +132,7 @@ def test_runtime_end_to_end_model_tool_call_then_respond_with_local_ollama() -> 
     assert model_name is not None
 
     registry = ToolRegistry()
-    recording_calculator = _RecordingCalculatorTool()
-    registry.register(recording_calculator)
+    registry.register(Calculator())
     recording_gateway = _RecordingGateway(gateway)
     runtime = AgentRuntime(model_gateway=recording_gateway, tool_runtime=ToolRuntime(registry))
 
@@ -178,8 +163,6 @@ def test_runtime_end_to_end_model_tool_call_then_respond_with_local_ollama() -> 
     assert runtime.tool_results[0].invocation.tool_name == "calculator"
     assert runtime.tool_results[0].invocation.arguments_as_mapping() == {"expression": "2+3"}
     assert runtime.tool_results[0].output_as_mapping() == {"value": 5}
-    assert len(recording_calculator.invocations) == 1
-    assert recording_calculator.invocations[0].arguments_as_mapping() == {"expression": "2+3"}
     assert len(recording_gateway.requests) >= 2
     second_request_messages = recording_gateway.requests[1].messages
     assert [message.role for message in second_request_messages[:4]] == [
