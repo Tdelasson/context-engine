@@ -11,6 +11,19 @@ from context_engine.tools.calculator.lexer import (
     TokenType,
 )
 
+class ParserCursor:
+
+    def __init__(self, tokens: list[Token]) -> None:
+        self._tokens = tokens
+        self._position = 0
+
+    def _advance(self) -> Token:
+            token = self._current()
+            self._position += 1
+            return token
+
+    def _current(self) -> int:
+        return self._tokens[self._position]
 
 class CalculatorParser:
     def __init__(self, lexer: CalculatorLexer) -> None:
@@ -20,12 +33,17 @@ class CalculatorParser:
 
     def parse(self, expression: str) -> Expression:
         self._tokens = self._lexer.tokenize(expression)
+
+        self._parserCursor: ParserCursor = ParserCursor(self._tokens)
+
         self._position = 0
 
         result = self._parse_expression()
 
         if self._current().type is not TokenType.EOF:
-            raise CalculatorParserError(f"Unexpected token '{self._current().value}'")
+            raise CalculatorParserError(
+                f"Unexpected token '{self._current().value}'"
+            )
 
         return result
 
@@ -101,12 +119,9 @@ class CalculatorParser:
 
             return expression
 
-        raise CalculatorParserError(f"Expected number or '(' but got '{token.value}'")
+        raise CalculatorParserError(
+            f"Expected number or '(' but got '{token.value}'"
+        )
 
     def _current(self) -> Token:
-        return self._tokens[self._position]
-
-    def _advance(self) -> Token:
-        token = self._current()
-        self._position += 1
-        return token
+        return self._parserCursor._current()
