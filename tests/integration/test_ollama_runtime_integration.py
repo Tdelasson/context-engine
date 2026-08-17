@@ -56,6 +56,7 @@ class _AddTool:
             raise RuntimeError("validated add tool received invalid argument types")
         return {"value": a + b}
 
+
 class _MultTool:
     name = "multiply"
     description = "Multiply two integers."
@@ -70,7 +71,6 @@ class _MultTool:
         if not isinstance(a, int) or not isinstance(b, int):
             raise RuntimeError("validated multiply tool received invalid argument types")
         return {"value": a * b}
-
 
 
 class _RecordingGateway:
@@ -230,4 +230,3 @@ def test_runtime_can_handle_multiple_tool_calls_with_deterministic_model_sequenc
     assert runtime.tool_results[1].invocation.tool_name == "multiply"
     assert runtime.tool_results[1].output_as_mapping() == {"value": 20}
     assert len(gateway.requests) == 3
-    
