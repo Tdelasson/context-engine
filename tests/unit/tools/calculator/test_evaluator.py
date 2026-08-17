@@ -9,11 +9,11 @@ from context_engine.tools.calculator.parser import CalculatorParser
 
 
 @pytest.fixture()
-def evaluate() -> Callable[[str], int]:
+def evaluate() -> Callable[[str], int | float]:
     parser = CalculatorParser(CalculatorLexer())
     evaluator = CalculatorEvaluator()
 
-    def _evaluate(expression: str) -> int:
+    def _evaluate(expression: str) -> int | float:
         ast = parser.parse(expression)
         return evaluator.evaluate(ast)
 
@@ -34,16 +34,21 @@ def evaluate() -> Callable[[str], int]:
         ("-5", -5),
         ("-5 + 10", 5),
         ("2 * -3", -6),
+        ("1.5 + 2.25", 3.75),
+        ("2.5 * 4", 10.0),
+        ("10 / 4", 2.5),
     ],
 )
 def test_evaluator(
-    evaluate: Callable[[str], int],
+    evaluate: Callable[[str], int | float],
     expression: str,
-    expected: int,
+    expected: float,
 ) -> None:
     assert evaluate(expression) == expected
 
 
-def test_evaluator_rejects_division_by_zero(evaluate: Callable[[str], int]) -> None:
+def test_evaluator_rejects_division_by_zero(
+    evaluate: Callable[[str], int | float],
+) -> None:
     with pytest.raises(CalculatorEvaluationError, match="Division by zero"):
         evaluate("10 / 0")

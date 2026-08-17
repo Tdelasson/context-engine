@@ -8,7 +8,7 @@ from context_engine.tools.calculator.errors import CalculatorEvaluationError
 
 
 class CalculatorEvaluator:
-    def evaluate(self, expression: Expression) -> int:
+    def evaluate(self, expression: Expression) -> int | float:
         if isinstance(expression, Number):
             return expression.value
 
@@ -40,7 +40,7 @@ class CalculatorEvaluator:
                 if right == 0:
                     raise CalculatorEvaluationError("Division by zero")
 
-                return left // right
+                return left / right
 
             raise CalculatorEvaluationError(f"Unknown binary operator '{expression.operator}'")
 

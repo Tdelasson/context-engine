@@ -61,6 +61,26 @@ def test_lexer_ignores_whitespace() -> None:
     ]
 
 
+def test_lexer_tokenizes_decimal_numbers() -> None:
+    lexer = CalculatorLexer()
+
+    tokens = lexer.tokenize("1.5 + 2.25")
+
+    assert [token.type for token in tokens] == [
+        TokenType.NUMBER,
+        TokenType.PLUS,
+        TokenType.NUMBER,
+        TokenType.EOF,
+    ]
+
+    assert [token.value for token in tokens] == [
+        "1.5",
+        "+",
+        "2.25",
+        "",
+    ]
+
+
 def test_lexer_rejects_unsupported_character() -> None:
     lexer = CalculatorLexer()
 

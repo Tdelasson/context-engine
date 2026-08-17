@@ -34,11 +34,29 @@ class CalculatorLexer:
                 position += 1
                 continue
 
-            if character.isdigit():
+            if character.isdigit() or (
+                character == "."
+                and position + 1 < len(expression)
+                and expression[position + 1].isdigit()
+            ):
                 start = position
+                seen_decimal = character == "."
 
-                while position < len(expression) and expression[position].isdigit():
-                    position += 1
+                position += 1
+
+                while position < len(expression):
+                    current = expression[position]
+
+                    if current.isdigit():
+                        position += 1
+                        continue
+
+                    if current == "." and not seen_decimal:
+                        seen_decimal = True
+                        position += 1
+                        continue
+
+                    break
 
                 tokens.append(
                     Token(

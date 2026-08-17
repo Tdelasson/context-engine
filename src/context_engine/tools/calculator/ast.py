@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Number:
-    value: int
+    value: int | float
 
 
 @dataclass(frozen=True)
