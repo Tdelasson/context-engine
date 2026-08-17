@@ -8,6 +8,7 @@ from typing import Protocol, runtime_checkable
 from context_engine.tools.errors import (
     DuplicateToolRegistrationError,
     ToolInputValidationError,
+    ToolRuntimeError,
     UnknownToolError,
 )
 
@@ -160,12 +161,20 @@ class ToolRuntime:
 
     def execute(self, invocation: ToolInvocation) -> ToolResult:
         """Resolve, validate, and execute one invocation deterministically."""
-        tool = self._registry.get(invocation.tool_name)
-        arguments = invocation.arguments_as_mapping()
-        tool.input_schema.validate(arguments)
-
         try:
+            tool = self._registry.get(invocation.tool_name)
+            arguments = invocation.arguments_as_mapping()
+            tool.input_schema.validate(arguments)
             output = tool.execute(invocation)
+        except ToolRuntimeError as exc:
+            return ToolResult(
+                invocation=invocation,
+                status=ToolResultStatus.ERROR,
+                error=ToolExecutionErrorDetails(
+                    error_type=type(exc).__name__,
+                    message=str(exc),
+                ),
+            )
         except Exception as exc:
             return ToolResult(
                 invocation=invocation,
