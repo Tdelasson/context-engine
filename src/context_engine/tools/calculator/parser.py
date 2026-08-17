@@ -11,6 +11,7 @@ from context_engine.tools.calculator.lexer import (
     TokenType,
 )
 
+
 class ParserCursor:
 
     def __init__(self, tokens: list[Token]) -> None:
