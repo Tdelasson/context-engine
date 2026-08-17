@@ -154,15 +154,23 @@ def test_runtime_end_to_end_model_tool_call_then_respond_with_local_ollama() -> 
     result = runtime.run(
         model_id=model_name,
         system_prompt=(
-            "Use tools when available. "
-            "For this task, call the calculator tool exactly once using "
-            '{"expression":"2+3"} as arguments, then respond using the tool result.'
+            "You must call the calculator tool exactly once. "
+            'Call it with exactly {"expression":"2+3"}. '
+            "Do not answer directly in prose. "
+            "After receiving the tool result, answer the user."
         ),
         user_prompt="What is 2 + 3?",
         max_output_tokens=128,
         temperature=0.0,
         max_model_iterations=4,
     )
+
+    assert recording_gateway.requests
+
+    first_request = recording_gateway.requests[0]
+
+    assert len(first_request.tools) == 1
+    assert first_request.tools[0].name == "calculator"
 
     assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
     assert result.proposed_response
