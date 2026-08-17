@@ -212,6 +212,31 @@ def test_runtime_propose_action_builds_typed_request_and_transitions() -> None:
     assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.RESPOND)
 
 
+def test_runtime_propose_action_exposes_registered_tools_to_model_request() -> None:
+    gateway = _RecordingStubModelGateway()
+    registry = ToolRegistry()
+    registry.register(_AddTool())
+    runtime = AgentRuntime(model_gateway=gateway, tool_runtime=ToolRuntime(registry))
+    runtime.transition_to(AgentExecutionStatus.CONTEXT)
+    runtime.transition_to(AgentExecutionStatus.THINK)
+
+    runtime.propose_action(model_id="mock-model", user_prompt="What is 2+3?")
+
+    assert len(gateway.requests) == 1
+    assert len(gateway.requests[0].tools) == 1
+    assert gateway.requests[0].tools[0].name == "add"
+    assert gateway.requests[0].tools[0].description == "Add two integers."
+    assert gateway.requests[0].tools[0].input_schema == {
+        "type": "object",
+        "properties": {
+            "a": {"type": "integer"},
+            "b": {"type": "integer"},
+        },
+        "required": ["a", "b"],
+        "additionalProperties": False,
+    }
+
+
 @pytest.mark.parametrize(
     ("finish_reason", "expected_kind", "expected_status"),
     [

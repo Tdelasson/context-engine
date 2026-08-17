@@ -658,6 +658,7 @@ runtime-to-model interaction and runtime decision interpretation:
 ModelRequest
   - model_id
   - messages[(role, content)]
+  - tools[(name, description, input_schema)] (optional)
   - max_output_tokens (optional)
   - temperature (optional)
 
@@ -665,11 +666,13 @@ ModelResponse
   - model_id
   - output_text
   - finish_reason
+  - tool_call(name, arguments) (optional)
   - usage (optional)
 
 ModelDecision
-  - kind: respond | retry | fail
+  - kind: respond | retry | fail | tool_call
   - proposed_response (optional, for respond)
+  - tool_name + tool_arguments (for tool_call)
 ```
 
 The runtime depends on a `ModelGateway` interface (`generate(request) -> response`)
@@ -693,6 +696,7 @@ of state transitions.
 Decision kinds are runtime-interpreted into valid post-validation transitions:
 
 * `respond` -> `RESPOND`
+* `tool_call` -> `TOOL_CALL`
 * `retry` -> `THINK`
 * `fail` -> `FAILED`
 
@@ -718,6 +722,14 @@ Local LLM
 
 Provider-specific request/response payloads are translated at the gateway boundary.
 `AgentRuntime` remains provider-independent and does not import Ollama-specific types.
+
+Tool calling remains runtime-owned and deterministic:
+
+* registered tool metadata (name, description, JSON-schema-like input contract) is exposed to
+  the model through provider-independent `ModelRequest.tools`;
+* provider-native tool calls are translated into provider-independent `ModelResponse.tool_call`;
+* the model can only propose a tool call, while execution remains inside Tool Runtime validation
+  and execution boundaries.
 
 ## 9.8 Deterministic Runtime Execution Loop (M2)
 

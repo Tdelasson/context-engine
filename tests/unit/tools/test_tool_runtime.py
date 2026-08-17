@@ -47,6 +47,22 @@ class _FailingTool:
         raise RuntimeError(f"failed: {message}")
 
 
+class _MultiplyTool:
+    name = "multiply"
+    description = "Multiply two integers."
+    input_schema = ToolInputSchema(
+        fields=(ToolInputField(name="a", value_type=int), ToolInputField(name="b", value_type=int))
+    )
+
+    def execute(self, invocation: ToolInvocation) -> dict[str, object]:
+        arguments = invocation.arguments_as_mapping()
+        a = arguments["a"]
+        b = arguments["b"]
+        if not isinstance(a, int) or not isinstance(b, int):
+            raise RuntimeError("validated multiply tool received invalid argument types")
+        return {"value": a * b}
+
+
 def test_tool_registry_registers_and_looks_up_tool_deterministically() -> None:
     registry = ToolRegistry()
     tool = _AddTool()
@@ -54,6 +70,16 @@ def test_tool_registry_registers_and_looks_up_tool_deterministically() -> None:
 
     assert isinstance(tool, Tool)
     assert registry.get("add") is tool
+
+
+def test_tool_registry_lists_tools_in_deterministic_name_order() -> None:
+    registry = ToolRegistry()
+    add_tool = _AddTool()
+    multiply_tool = _MultiplyTool()
+    registry.register(multiply_tool)
+    registry.register(add_tool)
+
+    assert tuple(tool.name for tool in registry.list_tools()) == ("add", "multiply")
 
 
 def test_tool_registry_rejects_duplicate_registration() -> None:

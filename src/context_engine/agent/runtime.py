@@ -19,9 +19,17 @@ from context_engine.models import (
     ModelMessage,
     ModelRequest,
     ModelRole,
+    ModelToolDefinition,
     normalize_messages,
+    normalize_model_tools,
 )
-from context_engine.tools import ToolInvocation, ToolResult, ToolResultStatus, ToolRuntimeError
+from context_engine.tools import (
+    Tool,
+    ToolInvocation,
+    ToolResult,
+    ToolResultStatus,
+    ToolRuntimeError,
+)
 
 
 @runtime_checkable
@@ -30,6 +38,9 @@ class AgentToolRuntime(Protocol):
 
     def execute(self, invocation: ToolInvocation) -> ToolResult:
         """Execute one validated tool invocation."""
+
+    def list_tools(self) -> tuple[Tool, ...]:
+        """Return registered tools for provider-independent model declaration."""
 
 
 class AgentRuntimeModelInteractionError(RuntimeError):
@@ -364,9 +375,51 @@ class AgentRuntime:
         return ModelRequest(
             model_id=model_id,
             messages=normalize_messages(messages),
+            tools=self._build_model_tool_definitions(),
             max_output_tokens=max_output_tokens,
             temperature=temperature,
         )
+
+    def _build_model_tool_definitions(self) -> tuple[ModelToolDefinition, ...]:
+        if self._tool_runtime is None:
+            return ()
+
+        tool_definitions = []
+        for tool in self._tool_runtime.list_tools():
+            properties: dict[str, object] = {}
+            required: list[str] = []
+            for field in tool.input_schema.fields:
+                properties[field.name] = {"type": self._json_schema_type_name(field.value_type)}
+                required.append(field.name)
+            tool_definitions.append(
+                ModelToolDefinition(
+                    name=tool.name,
+                    description=tool.description,
+                    input_schema={
+                        "type": "object",
+                        "properties": properties,
+                        "required": required,
+                        "additionalProperties": False,
+                    },
+                )
+            )
+
+        return normalize_model_tools(tool_definitions)
+
+    def _json_schema_type_name(self, value_type: type[object]) -> str:
+        if value_type is bool:
+            return "boolean"
+        if value_type is int:
+            return "integer"
+        if value_type is float:
+            return "number"
+        if value_type is str:
+            return "string"
+        if value_type is list:
+            return "array"
+        if value_type is dict:
+            return "object"
+        return "string"
 
     def _execute_tool_call(self, decision: ModelDecision) -> ToolResult:
         if self._tool_runtime is None:

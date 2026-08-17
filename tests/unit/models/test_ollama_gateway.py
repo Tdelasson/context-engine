@@ -1,5 +1,6 @@
 import io
 import json
+from http.client import HTTPMessage
 from urllib.error import HTTPError, URLError
 
 import pytest
@@ -12,9 +13,11 @@ from context_engine.models import (
     ModelRequest,
     ModelResponse,
     ModelRole,
+    ModelToolDefinition,
     ModelUsage,
     OllamaModelGateway,
     normalize_messages,
+    normalize_model_tools,
 )
 
 
@@ -124,6 +127,109 @@ def test_ollama_gateway_uses_request_model_when_default_model_not_configured(
     assert response.finish_reason is ModelFinishReason.LENGTH
 
 
+def test_ollama_gateway_translates_provider_independent_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_request_payload: dict[str, object] = {}
+
+    def fake_urlopen(request: object, timeout: float) -> _FakeHTTPResponse:
+        del timeout
+        data = getattr(request, "data")
+        captured_request_payload.update(json.loads(data.decode("utf-8")))
+        return _FakeHTTPResponse(
+            json.dumps({"message": {"content": "tool-ready"}, "done_reason": "stop"}).encode(
+                "utf-8"
+            )
+        )
+
+    monkeypatch.setattr("context_engine.models.ollama.urlopen", fake_urlopen)
+    gateway = OllamaModelGateway()
+    gateway.generate(
+        ModelRequest(
+            model_id="llama3.2",
+            messages=(ModelMessage(role=ModelRole.USER, content="Use add."),),
+            tools=normalize_model_tools(
+                [
+                    ModelToolDefinition(
+                        name="add",
+                        description="Add two integers.",
+                        input_schema={
+                            "type": "object",
+                            "properties": {
+                                "a": {"type": "integer"},
+                                "b": {"type": "integer"},
+                            },
+                            "required": ["a", "b"],
+                            "additionalProperties": False,
+                        },
+                    )
+                ]
+            ),
+        )
+    )
+
+    assert captured_request_payload["tools"] == [
+        {
+            "type": "function",
+            "function": {
+                "name": "add",
+                "description": "Add two integers.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "a": {"type": "integer"},
+                        "b": {"type": "integer"},
+                    },
+                    "required": ["a", "b"],
+                    "additionalProperties": False,
+                },
+            },
+        }
+    ]
+
+
+def test_ollama_gateway_translates_tool_call_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_urlopen(request: object, timeout: float) -> _FakeHTTPResponse:
+        del request, timeout
+        return _FakeHTTPResponse(
+            json.dumps(
+                {
+                    "message": {
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "function": {
+                                    "name": "add",
+                                    "arguments": {"b": 3, "a": 2},
+                                }
+                            }
+                        ],
+                    },
+                    "done_reason": "stop",
+                }
+            ).encode("utf-8")
+        )
+
+    monkeypatch.setattr("context_engine.models.ollama.urlopen", fake_urlopen)
+    gateway = OllamaModelGateway()
+
+    response = gateway.generate(
+        ModelRequest(
+            model_id="llama3.2",
+            messages=(ModelMessage(role=ModelRole.USER, content="What is 2+3?"),),
+        )
+    )
+
+    assert response.model_id == "llama3.2"
+    assert response.output_text == ""
+    assert response.finish_reason is ModelFinishReason.STOP
+    assert response.tool_call is not None
+    assert response.tool_call.tool_name == "add"
+    assert response.tool_call.arguments_as_mapping() == {"a": 2, "b": 3}
+
+
 def test_ollama_gateway_rejects_empty_message_requests() -> None:
     gateway = OllamaModelGateway()
     request = ModelRequest(model_id="llama3.2", messages=())
@@ -141,7 +247,7 @@ def test_ollama_gateway_wraps_http_errors_with_gateway_execution_error(
             url="http://localhost:11434/api/chat",
             code=503,
             msg="Service Unavailable",
-            hdrs=None,
+            hdrs=HTTPMessage(),
             fp=io.BytesIO(b'{"error":"service unavailable"}'),
         )
 
@@ -160,7 +266,7 @@ def test_ollama_gateway_wraps_http_errors_with_gateway_execution_error(
 @pytest.mark.parametrize(
     "provider_exception",
     [URLError("connection refused"), TimeoutError("timed out")],
-)
+)  # type: ignore[misc]
 def test_ollama_gateway_wraps_connection_and_timeout_failures(
     monkeypatch: pytest.MonkeyPatch,
     provider_exception: Exception,
@@ -193,8 +299,38 @@ def test_ollama_gateway_wraps_connection_and_timeout_failures(
             ),
             "prompt_eval_count",
         ),
+        (
+            json.dumps({"message": {"content": "", "tool_calls": {}}}).encode("utf-8"),
+            "tool_calls must be a list",
+        ),
+        (
+            json.dumps({"message": {"content": "", "tool_calls": []}}).encode("utf-8"),
+            "exactly one tool call",
+        ),
+        (
+            json.dumps(
+                {
+                    "message": {
+                        "content": "",
+                        "tool_calls": [{"function": {"name": "", "arguments": {}}}],
+                    }
+                }
+            ).encode("utf-8"),
+            "function name must be a non-empty string",
+        ),
+        (
+            json.dumps(
+                {
+                    "message": {
+                        "content": "",
+                        "tool_calls": [{"function": {"name": "add", "arguments": "["}}],
+                    }
+                }
+            ).encode("utf-8"),
+            "arguments string must be valid JSON object",
+        ),
     ],
-)
+)  # type: ignore[misc]
 def test_ollama_gateway_rejects_malformed_provider_responses(
     monkeypatch: pytest.MonkeyPatch,
     response_payload: bytes,

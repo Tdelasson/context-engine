@@ -1,6 +1,8 @@
 """Provider-independent model gateway contracts."""
 
-from collections.abc import Sequence
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
@@ -36,6 +38,7 @@ class ModelRequest:
 
     model_id: str
     messages: tuple[ModelMessage, ...]
+    tools: tuple[ModelToolDefinition, ...] = ()
     max_output_tokens: int | None = None
     temperature: float | None = None
 
@@ -55,6 +58,7 @@ class ModelResponse:
     model_id: str
     output_text: str
     finish_reason: ModelFinishReason
+    tool_call: ModelToolCall | None = None
     usage: ModelUsage | None = None
 
 
@@ -69,3 +73,43 @@ class ModelGateway(Protocol):
 def normalize_messages(messages: Sequence[ModelMessage]) -> tuple[ModelMessage, ...]:
     """Return an immutable message tuple for request construction."""
     return tuple(messages)
+
+
+def normalize_model_tools(
+    tools: Sequence[ModelToolDefinition],
+) -> tuple[ModelToolDefinition, ...]:
+    """Return an immutable tool tuple for request construction."""
+    return tuple(tools)
+
+
+@dataclass(frozen=True, slots=True)
+class ModelToolDefinition:
+    """Provider-independent model-visible tool declaration."""
+
+    name: str
+    description: str
+    input_schema: Mapping[str, object]
+
+
+@dataclass(frozen=True, slots=True)
+class ModelToolCall:
+    """Provider-independent model-requested tool call representation."""
+
+    tool_name: str
+    arguments: tuple[tuple[str, object], ...]
+
+    @classmethod
+    def from_mapping(cls, tool_name: str, arguments: Mapping[str, object]) -> ModelToolCall:
+        """Construct an immutable tool call from mapping arguments."""
+        return cls(tool_name=tool_name, arguments=normalize_tool_call_arguments(arguments))
+
+    def arguments_as_mapping(self) -> dict[str, object]:
+        """Return tool-call arguments as a mutable mapping."""
+        return dict(self.arguments)
+
+
+def normalize_tool_call_arguments(
+    arguments: Mapping[str, object],
+) -> tuple[tuple[str, object], ...]:
+    """Return immutable normalized arguments for deterministic tool calls."""
+    return tuple(sorted(arguments.items()))

@@ -14,7 +14,10 @@ from context_engine.models.gateway import (
     ModelGateway,
     ModelRequest,
     ModelResponse,
+    ModelToolCall,
+    ModelToolDefinition,
     ModelUsage,
+    normalize_tool_call_arguments,
 )
 
 
@@ -70,6 +73,8 @@ class OllamaModelGateway(ModelGateway):
             "messages": messages,
             "stream": False,
         }
+        if request.tools:
+            payload["tools"] = self._translate_tools(request.tools)
 
         options: dict[str, Any] = {}
         if request.max_output_tokens is not None:
@@ -124,7 +129,10 @@ class OllamaModelGateway(ModelGateway):
         if not isinstance(message_payload, dict):
             raise ModelGatewayExecutionError("Ollama response did not include a message object.")
 
+        tool_call = self._translate_tool_call(message_payload)
         output_text = message_payload.get("content")
+        if output_text is None and tool_call is not None:
+            output_text = ""
         if not isinstance(output_text, str):
             raise ModelGatewayExecutionError("Ollama response message content must be a string.")
 
@@ -133,8 +141,73 @@ class OllamaModelGateway(ModelGateway):
             model_id=requested_model_id,
             output_text=output_text,
             finish_reason=self._translate_finish_reason(payload.get("done_reason")),
+            tool_call=tool_call,
             usage=usage,
         )
+
+    def _translate_tools(self, tools: tuple[ModelToolDefinition, ...]) -> list[dict[str, object]]:
+        translated: list[dict[str, object]] = []
+        for tool in tools:
+            translated.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": dict(tool.input_schema),
+                    },
+                }
+            )
+        return translated
+
+    def _translate_tool_call(self, message_payload: dict[str, Any]) -> ModelToolCall | None:
+        tool_calls_payload = message_payload.get("tool_calls")
+        if tool_calls_payload is None:
+            return None
+        if not isinstance(tool_calls_payload, list):
+            raise ModelGatewayExecutionError("Ollama response tool_calls must be a list.")
+        if len(tool_calls_payload) != 1:
+            raise ModelGatewayExecutionError(
+                "Ollama response must contain exactly one tool call when tool_calls is present."
+            )
+
+        tool_call_payload = tool_calls_payload[0]
+        if not isinstance(tool_call_payload, dict):
+            raise ModelGatewayExecutionError("Ollama tool call entry must be an object.")
+
+        function_payload = tool_call_payload.get("function")
+        if not isinstance(function_payload, dict):
+            raise ModelGatewayExecutionError("Ollama tool call function payload must be an object.")
+
+        tool_name = function_payload.get("name")
+        if not isinstance(tool_name, str) or not tool_name.strip():
+            raise ModelGatewayExecutionError(
+                "Ollama tool call function name must be a non-empty string."
+            )
+
+        raw_arguments = function_payload.get("arguments")
+        arguments = self._parse_tool_call_arguments(raw_arguments)
+        return ModelToolCall(
+            tool_name=tool_name,
+            arguments=normalize_tool_call_arguments(arguments),
+        )
+
+    def _parse_tool_call_arguments(self, raw_arguments: object) -> dict[str, object]:
+        if isinstance(raw_arguments, str):
+            try:
+                parsed_arguments = json.loads(raw_arguments)
+            except json.JSONDecodeError as exc:
+                raise ModelGatewayExecutionError(
+                    "Ollama tool call arguments string must be valid JSON object."
+                ) from exc
+            raw_arguments = parsed_arguments
+        if raw_arguments is None:
+            return {}
+        if not isinstance(raw_arguments, dict):
+            raise ModelGatewayExecutionError("Ollama tool call arguments must be an object.")
+        if not all(isinstance(key, str) for key in raw_arguments):
+            raise ModelGatewayExecutionError("Ollama tool call arguments must use string keys.")
+        return dict(raw_arguments)
 
     def _translate_usage(self, payload: dict[str, Any]) -> ModelUsage | None:
         input_tokens = self._validate_optional_int(
