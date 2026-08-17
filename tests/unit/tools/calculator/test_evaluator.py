@@ -2,8 +2,9 @@ import pytest
 
 from context_engine.tools.calculator.errors import CalculatorEvaluationError
 from context_engine.tools.calculator.evaluator import CalculatorEvaluator
-from context_engine.tools.calculator.parser import CalculatorParser
 from context_engine.tools.calculator.lexer import CalculatorLexer
+from context_engine.tools.calculator.parser import CalculatorParser
+
 
 @pytest.fixture
 def evaluate():

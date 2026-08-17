@@ -6,8 +6,8 @@ from context_engine.tools.calculator.ast import (
     UnaryOperation,
 )
 from context_engine.tools.calculator.errors import CalculatorParserError
-from context_engine.tools.calculator.parser import CalculatorParser
 from context_engine.tools.calculator.lexer import CalculatorLexer
+from context_engine.tools.calculator.parser import CalculatorParser
 
 
 @pytest.fixture

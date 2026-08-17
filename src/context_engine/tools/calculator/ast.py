@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Union
 
 
 @dataclass(frozen=True)
@@ -20,4 +19,4 @@ class BinaryOperation:
     right: "Expression"
 
 
-Expression = Union[Number, UnaryOperation, BinaryOperation]
+Expression = Number | UnaryOperation | BinaryOperation
