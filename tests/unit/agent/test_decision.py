@@ -6,7 +6,7 @@ from context_engine.agent import (
     ModelDecisionKind,
     interpret_model_response,
 )
-from context_engine.models import ModelFinishReason, ModelResponse
+from context_engine.models import ModelFinishReason, ModelResponse, ModelToolCall
 
 
 def test_interpret_model_response_stop_maps_to_respond_decision() -> None:
@@ -40,6 +40,19 @@ def test_interpret_model_response_other_maps_to_fail_decision() -> None:
     )
 
     assert interpret_model_response(response) == ModelDecision(kind=ModelDecisionKind.FAIL)
+
+
+def test_interpret_model_response_tool_call_maps_to_tool_call_decision() -> None:
+    response = ModelResponse(
+        model_id="mock-model",
+        output_text="",
+        finish_reason=ModelFinishReason.STOP,
+        tool_call=ModelToolCall.from_mapping(tool_name="add", arguments={"b": 3, "a": 2}),
+    )
+
+    assert interpret_model_response(response) == ModelDecision.tool_call(
+        tool_name="add", arguments={"a": 2, "b": 3}
+    )
 
 
 def test_interpret_model_response_is_deterministic_for_identical_input() -> None:

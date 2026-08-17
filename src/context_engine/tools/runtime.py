@@ -143,12 +143,20 @@ class ToolRegistry:
             raise UnknownToolError(f"Unknown tool: {tool_name}")
         return tool
 
+    def list_tools(self) -> tuple[Tool, ...]:
+        """Return all registered tools in deterministic name order."""
+        return tuple(self._tools[name] for name in sorted(self._tools))
+
 
 class ToolRuntime:
     """Runtime-owned deterministic boundary for tool invocation and execution."""
 
     def __init__(self, registry: ToolRegistry) -> None:
         self._registry = registry
+
+    def list_tools(self) -> tuple[Tool, ...]:
+        """Expose registered tools for model-facing declaration only."""
+        return self._registry.list_tools()
 
     def execute(self, invocation: ToolInvocation) -> ToolResult:
         """Resolve, validate, and execute one invocation deterministically."""

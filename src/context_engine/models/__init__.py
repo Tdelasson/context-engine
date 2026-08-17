@@ -12,8 +12,14 @@ from context_engine.models.gateway import (
     ModelRequest,
     ModelResponse,
     ModelRole,
+    ModelToolCall,
+    ModelToolDefinition,
+    ModelToolResult,
+    ModelToolResultStatus,
     ModelUsage,
     normalize_messages,
+    normalize_model_tools,
+    normalize_tool_call_arguments,
 )
 from context_engine.models.ollama import OllamaModelGateway
 
@@ -27,7 +33,13 @@ __all__ = [
     "ModelRequest",
     "ModelResponse",
     "ModelRole",
+    "ModelToolCall",
+    "ModelToolDefinition",
+    "ModelToolResult",
+    "ModelToolResultStatus",
     "ModelUsage",
     "OllamaModelGateway",
     "normalize_messages",
+    "normalize_model_tools",
+    "normalize_tool_call_arguments",
 ]

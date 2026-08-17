@@ -57,6 +57,12 @@ class ModelDecisionInterpretationError(ValueError):
 
 def interpret_model_response(response: ModelResponse) -> ModelDecision:
     """Deterministically interpret a typed model response into a runtime decision."""
+    if response.tool_call is not None:
+        return ModelDecision.tool_call(
+            tool_name=response.tool_call.tool_name,
+            arguments=response.tool_call.arguments_as_mapping(),
+        )
+
     if response.finish_reason is ModelFinishReason.STOP:
         return ModelDecision(
             kind=ModelDecisionKind.RESPOND,
