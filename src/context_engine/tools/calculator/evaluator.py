@@ -21,9 +21,7 @@ class CalculatorEvaluator:
             if expression.operator == "-":
                 return -value
 
-            raise CalculatorEvaluationError(
-                f"Unknown unary operator '{expression.operator}'"
-            )
+            raise CalculatorEvaluationError(f"Unknown unary operator '{expression.operator}'")
 
         if isinstance(expression, BinaryOperation):
             left = self.evaluate(expression.left)
@@ -44,10 +42,6 @@ class CalculatorEvaluator:
 
                 return left // right
 
-            raise CalculatorEvaluationError(
-                f"Unknown binary operator '{expression.operator}'"
-            )
+            raise CalculatorEvaluationError(f"Unknown binary operator '{expression.operator}'")
 
-        raise CalculatorEvaluationError(
-            f"Unsupported expression node: {type(expression).__name__}"
-        )
+        raise CalculatorEvaluationError(f"Unsupported expression node: {type(expression).__name__}")

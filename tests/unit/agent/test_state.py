@@ -65,7 +65,7 @@ def test_allowed_transitions_graph_is_explicit_and_complete() -> None:
         for from_status, to_statuses in ALLOWED_TRANSITIONS.items()
         for to_status in to_statuses
     ],
-)  # type: ignore[misc]
+)
 def test_runtime_allows_every_explicit_transition(
     from_status: AgentExecutionStatus, to_status: AgentExecutionStatus
 ) -> None:
@@ -89,7 +89,7 @@ def test_transition_agent_state_returns_new_state_for_valid_transition() -> None
         (AgentExecutionStatus.THINK, AgentExecutionStatus.COMPLETED),
         (AgentExecutionStatus.ACTION_PROPOSED, AgentExecutionStatus.THINK),
     ],
-)  # type: ignore[misc]
+)
 def test_runtime_rejects_invalid_non_terminal_transitions(
     from_status: AgentExecutionStatus, to_status: AgentExecutionStatus
 ) -> None:
@@ -106,7 +106,7 @@ def test_runtime_rejects_invalid_non_terminal_transitions(
 @pytest.mark.parametrize(
     "terminal_status",
     [AgentExecutionStatus.COMPLETED, AgentExecutionStatus.FAILED],
-)  # type: ignore[misc]
+)
 def test_runtime_rejects_all_transitions_from_terminal_states(
     terminal_status: AgentExecutionStatus,
 ) -> None:

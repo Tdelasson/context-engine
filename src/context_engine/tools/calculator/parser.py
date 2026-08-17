@@ -25,9 +25,7 @@ class CalculatorParser:
         result = self._parse_expression()
 
         if self._current().type is not TokenType.EOF:
-            raise CalculatorParserError(
-                f"Unexpected token '{self._current().value}'"
-            )
+            raise CalculatorParserError(f"Unexpected token '{self._current().value}'")
 
         return result
 
@@ -103,9 +101,7 @@ class CalculatorParser:
 
             return expression
 
-        raise CalculatorParserError(
-            f"Expected number or '(' but got '{token.value}'"
-        )
+        raise CalculatorParserError(f"Expected number or '(' but got '{token.value}'")
 
     def _current(self) -> Token:
         return self._tokens[self._position]

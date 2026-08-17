@@ -23,7 +23,6 @@ class Token:
 
 
 class CalculatorLexer:
-
     def tokenize(self, expression: str) -> list[Token]:
         tokens: list[Token] = []
         position = 0
@@ -38,10 +37,7 @@ class CalculatorLexer:
             if character.isdigit():
                 start = position
 
-                while (
-                    position < len(expression)
-                    and expression[position].isdigit()
-                ):
+                while position < len(expression) and expression[position].isdigit():
                     position += 1
 
                 tokens.append(
@@ -66,8 +62,7 @@ class CalculatorLexer:
 
             if token_type is None:
                 raise CalculatorLexerError(
-                    f"Unexpected character '{character}' "
-                    f"at position {position}"
+                    f"Unexpected character '{character}' at position {position}"
                 )
 
             tokens.append(

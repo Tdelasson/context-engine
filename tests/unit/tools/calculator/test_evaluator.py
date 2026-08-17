@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 
 from context_engine.tools.calculator.errors import CalculatorEvaluationError
@@ -6,8 +8,8 @@ from context_engine.tools.calculator.lexer import CalculatorLexer
 from context_engine.tools.calculator.parser import CalculatorParser
 
 
-@pytest.fixture
-def evaluate():
+@pytest.fixture()
+def evaluate() -> Callable[[str], int]:
     parser = CalculatorParser(CalculatorLexer())
     evaluator = CalculatorEvaluator()
 
@@ -35,13 +37,13 @@ def evaluate():
     ],
 )
 def test_evaluator(
-    evaluate,
+    evaluate: Callable[[str], int],
     expression: str,
     expected: int,
 ) -> None:
     assert evaluate(expression) == expected
 
 
-def test_evaluator_rejects_division_by_zero(evaluate) -> None:
+def test_evaluator_rejects_division_by_zero(evaluate: Callable[[str], int]) -> None:
     with pytest.raises(CalculatorEvaluationError, match="Division by zero"):
         evaluate("10 / 0")

@@ -10,7 +10,7 @@ from context_engine.tools.calculator.lexer import CalculatorLexer
 from context_engine.tools.calculator.parser import CalculatorParser
 
 
-@pytest.fixture
+@pytest.fixture()
 def parser() -> CalculatorParser:
     return CalculatorParser(CalculatorLexer())
 

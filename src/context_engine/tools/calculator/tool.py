@@ -34,9 +34,7 @@ class Calculator(Tool):
         expression = arguments["expression"]
 
         if not isinstance(expression, str):
-            raise RuntimeError(
-                "calculator tool received invalid argument types"
-            )
+            raise RuntimeError("calculator tool received invalid argument types")
 
         ast = self._parser.parse(expression)
         result = self._evaluator.evaluate(ast)

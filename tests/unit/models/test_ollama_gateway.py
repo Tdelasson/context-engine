@@ -336,7 +336,7 @@ def test_ollama_gateway_wraps_http_errors_with_gateway_execution_error(
 @pytest.mark.parametrize(
     "provider_exception",
     [URLError("connection refused"), TimeoutError("timed out")],
-)  # type: ignore[misc]
+)
 def test_ollama_gateway_wraps_connection_and_timeout_failures(
     monkeypatch: pytest.MonkeyPatch,
     provider_exception: Exception,
@@ -411,7 +411,7 @@ def test_ollama_gateway_wraps_connection_and_timeout_failures(
             "tool call id must be a string",
         ),
     ],
-)  # type: ignore[misc]
+)
 def test_ollama_gateway_rejects_malformed_provider_responses(
     monkeypatch: pytest.MonkeyPatch,
     response_payload: bytes,
