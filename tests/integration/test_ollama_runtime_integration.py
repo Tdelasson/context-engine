@@ -58,7 +58,7 @@ class _AddTool:
 
 class _MultTool:
     name = "multiply"
-    description = "Multiply two floats."
+    description = "Multiply two integers."
     input_schema = ToolInputSchema(
         fields=(ToolInputField(name="a", value_type=int), ToolInputField(name="b", value_type=int))
     )
