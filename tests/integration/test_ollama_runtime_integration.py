@@ -20,6 +20,7 @@ from context_engine.tools import (
     ToolRegistry,
     ToolRuntime,
 )
+from context_engine.tools.calculator.tool import Calculator
 
 
 def _skip_unless_ollama_enabled() -> None:
@@ -131,25 +132,36 @@ def test_runtime_end_to_end_model_tool_call_then_respond_with_local_ollama() -> 
     assert model_name is not None
 
     registry = ToolRegistry()
-    registry.register(_AddTool())
+    registry.register(Calculator())
     recording_gateway = _RecordingGateway(gateway)
     runtime = AgentRuntime(model_gateway=recording_gateway, tool_runtime=ToolRuntime(registry))
 
     result = runtime.run(
         model_id=model_name,
         system_prompt=(
-            "Use tools when available. "
-            "For arithmetic, call the add tool first, then respond using the tool result."
+            "You must call the calculator tool exactly once. "
+            'Call it with exactly {"expression":"2+3"}. '
+            "Do not answer directly in prose. "
+            "After receiving the tool result, answer the user."
         ),
-        user_prompt="What is 2+3?",
+        user_prompt="What is 2 + 3?",
         max_output_tokens=128,
         temperature=0.0,
         max_model_iterations=4,
     )
 
+    assert recording_gateway.requests
+
+    first_request = recording_gateway.requests[0]
+
+    assert len(first_request.tools) == 1
+    assert first_request.tools[0].name == "calculator"
+
     assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert result.proposed_response
     assert len(runtime.tool_results) == 1
-    assert runtime.tool_results[0].invocation.tool_name == "add"
+    assert runtime.tool_results[0].invocation.tool_name == "calculator"
+    assert runtime.tool_results[0].invocation.arguments_as_mapping() == {"expression": "2+3"}
     assert runtime.tool_results[0].output_as_mapping() == {"value": 5}
     assert len(recording_gateway.requests) >= 2
     second_request_messages = recording_gateway.requests[1].messages
@@ -160,8 +172,8 @@ def test_runtime_end_to_end_model_tool_call_then_respond_with_local_ollama() -> 
         ModelRole.TOOL,
     ]
     assert second_request_messages[2].tool_call == ModelToolCall.from_mapping(
-        tool_name="add",
-        arguments={"a": 2, "b": 3},
+        tool_name="calculator",
+        arguments={"expression": "2+3"},
         tool_call_id="call-1",
     )
     assert second_request_messages[3].tool_result is not None
