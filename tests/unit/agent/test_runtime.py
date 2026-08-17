@@ -245,7 +245,7 @@ def test_runtime_propose_action_exposes_registered_tools_to_model_request() -> N
         (ModelFinishReason.LENGTH, ModelDecisionKind.RETRY, AgentExecutionStatus.THINK),
         (ModelFinishReason.OTHER, ModelDecisionKind.FAIL, AgentExecutionStatus.FAILED),
     ],
-)  # type: ignore[misc]
+)
 def test_runtime_propose_action_maps_decision_to_runtime_state(
     finish_reason: ModelFinishReason,
     expected_kind: ModelDecisionKind,
@@ -304,7 +304,7 @@ def test_runtime_propose_action_interpretation_error_keeps_runtime_in_think() ->
         (ModelDecision(kind=ModelDecisionKind.RETRY), AgentExecutionStatus.THINK),
         (ModelDecision(kind=ModelDecisionKind.FAIL), AgentExecutionStatus.FAILED),
     ],
-)  # type: ignore[misc]
+)
 def test_runtime_apply_model_decision_maps_to_valid_runtime_transitions(
     decision: ModelDecision,
     expected_status: AgentExecutionStatus,
@@ -386,7 +386,7 @@ def test_runtime_can_reach_failed() -> None:
 @pytest.mark.parametrize(
     "terminal_status",
     [AgentExecutionStatus.COMPLETED, AgentExecutionStatus.FAILED],
-)  # type: ignore[misc]
+)
 def test_runtime_cannot_advance_terminal_states(
     terminal_status: AgentExecutionStatus,
 ) -> None:
