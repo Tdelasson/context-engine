@@ -5,7 +5,6 @@ from context_engine.tools import (
     Tool,
     ToolInputField,
     ToolInputSchema,
-    ToolInputValidationError,
     ToolInvocation,
     ToolRegistry,
     ToolResultStatus,
@@ -117,20 +116,23 @@ def test_tool_runtime_rejects_invalid_input_without_execution() -> None:
     registry.register(tool)
     runtime = ToolRuntime(registry)
 
-    with pytest.raises(
-        ToolInputValidationError,
-        match="Type mismatches: a expected int, got str",
-    ):
-        runtime.execute(ToolInvocation.from_mapping("add", {"a": "2", "b": 3}))
-
+    result = runtime.execute(ToolInvocation.from_mapping("add", {"a": "2", "b": 3}))
+    assert result.status is ToolResultStatus.ERROR
+    assert result.output is None
+    assert result.error is not None
+    assert result.error.error_type == "ToolInputValidationError"
+    assert "Type mismatches: a expected int, got str" in result.error.message
     assert tool.was_executed is False
 
 
 def test_tool_runtime_rejects_unknown_tool_invocation_deterministically() -> None:
     runtime = ToolRuntime(ToolRegistry())
-
-    with pytest.raises(UnknownToolError, match="Unknown tool: unknown"):
-        runtime.execute(ToolInvocation.from_mapping("unknown", {"a": 1}))
+    result = runtime.execute(ToolInvocation.from_mapping("unknown", {"a": 1}))
+    assert result.status is ToolResultStatus.ERROR
+    assert result.output is None
+    assert result.error is not None
+    assert result.error.error_type == "UnknownToolError"
+    assert result.error.message == "Unknown tool: unknown"
 
 
 def test_tool_runtime_captures_execution_failure_as_structured_error_result() -> None:

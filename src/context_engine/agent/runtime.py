@@ -29,7 +29,6 @@ from context_engine.tools import (
     ToolInvocation,
     ToolResult,
     ToolResultStatus,
-    ToolRuntimeError,
 )
 
 
@@ -293,14 +292,6 @@ class AgentRuntime:
                             ),
                         )
                     )
-                    if tool_result.status is not ToolResultStatus.SUCCESS:
-                        self._transition_to_failed_from_tool_call()
-                        return AgentRuntimeExecutionResult(
-                            outcome=AgentRuntimeExecutionOutcome.FAILED,
-                            terminal_state=self._state,
-                            error_message=self._tool_error_message(tool_result),
-                            model_iterations=model_iterations,
-                        )
                     self.transition_to(AgentExecutionStatus.THINK)
                     continue
 
@@ -461,12 +452,7 @@ class AgentRuntime:
             arguments=decision.tool_arguments or tuple(),
         )
 
-        try:
-            return self._tool_runtime.execute(invocation)
-        except ToolRuntimeError as exc:
-            raise AgentRuntimeModelInteractionError(
-                f"Tool runtime rejected invocation: {exc}"
-            ) from exc
+        return self._tool_runtime.execute(invocation)
 
     def _build_initial_conversation_history(
         self,

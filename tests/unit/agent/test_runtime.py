@@ -699,124 +699,175 @@ def test_runtime_preserves_system_and_user_messages_across_tool_iterations(
     assert second_request.messages[1].content == "What is 2+3?"
 
 
-def test_runtime_run_tool_call_unknown_tool_fails_through_runtime_state_machine(
+def test_runtime_run_tool_call_unknown_tool_error_is_returned_to_model_for_recovery(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    transitions = _capture_runtime_transitions(monkeypatch)
     _patch_interpret_model_decisions(
         monkeypatch,
-        [ModelDecision.tool_call(tool_name="missing", arguments={"a": 2, "b": 3})],
+        [
+            ModelDecision.tool_call(tool_name="missing", arguments={"a": 2, "b": 3}),
+            ModelDecision.tool_call(tool_name="add", arguments={"a": 2, "b": 3}),
+            ModelDecision(kind=ModelDecisionKind.RESPOND, proposed_response="The answer is 5"),
+        ],
+    )
+    registry = ToolRegistry()
+    registry.register(_AddTool())
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call-corrected",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="respond",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
     )
     runtime = AgentRuntime(
-        model_gateway=_SequenceStubModelGateway(
-            responses=[
-                ModelResponse(
-                    model_id="mock-model",
-                    output_text="tool-call",
-                    finish_reason=ModelFinishReason.STOP,
-                )
-            ]
-        ),
-        tool_runtime=ToolRuntime(ToolRegistry()),
+        model_gateway=gateway,
+        tool_runtime=ToolRuntime(registry),
     )
 
     result = runtime.run(model_id="mock-model", user_prompt="What is 2+3?")
 
-    assert result.outcome is AgentRuntimeExecutionOutcome.FAILED
-    assert result.error_message is not None
-    assert "Unknown tool: missing" in result.error_message
-    assert result.model_iterations == 1
-    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
-    assert transitions == [
-        AgentExecutionStatus.CONTEXT,
-        AgentExecutionStatus.THINK,
-        AgentExecutionStatus.ACTION_PROPOSED,
-        AgentExecutionStatus.RUNTIME_VALIDATE,
-        AgentExecutionStatus.TOOL_CALL,
-        AgentExecutionStatus.THINK,
-        AgentExecutionStatus.ACTION_PROPOSED,
-        AgentExecutionStatus.RUNTIME_VALIDATE,
-        AgentExecutionStatus.FAILED,
-    ]
+    assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert result.proposed_response == "The answer is 5"
+    assert result.model_iterations == 3
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.COMPLETED)
+    assert len(runtime.tool_results) == 2
+    assert runtime.tool_results[0].status is ToolResultStatus.ERROR
+    assert runtime.tool_results[0].error is not None
+    assert runtime.tool_results[0].error.error_type == "UnknownToolError"
+    assert runtime.tool_results[0].error.message == "Unknown tool: missing"
+    assert runtime.tool_results[1].status is ToolResultStatus.SUCCESS
+    second_request = gateway.requests[1]
+    assert second_request.messages[-1].role is ModelRole.TOOL
+    assert second_request.messages[-1].tool_result is not None
+    assert second_request.messages[-1].tool_result.status is ModelToolResultStatus.ERROR
+    assert second_request.messages[-1].tool_result.error_type == "UnknownToolError"
+    assert second_request.messages[-1].tool_result.error_message == "Unknown tool: missing"
 
 
-def test_runtime_run_tool_call_invalid_arguments_fails_before_execution(
+def test_runtime_run_tool_call_invalid_arguments_can_be_corrected_by_model(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    transitions = _capture_runtime_transitions(monkeypatch)
     _patch_interpret_model_decisions(
         monkeypatch,
-        [ModelDecision.tool_call(tool_name="add", arguments={"a": "2", "b": 3})],
+        [
+            ModelDecision.tool_call(tool_name="add", arguments={"a": "2", "b": 3}),
+            ModelDecision.tool_call(tool_name="add", arguments={"a": 2, "b": 3}),
+            ModelDecision(kind=ModelDecisionKind.RESPOND, proposed_response="The answer is 5"),
+        ],
     )
     registry = ToolRegistry()
     add_tool = _AddTool()
     registry.register(add_tool)
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call-corrected",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="respond",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
+    )
     runtime = AgentRuntime(
-        model_gateway=_SequenceStubModelGateway(
-            responses=[
-                ModelResponse(
-                    model_id="mock-model",
-                    output_text="tool-call",
-                    finish_reason=ModelFinishReason.STOP,
-                )
-            ]
-        ),
+        model_gateway=gateway,
         tool_runtime=ToolRuntime(registry),
     )
 
     result = runtime.run(model_id="mock-model", user_prompt="What is 2+3?")
 
-    assert result.outcome is AgentRuntimeExecutionOutcome.FAILED
+    assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert result.proposed_response == "The answer is 5"
+    assert result.model_iterations == 3
+    assert add_tool.was_executed is True
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.COMPLETED)
+    assert len(runtime.tool_results) == 2
+    first_tool_result = runtime.tool_results[0]
+    assert first_tool_result.status is ToolResultStatus.ERROR
+    assert first_tool_result.error is not None
+    assert first_tool_result.error.error_type == "ToolInputValidationError"
+    assert "Type mismatches: a expected int, got str" in first_tool_result.error.message
+    second_request = gateway.requests[1]
+    assert second_request.messages[-1].role is ModelRole.TOOL
+    assert second_request.messages[-1].tool_result is not None
+    assert second_request.messages[-1].tool_result.status is ModelToolResultStatus.ERROR
+    assert second_request.messages[-1].tool_result.error_type == "ToolInputValidationError"
+
+
+def test_runtime_run_tool_call_execution_error_is_returned_and_bounded_by_iteration_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    _patch_interpret_model_decisions(
+        monkeypatch,
+        [
+            ModelDecision.tool_call(tool_name="explode", arguments={"message": "boom"}),
+            ModelDecision.tool_call(tool_name="explode", arguments={"message": "boom-again"}),
+        ],
+    )
+    registry = ToolRegistry()
+    registry.register(_FailingTool())
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call-again",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
+    )
+    runtime = AgentRuntime(
+        model_gateway=gateway,
+        tool_runtime=ToolRuntime(registry),
+    )
+
+    result = runtime.run(model_id="mock-model", user_prompt="explode", max_model_iterations=2)
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.LIMIT_REACHED
     assert result.error_message is not None
-    assert "Type mismatches: a expected int, got str" in result.error_message
-    assert add_tool.was_executed is False
-    assert result.model_iterations == 1
+    assert "exceeded max model iterations" in result.error_message
+    assert result.model_iterations == 2
     assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
+    assert len(runtime.tool_results) == 2
+    assert runtime.tool_results[0].status is ToolResultStatus.ERROR
+    assert runtime.tool_results[0].error is not None
+    assert runtime.tool_results[0].error.error_type == "RuntimeError"
+    assert runtime.tool_results[0].error.message == "failed: boom"
+    assert runtime.tool_results[1].status is ToolResultStatus.ERROR
+    assert runtime.tool_results[1].error is not None
+    assert runtime.tool_results[1].error.error_type == "RuntimeError"
+    assert runtime.tool_results[1].error.message == "failed: boom-again"
     assert transitions == [
         AgentExecutionStatus.CONTEXT,
         AgentExecutionStatus.THINK,
         AgentExecutionStatus.ACTION_PROPOSED,
         AgentExecutionStatus.RUNTIME_VALIDATE,
         AgentExecutionStatus.TOOL_CALL,
-        AgentExecutionStatus.THINK,
-        AgentExecutionStatus.ACTION_PROPOSED,
-        AgentExecutionStatus.RUNTIME_VALIDATE,
-        AgentExecutionStatus.FAILED,
-    ]
-
-
-def test_runtime_run_tool_call_execution_error_fails_without_bypassing_state_machine(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    transitions = _capture_runtime_transitions(monkeypatch)
-    _patch_interpret_model_decisions(
-        monkeypatch,
-        [ModelDecision.tool_call(tool_name="explode", arguments={"message": "boom"})],
-    )
-    registry = ToolRegistry()
-    registry.register(_FailingTool())
-    runtime = AgentRuntime(
-        model_gateway=_SequenceStubModelGateway(
-            responses=[
-                ModelResponse(
-                    model_id="mock-model",
-                    output_text="tool-call",
-                    finish_reason=ModelFinishReason.STOP,
-                )
-            ]
-        ),
-        tool_runtime=ToolRuntime(registry),
-    )
-
-    result = runtime.run(model_id="mock-model", user_prompt="explode")
-
-    assert result.outcome is AgentRuntimeExecutionOutcome.FAILED
-    assert result.error_message is not None
-    assert "Tool execution failed for explode: RuntimeError: failed: boom" in result.error_message
-    assert result.model_iterations == 1
-    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
-    assert transitions == [
-        AgentExecutionStatus.CONTEXT,
         AgentExecutionStatus.THINK,
         AgentExecutionStatus.ACTION_PROPOSED,
         AgentExecutionStatus.RUNTIME_VALIDATE,
