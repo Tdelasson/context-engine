@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from context_engine.agent import (
@@ -22,6 +24,14 @@ from context_engine.models import (
     ModelResponse,
     ModelRole,
     normalize_messages,
+)
+from context_engine.tools import (
+    ToolInputField,
+    ToolInputSchema,
+    ToolInvocation,
+    ToolRegistry,
+    ToolResultStatus,
+    ToolRuntime,
 )
 
 
@@ -74,6 +84,36 @@ class _SequenceStubModelGateway:
         )
 
 
+class _AddTool:
+    name = "add"
+    description = "Add two integers."
+    input_schema = ToolInputSchema(
+        fields=(ToolInputField(name="a", value_type=int), ToolInputField(name="b", value_type=int))
+    )
+
+    def __init__(self) -> None:
+        self.was_executed = False
+
+    def execute(self, invocation: ToolInvocation) -> dict[str, object]:
+        self.was_executed = True
+        arguments = invocation.arguments_as_mapping()
+        a = arguments["a"]
+        b = arguments["b"]
+        if not isinstance(a, int) or not isinstance(b, int):
+            raise RuntimeError("validated add tool received invalid argument types")
+        return {"value": a + b}
+
+
+class _FailingTool:
+    name = "explode"
+    description = "Raise an execution error."
+    input_schema = ToolInputSchema(fields=(ToolInputField(name="message", value_type=str),))
+
+    def execute(self, invocation: ToolInvocation) -> dict[str, object]:
+        message = invocation.arguments_as_mapping()["message"]
+        raise RuntimeError(f"failed: {message}")
+
+
 def _capture_runtime_transitions(monkeypatch: pytest.MonkeyPatch) -> list[AgentExecutionStatus]:
     transitions: list[AgentExecutionStatus] = []
     original_transition = runtime_transition_agent_state
@@ -87,6 +127,23 @@ def _capture_runtime_transitions(monkeypatch: pytest.MonkeyPatch) -> list[AgentE
 
     monkeypatch.setattr("context_engine.agent.runtime.transition_agent_state", recording_transition)
     return transitions
+
+
+def _patch_interpret_model_decisions(
+    monkeypatch: pytest.MonkeyPatch,
+    decisions: list[ModelDecision],
+) -> None:
+    queue = list(decisions)
+
+    def decision_sequence(_: ModelResponse) -> ModelDecision:
+        if not queue:
+            raise AssertionError("No model decision remaining in deterministic sequence")
+        return queue.pop(0)
+
+    monkeypatch.setattr(
+        "context_engine.agent.runtime.interpret_model_response",
+        decision_sequence,
+    )
 
 
 def test_runtime_starts_in_start() -> None:
@@ -111,6 +168,14 @@ def test_runtime_can_depend_on_provider_independent_model_gateway() -> None:
         output_text="stub",
         finish_reason=ModelFinishReason.STOP,
     )
+
+
+def test_runtime_can_depend_on_provider_independent_tool_runtime() -> None:
+    registry = ToolRegistry()
+    registry.register(_AddTool())
+    runtime = AgentRuntime(tool_runtime=ToolRuntime(registry))
+
+    assert runtime.tool_runtime is not None
 
 
 def test_runtime_propose_action_builds_typed_request_and_transitions() -> None:
@@ -205,6 +270,10 @@ def test_runtime_propose_action_interpretation_error_keeps_runtime_in_think() ->
         (
             ModelDecision(kind=ModelDecisionKind.RESPOND, proposed_response="final"),
             AgentExecutionStatus.RESPOND,
+        ),
+        (
+            ModelDecision.tool_call(tool_name="add", arguments={"a": 2, "b": 3}),
+            AgentExecutionStatus.TOOL_CALL,
         ),
         (ModelDecision(kind=ModelDecisionKind.RETRY), AgentExecutionStatus.THINK),
         (ModelDecision(kind=ModelDecisionKind.FAIL), AgentExecutionStatus.FAILED),
@@ -477,6 +546,208 @@ def test_runtime_run_gateway_failure_returns_failed_result_and_terminal_state(
         AgentExecutionStatus.CONTEXT,
         AgentExecutionStatus.THINK,
         AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.FAILED,
+    ]
+
+
+def test_runtime_run_tool_call_then_respond_completes_with_structured_tool_observation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    _patch_interpret_model_decisions(
+        monkeypatch,
+        [
+            ModelDecision.tool_call(tool_name="add", arguments={"a": 2, "b": 3}),
+            ModelDecision(kind=ModelDecisionKind.RESPOND, proposed_response="The answer is 5"),
+        ],
+    )
+
+    registry = ToolRegistry()
+    add_tool = _AddTool()
+    registry.register(add_tool)
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="respond",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
+    )
+    runtime = AgentRuntime(
+        model_gateway=gateway,
+        tool_runtime=ToolRuntime(registry),
+    )
+
+    result = runtime.run(model_id="mock-model", user_prompt="What is 2+3?")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert result.proposed_response == "The answer is 5"
+    assert result.model_iterations == 2
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.COMPLETED)
+    assert add_tool.was_executed is True
+    assert len(gateway.requests) == 2
+    assert len(runtime.tool_results) == 1
+    tool_result = runtime.tool_results[0]
+    assert tool_result.status is ToolResultStatus.SUCCESS
+    assert tool_result.output_as_mapping() == {"value": 5}
+    second_request = gateway.requests[1]
+    assert len(second_request.messages) == 2
+    tool_observation_payload = json.loads(second_request.messages[0].content)
+    assert tool_observation_payload == {
+        "tool_results": [
+            {
+                "arguments": {"a": 2, "b": 3},
+                "output": {"value": 5},
+                "status": "success",
+                "tool_name": "add",
+            }
+        ]
+    }
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.TOOL_CALL,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.RESPOND,
+        AgentExecutionStatus.COMPLETED,
+    ]
+
+
+def test_runtime_run_tool_call_unknown_tool_fails_through_runtime_state_machine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    _patch_interpret_model_decisions(
+        monkeypatch,
+        [ModelDecision.tool_call(tool_name="missing", arguments={"a": 2, "b": 3})],
+    )
+    runtime = AgentRuntime(
+        model_gateway=_SequenceStubModelGateway(
+            responses=[
+                ModelResponse(
+                    model_id="mock-model",
+                    output_text="tool-call",
+                    finish_reason=ModelFinishReason.STOP,
+                )
+            ]
+        ),
+        tool_runtime=ToolRuntime(ToolRegistry()),
+    )
+
+    result = runtime.run(model_id="mock-model", user_prompt="What is 2+3?")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.FAILED
+    assert result.error_message is not None
+    assert "Unknown tool: missing" in result.error_message
+    assert result.model_iterations == 1
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.TOOL_CALL,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.FAILED,
+    ]
+
+
+def test_runtime_run_tool_call_invalid_arguments_fails_before_execution(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    _patch_interpret_model_decisions(
+        monkeypatch,
+        [ModelDecision.tool_call(tool_name="add", arguments={"a": "2", "b": 3})],
+    )
+    registry = ToolRegistry()
+    add_tool = _AddTool()
+    registry.register(add_tool)
+    runtime = AgentRuntime(
+        model_gateway=_SequenceStubModelGateway(
+            responses=[
+                ModelResponse(
+                    model_id="mock-model",
+                    output_text="tool-call",
+                    finish_reason=ModelFinishReason.STOP,
+                )
+            ]
+        ),
+        tool_runtime=ToolRuntime(registry),
+    )
+
+    result = runtime.run(model_id="mock-model", user_prompt="What is 2+3?")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.FAILED
+    assert result.error_message is not None
+    assert "Type mismatches: a expected int, got str" in result.error_message
+    assert add_tool.was_executed is False
+    assert result.model_iterations == 1
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.TOOL_CALL,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.FAILED,
+    ]
+
+
+def test_runtime_run_tool_call_execution_error_fails_without_bypassing_state_machine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    transitions = _capture_runtime_transitions(monkeypatch)
+    _patch_interpret_model_decisions(
+        monkeypatch,
+        [ModelDecision.tool_call(tool_name="explode", arguments={"message": "boom"})],
+    )
+    registry = ToolRegistry()
+    registry.register(_FailingTool())
+    runtime = AgentRuntime(
+        model_gateway=_SequenceStubModelGateway(
+            responses=[
+                ModelResponse(
+                    model_id="mock-model",
+                    output_text="tool-call",
+                    finish_reason=ModelFinishReason.STOP,
+                )
+            ]
+        ),
+        tool_runtime=ToolRuntime(registry),
+    )
+
+    result = runtime.run(model_id="mock-model", user_prompt="explode")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.FAILED
+    assert result.error_message is not None
+    assert "Tool execution failed for explode: RuntimeError: failed: boom" in result.error_message
+    assert result.model_iterations == 1
+    assert runtime.state == AgentExecutionState(status=AgentExecutionStatus.FAILED)
+    assert transitions == [
+        AgentExecutionStatus.CONTEXT,
+        AgentExecutionStatus.THINK,
+        AgentExecutionStatus.ACTION_PROPOSED,
+        AgentExecutionStatus.RUNTIME_VALIDATE,
+        AgentExecutionStatus.TOOL_CALL,
+        AgentExecutionStatus.THINK,
         AgentExecutionStatus.ACTION_PROPOSED,
         AgentExecutionStatus.RUNTIME_VALIDATE,
         AgentExecutionStatus.FAILED,

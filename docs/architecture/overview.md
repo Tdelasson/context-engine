@@ -259,6 +259,8 @@ In implementation, transition validation is runtime-owned and deterministic:
 * allowed status transitions are defined explicitly in a runtime transition map.
 * invalid transitions fail explicitly, including all transitions from terminal states.
 
+When the model proposes a tool call, the runtime performs deterministic invocation through the Tool Runtime boundary. The resulting `ToolResult` is captured as structured runtime observation and injected into the next model iteration context. Tool lookup failures, input validation errors, and execution errors remain runtime-owned failure paths and do not bypass state transitions.
+
 ## 5.2 Fixed Runtime Actions
 
 The Agent Runtime owns a closed set of action types.
