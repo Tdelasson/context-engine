@@ -8,8 +8,14 @@ from typing import Protocol, runtime_checkable
 from context_engine.tools.errors import (
     DuplicateToolRegistrationError,
     ToolInputValidationError,
+    ToolPolicyDeniedError,
     ToolRuntimeError,
     UnknownToolError,
+)
+from context_engine.tools.policy import (
+    AllowAllToolPolicy,
+    ToolPolicy,
+    ToolPolicyDecision,
 )
 
 
@@ -152,8 +158,9 @@ class ToolRegistry:
 class ToolRuntime:
     """Runtime-owned deterministic boundary for tool invocation and execution."""
 
-    def __init__(self, registry: ToolRegistry) -> None:
+    def __init__(self, registry: ToolRegistry, policy: ToolPolicy | None = None) -> None:
         self._registry = registry
+        self._policy = policy or AllowAllToolPolicy()
 
     def list_tools(self) -> tuple[Tool, ...]:
         """Expose registered tools for model-facing declaration only."""
@@ -165,6 +172,12 @@ class ToolRuntime:
             tool = self._registry.get(invocation.tool_name)
             arguments = invocation.arguments_as_mapping()
             tool.input_schema.validate(arguments)
+            policy_evaluation = self._policy.evaluate(invocation)
+            if policy_evaluation.decision is ToolPolicyDecision.DENY:
+                raise ToolPolicyDeniedError(
+                    policy_evaluation.reason
+                    or f"Tool invocation denied by policy: {invocation.tool_name}"
+                )
             output = tool.execute(invocation)
         except ToolRuntimeError as exc:
             return ToolResult(

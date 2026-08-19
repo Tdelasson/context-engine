@@ -14,6 +14,7 @@ from context_engine.models import (
     OllamaModelGateway,
 )
 from context_engine.tools import (
+    AllowAllToolPolicy,
     ToolInputField,
     ToolInputSchema,
     ToolInvocation,
@@ -134,7 +135,10 @@ def test_runtime_end_to_end_model_tool_call_then_respond_with_local_ollama() -> 
     registry = ToolRegistry()
     registry.register(Calculator())
     recording_gateway = _RecordingGateway(gateway)
-    runtime = AgentRuntime(model_gateway=recording_gateway, tool_runtime=ToolRuntime(registry))
+    runtime = AgentRuntime(
+        model_gateway=recording_gateway,
+        tool_runtime=ToolRuntime(registry, policy=AllowAllToolPolicy()),
+    )
 
     result = runtime.run(
         model_id=model_name,
