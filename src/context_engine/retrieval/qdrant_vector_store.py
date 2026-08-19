@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, cast
 
@@ -49,7 +50,10 @@ class QdrantVectorStore(VectorStore):
             self._config.ensure_embedding_compatible(record.embedding)
             points.append(
                 self._qdrant_models.PointStruct(
-                    id=record.document.document_id,
+                    id=_qdrant_point_id_for_document_id(
+                        collection_name=self._config.collection_name,
+                        document_id=record.document.document_id,
+                    ),
                     vector=list(record.embedding.vector),
                     payload={
                         "document_id": record.document.document_id,
@@ -94,9 +98,15 @@ class QdrantVectorStore(VectorStore):
         active_ids = [document_id for document_id in document_ids if document_id]
         if not active_ids:
             return
+        point_ids = [
+            _qdrant_point_id_for_document_id(
+                collection_name=self._config.collection_name, document_id=document_id
+            )
+            for document_id in active_ids
+        ]
         self._client.delete(
             collection_name=self._config.collection_name,
-            points_selector=self._qdrant_models.PointIdsList(points=active_ids),
+            points_selector=self._qdrant_models.PointIdsList(points=point_ids),
             wait=True,
         )
 
@@ -214,3 +224,8 @@ def _load_qdrant_client_dependencies() -> tuple[Any, Any]:
             "pip install qdrant-client"
         ) from exc
     return qdrant_client_module.QdrantClient, qdrant_http_models_module
+
+
+def _qdrant_point_id_for_document_id(*, collection_name: str, document_id: str) -> str:
+    namespace = uuid.uuid5(uuid.NAMESPACE_URL, f"context-engine:qdrant:{collection_name}")
+    return str(uuid.uuid5(namespace, document_id))
