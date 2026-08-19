@@ -16,8 +16,8 @@ from context_engine.tools.policy import (
 )
 from context_engine.tools.runtime import (
     Tool,
-    ToolExecutionTrace,
     ToolExecutionErrorDetails,
+    ToolExecutionTrace,
     ToolInputField,
     ToolInputSchema,
     ToolInvocation,
