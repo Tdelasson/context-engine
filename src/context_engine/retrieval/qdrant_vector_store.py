@@ -86,15 +86,15 @@ class QdrantVectorStore(VectorStore):
         self._config.ensure_embedding_compatible(query_embedding)
         query_filter = self._build_qdrant_filter(metadata_filter)
 
-        scored_points = self._client.search(
+        response = self._client.query_points(
             collection_name=self._config.collection_name,
-            query_vector=list(query_embedding.vector),
+            query=list(query_embedding.vector),
             query_filter=query_filter,
             limit=top_k,
             with_payload=True,
             with_vectors=False,
         )
-        return tuple(self._build_search_result(point) for point in scored_points)
+        return tuple(self._build_search_result(point) for point in response.points)
 
     def delete(self, document_ids: Sequence[str]) -> None:
         active_ids = [document_id for document_id in document_ids if document_id]
