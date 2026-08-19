@@ -25,6 +25,8 @@ M3 established the deterministic tool execution boundary, including:
 
 The current end-to-end demonstration uses a calculator tool with a local Ollama model. The model can propose the calculator call, but the runtime remains responsible for validation, policy, approval, execution, and returning the result to the model.
 
+M4 is now focused on the semantic retrieval foundation: provider-independent embeddings, local embedding inference, Qdrant-backed vector storage, metadata filtering, retrieval, and a small model-independent retrieval benchmark.
+
 ## Goals
 
 - Agentic AI
@@ -66,7 +68,23 @@ Policy
 
 The model never directly executes a tool or controls runtime state. Provider-specific model behavior is isolated behind the Model Gateway, while tools are controlled by the Tool Runtime.
 
-See the [Architecture Overview](docs/architecture/overview.md) and [Tool Runtime Architecture](docs/architecture/tool-runtime.md) for the current system design and the [Development Roadmap](docs/product/roadmap.md) for milestone status.
+The M4 retrieval foundation is separated into embedding generation, vector storage, and retrieval orchestration:
+
+```text
+Document
+   ↓
+LocalEmbeddingProvider
+   ↓
+Embedding
+   ↓
+QdrantVectorStore
+   ↓
+Retriever
+   ↓
+SearchResult[]
+```
+
+See the [Architecture Overview](docs/architecture/overview.md), [Embedding & Retrieval Architecture](docs/architecture/embedding-and-retrieval.md), and [Tool Runtime Architecture](docs/architecture/tool-runtime.md) for the current system design and the [Development Roadmap](docs/product/roadmap.md) for milestone status.
 
 ## Example Application
 
@@ -78,8 +96,15 @@ See the [Architecture Overview](docs/architecture/overview.md) and [Tool Runtime
 - [Project Context](docs/product/PROJECT_CONTEXT.md)
 - [Roadmap](docs/product/roadmap.md)
 - [Architecture](docs/architecture/overview.md)
+- [Embedding & Retrieval Architecture](docs/architecture/embedding-and-retrieval.md)
 - [Tool Runtime Architecture](docs/architecture/tool-runtime.md)
 - [Architecture Decisions](docs/architecture/decisions/)
+
+### M4 Architecture Decisions
+
+- [ADR-003 — Embedding Provider Abstraction](docs/architecture/decisions/ADR-003-embedding-provider-abstraction.md)
+- [ADR-004 — Vector Store and Retrieval Architecture](docs/architecture/decisions/ADR-004-vector-store-and-retrieval-architecture.md)
+- [ADR-005 — Retrieval Evaluation Strategy](docs/architecture/decisions/ADR-005-retrieval-evaluation-strategy.md)
 
 ## Development
 
