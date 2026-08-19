@@ -25,14 +25,22 @@ class ModelDecision:
     proposed_response: str | None = None
     tool_name: str | None = None
     tool_arguments: tuple[tuple[str, object], ...] | None = None
+    tool_call_id: str | None = None
 
     @classmethod
-    def tool_call(cls, tool_name: str, arguments: Mapping[str, object]) -> "ModelDecision":
+    def tool_call(
+        cls,
+        tool_name: str,
+        arguments: Mapping[str, object],
+        *,
+        tool_call_id: str | None = None,
+    ) -> "ModelDecision":
         """Construct a typed tool-call model decision with normalized arguments."""
         return cls(
             kind=ModelDecisionKind.TOOL_CALL,
             tool_name=tool_name,
             tool_arguments=normalize_tool_arguments(arguments),
+            tool_call_id=tool_call_id,
         )
 
     def tool_arguments_as_mapping(self) -> dict[str, object]:
@@ -47,8 +55,14 @@ class ModelDecision:
                 raise ValueError("tool_arguments are required for TOOL_CALL decisions.")
             return
 
-        if self.tool_name is not None or self.tool_arguments is not None:
-            raise ValueError("tool_name/tool_arguments are only valid for TOOL_CALL decisions.")
+        if (
+            self.tool_name is not None
+            or self.tool_arguments is not None
+            or self.tool_call_id is not None
+        ):
+            raise ValueError(
+                "tool_name/tool_arguments/tool_call_id are only valid for TOOL_CALL decisions."
+            )
 
 
 class ModelDecisionInterpretationError(ValueError):
@@ -61,6 +75,7 @@ def interpret_model_response(response: ModelResponse) -> ModelDecision:
         return ModelDecision.tool_call(
             tool_name=response.tool_call.tool_name,
             arguments=response.tool_call.arguments_as_mapping(),
+            tool_call_id=response.tool_call.tool_call_id,
         )
 
     if response.finish_reason is ModelFinishReason.STOP:

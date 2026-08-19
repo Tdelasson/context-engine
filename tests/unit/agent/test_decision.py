@@ -47,11 +47,17 @@ def test_interpret_model_response_tool_call_maps_to_tool_call_decision() -> None
         model_id="mock-model",
         output_text="",
         finish_reason=ModelFinishReason.STOP,
-        tool_call=ModelToolCall.from_mapping(tool_name="add", arguments={"b": 3, "a": 2}),
+        tool_call=ModelToolCall.from_mapping(
+            tool_name="add",
+            arguments={"b": 3, "a": 2},
+            tool_call_id="tool-call-1",
+        ),
     )
 
     assert interpret_model_response(response) == ModelDecision.tool_call(
-        tool_name="add", arguments={"a": 2, "b": 3}
+        tool_name="add",
+        arguments={"a": 2, "b": 3},
+        tool_call_id="tool-call-1",
     )
 
 
@@ -88,11 +94,16 @@ def test_model_decision_tool_call_requires_tool_name_and_arguments() -> None:
 
 
 def test_model_decision_tool_call_factory_normalizes_arguments() -> None:
-    decision = ModelDecision.tool_call(tool_name="add", arguments={"b": 3, "a": 2})
+    decision = ModelDecision.tool_call(
+        tool_name="add",
+        arguments={"b": 3, "a": 2},
+        tool_call_id="tool-call-1",
+    )
 
     assert decision.kind is ModelDecisionKind.TOOL_CALL
     assert decision.tool_name == "add"
     assert decision.tool_arguments == (("a", 2), ("b", 3))
+    assert decision.tool_call_id == "tool-call-1"
     assert decision.tool_arguments_as_mapping() == {"a": 2, "b": 3}
 
 

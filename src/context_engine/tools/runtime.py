@@ -79,11 +79,22 @@ class ToolInvocation:
 
     tool_name: str
     arguments: tuple[tuple[str, object], ...]
+    invocation_id: str | None = None
 
     @classmethod
-    def from_mapping(cls, tool_name: str, arguments: Mapping[str, object]) -> "ToolInvocation":
+    def from_mapping(
+        cls,
+        tool_name: str,
+        arguments: Mapping[str, object],
+        *,
+        invocation_id: str | None = None,
+    ) -> "ToolInvocation":
         """Construct a typed immutable invocation from a mapping."""
-        return cls(tool_name=tool_name, arguments=normalize_tool_arguments(arguments))
+        return cls(
+            tool_name=tool_name,
+            arguments=normalize_tool_arguments(arguments),
+            invocation_id=invocation_id,
+        )
 
     def arguments_as_mapping(self) -> dict[str, object]:
         """Return invocation arguments as a dictionary."""
@@ -131,6 +142,21 @@ class ToolResult:
         return {} if self.output is None else dict(self.output)
 
 
+@dataclass(frozen=True, slots=True)
+class ToolExecutionTrace:
+    """Provider-independent structured trace for one tool invocation."""
+
+    invocation: ToolInvocation
+    policy_decision: ToolPolicyDecision
+    status: ToolResultStatus
+    output: tuple[tuple[str, object], ...] | None = None
+    error: ToolExecutionErrorDetails | None = None
+
+    def output_as_mapping(self) -> dict[str, object]:
+        """Return traced output payload as a dictionary."""
+        return {} if self.output is None else dict(self.output)
+
+
 class ToolRegistry:
     """Explicit deterministic in-memory tool registration and lookup."""
 
@@ -161,18 +187,26 @@ class ToolRuntime:
     def __init__(self, registry: ToolRegistry, policy: ToolPolicy | None = None) -> None:
         self._registry = registry
         self._policy = policy or AllowAllToolPolicy()
+        self._execution_traces: list[ToolExecutionTrace] = []
 
     def list_tools(self) -> tuple[Tool, ...]:
         """Expose registered tools for model-facing declaration only."""
         return self._registry.list_tools()
 
+    @property
+    def execution_traces(self) -> tuple[ToolExecutionTrace, ...]:
+        """Return structured tool execution traces in deterministic execution order."""
+        return tuple(self._execution_traces)
+
     def execute(self, invocation: ToolInvocation) -> ToolResult:
         """Resolve, validate, and execute one invocation deterministically."""
+        policy_decision = ToolPolicyDecision.ALLOW
         try:
             tool = self._registry.get(invocation.tool_name)
             arguments = invocation.arguments_as_mapping()
             tool.input_schema.validate(arguments)
             policy_evaluation = self._policy.evaluate(invocation)
+            policy_decision = policy_evaluation.decision
             if policy_evaluation.decision is ToolPolicyDecision.DENY:
                 raise ToolPolicyDeniedError(
                     policy_evaluation.reason
@@ -180,7 +214,7 @@ class ToolRuntime:
                 )
             output = tool.execute(invocation)
         except ToolRuntimeError as exc:
-            return ToolResult(
+            result = ToolResult(
                 invocation=invocation,
                 status=ToolResultStatus.ERROR,
                 error=ToolExecutionErrorDetails(
@@ -188,8 +222,18 @@ class ToolRuntime:
                     message=str(exc),
                 ),
             )
+            self._execution_traces.append(
+                ToolExecutionTrace(
+                    invocation=invocation,
+                    policy_decision=policy_decision,
+                    status=result.status,
+                    output=result.output,
+                    error=result.error,
+                )
+            )
+            return result
         except Exception as exc:
-            return ToolResult(
+            result = ToolResult(
                 invocation=invocation,
                 status=ToolResultStatus.ERROR,
                 error=ToolExecutionErrorDetails(
@@ -197,9 +241,29 @@ class ToolRuntime:
                     message=str(exc),
                 ),
             )
+            self._execution_traces.append(
+                ToolExecutionTrace(
+                    invocation=invocation,
+                    policy_decision=policy_decision,
+                    status=result.status,
+                    output=result.output,
+                    error=result.error,
+                )
+            )
+            return result
 
-        return ToolResult(
+        result = ToolResult(
             invocation=invocation,
             status=ToolResultStatus.SUCCESS,
             output=normalize_tool_arguments(output),
         )
+        self._execution_traces.append(
+            ToolExecutionTrace(
+                invocation=invocation,
+                policy_decision=policy_decision,
+                status=result.status,
+                output=result.output,
+                error=result.error,
+            )
+        )
+        return result
