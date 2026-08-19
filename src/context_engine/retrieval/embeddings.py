@@ -92,4 +92,3 @@ class EmbeddingProvider(Protocol):
 
     def embed_query(self, query: str) -> Embedding:
         """Embed one query string."""
-

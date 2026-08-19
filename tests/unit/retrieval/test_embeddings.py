@@ -63,7 +63,9 @@ def test_embedding_rejects_dimensionality_mismatch_deterministically() -> None:
 
 def test_embedding_rejects_non_finite_values() -> None:
     with pytest.raises(ValueError, match="Embedding vector values must be finite numbers."):
-        Embedding.from_sequence(vector=(0.1, float("inf"), 0.3), model_id="mock-model", dimensions=3)
+        Embedding.from_sequence(
+            vector=(0.1, float("inf"), 0.3), model_id="mock-model", dimensions=3
+        )
 
 
 def test_fake_provider_satisfies_embedding_provider_contract_for_batch_documents() -> None:
