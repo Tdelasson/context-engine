@@ -200,6 +200,22 @@ def test_tool_runtime_rejects_invalid_input_without_execution() -> None:
     assert tool.was_executed is False
 
 
+def test_tool_runtime_validates_input_before_policy_evaluation() -> None:
+    registry = ToolRegistry()
+    tool = _AddTool()
+    registry.register(tool)
+    policy = _RecordingPolicy(ToolPolicyDecision.ALLOW)
+    runtime = ToolRuntime(registry, policy=policy)
+
+    result = runtime.execute(ToolInvocation.from_mapping("add", {"a": "2", "b": 3}))
+
+    assert result.status is ToolResultStatus.ERROR
+    assert result.error is not None
+    assert result.error.error_type == "ToolInputValidationError"
+    assert policy.evaluated == []
+    assert tool.was_executed is False
+
+
 def test_tool_runtime_rejects_unknown_tool_invocation_deterministically() -> None:
     runtime = ToolRuntime(ToolRegistry())
     result = runtime.execute(ToolInvocation.from_mapping("unknown", {"a": 1}))
