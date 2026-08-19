@@ -626,6 +626,14 @@ def test_runtime_run_tool_call_then_respond_completes_with_structured_tool_obser
     tool_result = runtime.tool_results[0]
     assert tool_result.status is ToolResultStatus.SUCCESS
     assert tool_result.output_as_mapping() == {"value": 5}
+    assert len(runtime.tool_execution_traces) == 1
+    trace = runtime.tool_execution_traces[0]
+    assert trace.invocation.tool_name == "add"
+    assert trace.invocation.arguments_as_mapping() == {"a": 2, "b": 3}
+    assert trace.policy_decision is ToolPolicyDecision.ALLOW
+    assert trace.status is ToolResultStatus.SUCCESS
+    assert trace.output_as_mapping() == {"value": 5}
+    assert trace.error is None
     second_request = gateway.requests[1]
     assert len(second_request.messages) == 3
     assert second_request.messages[0] == ModelMessage(role=ModelRole.USER, content="What is 2+3?")
@@ -699,6 +707,43 @@ def test_runtime_preserves_system_and_user_messages_across_tool_iterations(
     ]
     assert second_request.messages[0].content == "Use tools when available."
     assert second_request.messages[1].content == "What is 2+3?"
+
+
+def test_runtime_preserves_provider_tool_call_id_in_invocation_and_trace() -> None:
+    registry = ToolRegistry()
+    registry.register(_AddTool())
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call",
+                finish_reason=ModelFinishReason.STOP,
+                tool_call=ModelToolCall.from_mapping(
+                    tool_name="add",
+                    arguments={"a": 2, "b": 3},
+                    tool_call_id="provider-call-1",
+                ),
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="The answer is 5",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
+    )
+    runtime = AgentRuntime(model_gateway=gateway, tool_runtime=ToolRuntime(registry))
+
+    result = runtime.run(model_id="mock-model", user_prompt="What is 2+3?")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert len(runtime.tool_results) == 1
+    assert runtime.tool_results[0].status is ToolResultStatus.SUCCESS
+    assert runtime.tool_results[0].invocation.invocation_id == "provider-call-1"
+    assert len(runtime.tool_execution_traces) == 1
+    assert runtime.tool_execution_traces[0].invocation.invocation_id == "provider-call-1"
+    second_request = gateway.requests[1]
+    assert second_request.messages[1].tool_call is not None
+    assert second_request.messages[1].tool_call.tool_call_id == "provider-call-1"
 
 
 def test_runtime_run_tool_call_unknown_tool_error_is_returned_to_model_for_recovery(
@@ -804,6 +849,15 @@ def test_runtime_run_denied_tool_call_is_returned_to_model_for_recovery(
     assert runtime.tool_results[0].error is not None
     assert runtime.tool_results[0].error.error_type == "ToolPolicyDeniedError"
     assert runtime.tool_results[0].error.message == "Tool invocation denied by policy: add"
+    assert len(runtime.tool_execution_traces) == 1
+    trace = runtime.tool_execution_traces[0]
+    assert trace.invocation.tool_name == "add"
+    assert trace.invocation.arguments_as_mapping() == {"a": 2, "b": 3}
+    assert trace.policy_decision is ToolPolicyDecision.DENY
+    assert trace.status is ToolResultStatus.ERROR
+    assert trace.error is not None
+    assert trace.error.error_type == "ToolPolicyDeniedError"
+    assert trace.error.message == "Tool invocation denied by policy: add"
     second_request = gateway.requests[1]
     assert second_request.messages[-1].role is ModelRole.TOOL
     assert second_request.messages[-1].tool_result is not None
@@ -921,6 +975,17 @@ def test_runtime_run_tool_call_execution_error_is_returned_and_bounded_by_iterat
     assert runtime.tool_results[1].error is not None
     assert runtime.tool_results[1].error.error_type == "RuntimeError"
     assert runtime.tool_results[1].error.message == "failed: boom-again"
+    assert len(runtime.tool_execution_traces) == 2
+    assert runtime.tool_execution_traces[0].invocation.tool_name == "explode"
+    assert runtime.tool_execution_traces[0].invocation.arguments_as_mapping() == {"message": "boom"}
+    assert runtime.tool_execution_traces[0].policy_decision is ToolPolicyDecision.ALLOW
+    assert runtime.tool_execution_traces[0].status is ToolResultStatus.ERROR
+    assert runtime.tool_execution_traces[1].invocation.tool_name == "explode"
+    assert runtime.tool_execution_traces[1].invocation.arguments_as_mapping() == {
+        "message": "boom-again"
+    }
+    assert runtime.tool_execution_traces[1].policy_decision is ToolPolicyDecision.ALLOW
+    assert runtime.tool_execution_traces[1].status is ToolResultStatus.ERROR
     assert transitions == [
         AgentExecutionStatus.CONTEXT,
         AgentExecutionStatus.THINK,

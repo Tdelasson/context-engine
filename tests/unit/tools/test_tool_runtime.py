@@ -130,6 +130,14 @@ def test_tool_runtime_executes_valid_tool_invocation_and_returns_structured_resu
     assert result.error is None
     assert tool.was_executed is True
     assert tool.last_invocation is invocation
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.tool_name == "add"
+    assert trace.invocation.arguments_as_mapping() == {"a": 2, "b": 3}
+    assert trace.policy_decision is ToolPolicyDecision.ALLOW
+    assert trace.status is ToolResultStatus.SUCCESS
+    assert trace.output_as_mapping() == {"value": 5}
+    assert trace.error is None
 
 
 def test_tool_runtime_evaluates_allow_policy_before_execution() -> None:
@@ -154,7 +162,9 @@ def test_tool_runtime_denies_tool_invocation_without_execution() -> None:
     policy = ToolNamePolicy.from_mapping({"add": ToolPolicyDecision.DENY})
     runtime = ToolRuntime(registry, policy=policy)
 
-    result = runtime.execute(ToolInvocation.from_mapping("add", {"a": 2, "b": 3}))
+    result = runtime.execute(
+        ToolInvocation.from_mapping("add", {"a": 2, "b": 3}, invocation_id="tool-call-1")
+    )
 
     assert result.status is ToolResultStatus.ERROR
     assert result.output is None
@@ -162,6 +172,16 @@ def test_tool_runtime_denies_tool_invocation_without_execution() -> None:
     assert result.error.error_type == "ToolPolicyDeniedError"
     assert result.error.message == "Tool invocation denied by policy: add"
     assert tool.was_executed is False
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.tool_name == "add"
+    assert trace.invocation.arguments_as_mapping() == {"a": 2, "b": 3}
+    assert trace.invocation.invocation_id == "tool-call-1"
+    assert trace.policy_decision is ToolPolicyDecision.DENY
+    assert trace.status is ToolResultStatus.ERROR
+    assert trace.error is not None
+    assert trace.error.error_type == "ToolPolicyDeniedError"
+    assert trace.error.message == "Tool invocation denied by policy: add"
 
 
 def test_tool_runtime_policy_can_distinguish_tools_deterministically() -> None:
@@ -198,6 +218,14 @@ def test_tool_runtime_rejects_invalid_input_without_execution() -> None:
     assert result.error.error_type == "ToolInputValidationError"
     assert "Type mismatches: a expected int, got str" in result.error.message
     assert tool.was_executed is False
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.tool_name == "add"
+    assert trace.invocation.arguments_as_mapping() == {"a": "2", "b": 3}
+    assert trace.policy_decision is None
+    assert trace.status is ToolResultStatus.ERROR
+    assert trace.error is not None
+    assert trace.error.error_type == "ToolInputValidationError"
 
 
 def test_tool_runtime_validates_input_before_policy_evaluation() -> None:
@@ -224,6 +252,14 @@ def test_tool_runtime_rejects_unknown_tool_invocation_deterministically() -> Non
     assert result.error is not None
     assert result.error.error_type == "UnknownToolError"
     assert result.error.message == "Unknown tool: unknown"
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.tool_name == "unknown"
+    assert trace.invocation.arguments_as_mapping() == {"a": 1}
+    assert trace.policy_decision is None
+    assert trace.status is ToolResultStatus.ERROR
+    assert trace.error is not None
+    assert trace.error.error_type == "UnknownToolError"
 
 
 def test_tool_runtime_captures_execution_failure_as_structured_error_result() -> None:
@@ -238,3 +274,36 @@ def test_tool_runtime_captures_execution_failure_as_structured_error_result() ->
     assert result.error is not None
     assert result.error.error_type == "RuntimeError"
     assert result.error.message == "failed: boom"
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.tool_name == "explode"
+    assert trace.invocation.arguments_as_mapping() == {"message": "boom"}
+    assert trace.policy_decision is ToolPolicyDecision.ALLOW
+    assert trace.status is ToolResultStatus.ERROR
+    assert trace.output is None
+    assert trace.error is not None
+    assert trace.error.error_type == "RuntimeError"
+    assert trace.error.message == "failed: boom"
+
+
+def test_tool_runtime_records_distinct_traces_in_deterministic_execution_order() -> None:
+    registry = ToolRegistry()
+    add_tool = _AddTool()
+    multiply_tool = _MultiplyTool()
+    registry.register(add_tool)
+    registry.register(multiply_tool)
+    runtime = ToolRuntime(registry, policy=AllowAllToolPolicy())
+
+    runtime.execute(ToolInvocation.from_mapping("add", {"a": 1, "b": 2}, invocation_id="call-a"))
+    runtime.execute(
+        ToolInvocation.from_mapping("multiply", {"a": 3, "b": 4}, invocation_id="call-b")
+    )
+
+    traces = runtime.execution_traces
+    assert len(traces) == 2
+    assert traces[0].invocation.tool_name == "add"
+    assert traces[0].invocation.invocation_id == "call-a"
+    assert traces[0].output_as_mapping() == {"value": 3}
+    assert traces[1].invocation.tool_name == "multiply"
+    assert traces[1].invocation.invocation_id == "call-b"
+    assert traces[1].output_as_mapping() == {"value": 12}

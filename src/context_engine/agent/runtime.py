@@ -26,6 +26,7 @@ from context_engine.models import (
 )
 from context_engine.tools import (
     Tool,
+    ToolExecutionTrace,
     ToolInvocation,
     ToolResult,
     ToolResultStatus,
@@ -99,6 +100,14 @@ class AgentRuntime:
     def tool_results(self) -> tuple[ToolResult, ...]:
         """Return structured immutable tool results captured during execution."""
         return tuple(self._tool_results)
+
+    @property
+    def tool_execution_traces(self) -> tuple[ToolExecutionTrace, ...]:
+        """Return provider-independent execution traces captured by the tool runtime."""
+        if self._tool_runtime is None:
+            return ()
+        traces = getattr(self._tool_runtime, "execution_traces", ())
+        return tuple(traces)
 
     @property
     def is_terminal(self) -> bool:
@@ -450,6 +459,7 @@ class AgentRuntime:
         invocation = ToolInvocation(
             tool_name=decision.tool_name,
             arguments=decision.tool_arguments or tuple(),
+            invocation_id=decision.tool_call_id,
         )
 
         return self._tool_runtime.execute(invocation)
@@ -474,7 +484,7 @@ class AgentRuntime:
         return ModelToolCall.from_mapping(
             tool_name=decision.tool_name,
             arguments=decision.tool_arguments_as_mapping(),
-            tool_call_id=f"call-{len(self._tool_results) + 1}",
+            tool_call_id=decision.tool_call_id or f"call-{len(self._tool_results) + 1}",
         )
 
     def _build_model_tool_result_message(

@@ -17,6 +17,7 @@ from context_engine.tools.policy import (
 from context_engine.tools.runtime import (
     Tool,
     ToolExecutionErrorDetails,
+    ToolExecutionTrace,
     ToolInputField,
     ToolInputSchema,
     ToolInvocation,
@@ -30,6 +31,7 @@ from context_engine.tools.runtime import (
 __all__ = [
     "DuplicateToolRegistrationError",
     "Tool",
+    "ToolExecutionTrace",
     "ToolExecutionErrorDetails",
     "ToolInputField",
     "ToolInputSchema",
