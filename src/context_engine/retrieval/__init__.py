@@ -15,6 +15,13 @@ from context_engine.retrieval.local_embedding_provider import (
     LocalEmbeddingProviderInitializationError,
 )
 from context_engine.retrieval.qdrant_vector_store import QdrantVectorStore
+from context_engine.retrieval.retriever import (
+    EmbeddingVectorStoreRetriever,
+    RetrievalRequest,
+    Retriever,
+    RetrieverConfigurationError,
+    RetrieverError,
+)
 from context_engine.retrieval.vector_store import (
     MetadataFilter,
     SearchResult,
@@ -39,6 +46,11 @@ __all__ = [
     "LocalEmbeddingProviderInferenceError",
     "LocalEmbeddingProviderInitializationError",
     "QdrantVectorStore",
+    "Retriever",
+    "RetrieverError",
+    "RetrieverConfigurationError",
+    "RetrievalRequest",
+    "EmbeddingVectorStoreRetriever",
     "SearchResult",
     "VectorDistanceMetric",
     "VectorStore",
