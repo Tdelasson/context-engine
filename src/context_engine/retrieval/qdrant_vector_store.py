@@ -19,6 +19,9 @@ from context_engine.retrieval.vector_store import (
     VectorStoreRecord,
 )
 
+_SYSTEM_RECORD_PAYLOAD_KEY = "_context_engine_system_record"
+_COLLECTION_CONFIG_PAYLOAD_KEY = "_context_engine_collection_config"
+
 
 class QdrantVectorStore(VectorStore):
     """Qdrant implementation of the provider-independent VectorStore contract."""
@@ -122,6 +125,7 @@ class QdrantVectorStore(VectorStore):
                 distance=self._to_qdrant_distance(self._config.distance_metric),
             ),
         )
+        self._persist_collection_config()
 
     def _validate_collection_compatibility(self) -> None:
         collection = self._client.get_collection(self._config.collection_name)
@@ -147,6 +151,18 @@ class QdrantVectorStore(VectorStore):
                 f"expected {self._config.distance_metric.value} but found {vector_params.distance}."
             )
 
+        config_embedding_model_id = self._read_collection_embedding_model_id()
+        if config_embedding_model_id is None:
+            raise VectorStoreCompatibilityError(
+                "Collection compatibility metadata missing embedding model identity."
+            )
+        if config_embedding_model_id != self._config.embedding_model_id:
+            raise VectorStoreCompatibilityError(
+                "Collection embedding model mismatch: "
+                f"expected '{self._config.embedding_model_id}' but found "
+                f"'{config_embedding_model_id}'."
+            )
+
     def _extract_vector_params(self, vectors_config: Any) -> Any | None:
         if hasattr(vectors_config, "size") and hasattr(vectors_config, "distance"):
             return vectors_config
@@ -163,6 +179,12 @@ class QdrantVectorStore(VectorStore):
                 match=self._qdrant_models.MatchValue(value=self._config.embedding_model_id),
             )
         ]
+        must_not_conditions = [
+            self._qdrant_models.FieldCondition(
+                key=_SYSTEM_RECORD_PAYLOAD_KEY,
+                match=self._qdrant_models.MatchValue(value=True),
+            )
+        ]
         if metadata_filter is not None:
             for metadata_key, metadata_value in metadata_filter.equals:
                 must_conditions.append(
@@ -171,7 +193,55 @@ class QdrantVectorStore(VectorStore):
                         match=self._qdrant_models.MatchValue(value=metadata_value),
                     )
                 )
-        return self._qdrant_models.Filter(must=must_conditions)
+        return self._qdrant_models.Filter(must=must_conditions, must_not=must_not_conditions)
+
+    def _persist_collection_config(self) -> None:
+        self._client.upsert(
+            collection_name=self._config.collection_name,
+            points=[
+                self._qdrant_models.PointStruct(
+                    id=_qdrant_collection_config_point_id(
+                        collection_name=self._config.collection_name
+                    ),
+                    vector=[0.0] * self._config.dimensions,
+                    payload={
+                        _SYSTEM_RECORD_PAYLOAD_KEY: True,
+                        _COLLECTION_CONFIG_PAYLOAD_KEY: True,
+                        "embedding_model_id": self._config.embedding_model_id,
+                        "embedding_dimensions": self._config.dimensions,
+                    },
+                )
+            ],
+            wait=True,
+        )
+
+    def _read_collection_embedding_model_id(self) -> str | None:
+        points = self._client.retrieve(
+            collection_name=self._config.collection_name,
+            ids=[_qdrant_collection_config_point_id(collection_name=self._config.collection_name)],
+            with_payload=True,
+            with_vectors=False,
+        )
+        if points:
+            payload = cast(dict[str, Any], points[0].payload or {})
+            embedding_model_id = payload.get("embedding_model_id")
+            if isinstance(embedding_model_id, str) and embedding_model_id:
+                return embedding_model_id
+
+        points_page, _ = self._client.scroll(
+            collection_name=self._config.collection_name,
+            limit=1,
+            with_payload=True,
+            with_vectors=False,
+        )
+        for point in points_page:
+            payload = cast(dict[str, Any], point.payload or {})
+            if payload.get(_SYSTEM_RECORD_PAYLOAD_KEY) is True:
+                continue
+            embedding_model_id = payload.get("embedding_model_id")
+            if isinstance(embedding_model_id, str) and embedding_model_id:
+                return embedding_model_id
+        return None
 
     def _build_search_result(self, point: Any) -> SearchResult:
         payload = cast(dict[str, Any], point.payload or {})
@@ -229,3 +299,8 @@ def _load_qdrant_client_dependencies() -> tuple[Any, Any]:
 def _qdrant_point_id_for_document_id(*, collection_name: str, document_id: str) -> str:
     namespace = uuid.uuid5(uuid.NAMESPACE_URL, f"context-engine:qdrant:{collection_name}")
     return str(uuid.uuid5(namespace, document_id))
+
+
+def _qdrant_collection_config_point_id(*, collection_name: str) -> str:
+    namespace = uuid.uuid5(uuid.NAMESPACE_URL, f"context-engine:qdrant-config:{collection_name}")
+    return str(uuid.uuid5(namespace, "collection-config"))
