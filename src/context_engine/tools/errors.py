@@ -19,3 +19,11 @@ class ToolInputValidationError(ToolRuntimeError, ValueError):
 
 class ToolPolicyDeniedError(ToolRuntimeError, PermissionError):
     """Raised when tool invocation is denied by deterministic policy."""
+
+
+class ToolApprovalRejectedError(ToolRuntimeError, PermissionError):
+    """Raised when a required human approval is explicitly rejected."""
+
+
+class ToolApprovalRequiredError(ToolRuntimeError, PermissionError):
+    """Raised when approval is required but no approval resolver is configured."""

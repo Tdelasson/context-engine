@@ -1,7 +1,15 @@
 """Tool runtime abstractions and execution boundaries."""
 
+from context_engine.tools.approval import (
+    ToolApprovalDecision,
+    ToolApprovalRequest,
+    ToolApprovalResolution,
+    ToolApprovalResolver,
+)
 from context_engine.tools.errors import (
     DuplicateToolRegistrationError,
+    ToolApprovalRejectedError,
+    ToolApprovalRequiredError,
     ToolInputValidationError,
     ToolPolicyDeniedError,
     ToolRuntimeError,
@@ -31,6 +39,12 @@ from context_engine.tools.runtime import (
 __all__ = [
     "DuplicateToolRegistrationError",
     "Tool",
+    "ToolApprovalDecision",
+    "ToolApprovalRejectedError",
+    "ToolApprovalRequest",
+    "ToolApprovalRequiredError",
+    "ToolApprovalResolution",
+    "ToolApprovalResolver",
     "ToolExecutionTrace",
     "ToolExecutionErrorDetails",
     "ToolInputField",

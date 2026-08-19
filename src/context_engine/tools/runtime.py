@@ -5,8 +5,15 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
+from context_engine.tools.approval import (
+    ToolApprovalDecision,
+    ToolApprovalRequest,
+    ToolApprovalResolver,
+)
 from context_engine.tools.errors import (
     DuplicateToolRegistrationError,
+    ToolApprovalRejectedError,
+    ToolApprovalRequiredError,
     ToolInputValidationError,
     ToolPolicyDeniedError,
     ToolRuntimeError,
@@ -148,6 +155,7 @@ class ToolExecutionTrace:
 
     invocation: ToolInvocation
     policy_decision: ToolPolicyDecision | None
+    approval_decision: ToolApprovalDecision | None
     status: ToolResultStatus
     output: tuple[tuple[str, object], ...] | None = None
     error: ToolExecutionErrorDetails | None = None
@@ -184,9 +192,15 @@ class ToolRegistry:
 class ToolRuntime:
     """Runtime-owned deterministic boundary for tool invocation and execution."""
 
-    def __init__(self, registry: ToolRegistry, policy: ToolPolicy | None = None) -> None:
+    def __init__(
+        self,
+        registry: ToolRegistry,
+        policy: ToolPolicy | None = None,
+        approval_resolver: ToolApprovalResolver | None = None,
+    ) -> None:
         self._registry = registry
         self._policy = policy or AllowAllToolPolicy()
+        self._approval_resolver = approval_resolver
         self._execution_traces: list[ToolExecutionTrace] = []
 
     def list_tools(self) -> tuple[Tool, ...]:
@@ -201,6 +215,7 @@ class ToolRuntime:
     def execute(self, invocation: ToolInvocation) -> ToolResult:
         """Resolve, validate, and execute one invocation deterministically."""
         policy_decision: ToolPolicyDecision | None = None
+        approval_decision: ToolApprovalDecision | None = None
         try:
             tool = self._registry.get(invocation.tool_name)
             arguments = invocation.arguments_as_mapping()
@@ -212,6 +227,24 @@ class ToolRuntime:
                     policy_evaluation.reason
                     or f"Tool invocation denied by policy: {invocation.tool_name}"
                 )
+            if policy_evaluation.decision is ToolPolicyDecision.REQUIRE_APPROVAL:
+                if self._approval_resolver is None:
+                    raise ToolApprovalRequiredError(
+                        "Tool invocation requires explicit human approval, "
+                        "but no approval resolver is configured."
+                    )
+                approval_resolution = self._approval_resolver.resolve(
+                    ToolApprovalRequest(
+                        invocation=invocation,
+                        policy_evaluation=policy_evaluation,
+                    )
+                )
+                approval_decision = approval_resolution.decision
+                if approval_resolution.decision is ToolApprovalDecision.REJECTED:
+                    raise ToolApprovalRejectedError(
+                        approval_resolution.reason
+                        or f"Tool invocation rejected by human approval: {invocation.tool_name}"
+                    )
             output = tool.execute(invocation)
         except ToolRuntimeError as exc:
             result = ToolResult(
@@ -226,6 +259,7 @@ class ToolRuntime:
                 ToolExecutionTrace(
                     invocation=invocation,
                     policy_decision=policy_decision,
+                    approval_decision=approval_decision,
                     status=result.status,
                     output=result.output,
                     error=result.error,
@@ -245,6 +279,7 @@ class ToolRuntime:
                 ToolExecutionTrace(
                     invocation=invocation,
                     policy_decision=policy_decision,
+                    approval_decision=approval_decision,
                     status=result.status,
                     output=result.output,
                     error=result.error,
@@ -261,6 +296,7 @@ class ToolRuntime:
             ToolExecutionTrace(
                 invocation=invocation,
                 policy_decision=policy_decision,
+                approval_decision=approval_decision,
                 status=result.status,
                 output=result.output,
                 error=result.error,
