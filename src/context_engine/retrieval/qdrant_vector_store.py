@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import inspect
 import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, cast
@@ -21,6 +22,7 @@ from context_engine.retrieval.vector_store import (
 
 _SYSTEM_RECORD_PAYLOAD_KEY = "_context_engine_system_record"
 _COLLECTION_CONFIG_PAYLOAD_KEY = "_context_engine_collection_config"
+_COLLECTION_METADATA_KEY = "_context_engine_collection_config"
 
 
 class QdrantVectorStore(VectorStore):
@@ -118,14 +120,18 @@ class QdrantVectorStore(VectorStore):
             self._validate_collection_compatibility()
             return
 
-        self._client.create_collection(
-            collection_name=self._config.collection_name,
-            vectors_config=self._qdrant_models.VectorParams(
+        create_collection_kwargs: dict[str, Any] = {
+            "collection_name": self._config.collection_name,
+            "vectors_config": self._qdrant_models.VectorParams(
                 size=self._config.dimensions,
                 distance=self._to_qdrant_distance(self._config.distance_metric),
             ),
-        )
-        self._persist_collection_config()
+        }
+        if "metadata" in inspect.signature(self._client.create_collection).parameters:
+            create_collection_kwargs["metadata"] = self._collection_config_payload()
+        self._client.create_collection(**create_collection_kwargs)
+        if "metadata" not in create_collection_kwargs:
+            self._persist_collection_config()
 
     def _validate_collection_compatibility(self) -> None:
         collection = self._client.get_collection(self._config.collection_name)
@@ -216,6 +222,14 @@ class QdrantVectorStore(VectorStore):
         )
 
     def _read_collection_embedding_model_id(self) -> str | None:
+        collection = self._client.get_collection(self._config.collection_name)
+        collection_metadata = _extract_collection_metadata(cast(Any, collection))
+        config_payload = collection_metadata.get(_COLLECTION_METADATA_KEY)
+        if isinstance(config_payload, Mapping):
+            embedding_model_id = config_payload.get("embedding_model_id")
+            if isinstance(embedding_model_id, str) and embedding_model_id:
+                return embedding_model_id
+
         points = self._client.retrieve(
             collection_name=self._config.collection_name,
             ids=[_qdrant_collection_config_point_id(collection_name=self._config.collection_name)],
@@ -242,6 +256,14 @@ class QdrantVectorStore(VectorStore):
             if isinstance(embedding_model_id, str) and embedding_model_id:
                 return embedding_model_id
         return None
+
+    def _collection_config_payload(self) -> dict[str, object]:
+        return {
+            _COLLECTION_METADATA_KEY: {
+                "embedding_model_id": self._config.embedding_model_id,
+                "embedding_dimensions": self._config.dimensions,
+            }
+        }
 
     def _build_search_result(self, point: Any) -> SearchResult:
         payload = cast(dict[str, Any], point.payload or {})
@@ -304,3 +326,13 @@ def _qdrant_point_id_for_document_id(*, collection_name: str, document_id: str) 
 def _qdrant_collection_config_point_id(*, collection_name: str) -> str:
     namespace = uuid.uuid5(uuid.NAMESPACE_URL, f"context-engine:qdrant-config:{collection_name}")
     return str(uuid.uuid5(namespace, "collection-config"))
+
+
+def _extract_collection_metadata(collection: Any) -> Mapping[str, object]:
+    config = getattr(collection, "config", None)
+    if config is None:
+        return {}
+    metadata = getattr(config, "metadata", None)
+    if isinstance(metadata, Mapping):
+        return cast(Mapping[str, object], metadata)
+    return {}
