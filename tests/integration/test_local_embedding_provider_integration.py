@@ -22,6 +22,7 @@ def _build_local_provider() -> LocalEmbeddingProvider:
     model_reference = os.getenv("CONTEXT_ENGINE_EMBEDDING_MODEL")
     if not model_reference:
         pytest.skip("Set CONTEXT_ENGINE_EMBEDDING_MODEL to a locally available embedding model.")
+    assert model_reference is not None
 
     model_id = os.getenv("CONTEXT_ENGINE_EMBEDDING_MODEL_ID", model_reference)
     batch_size = int(os.getenv("CONTEXT_ENGINE_EMBEDDING_BATCH_SIZE", "8"))
@@ -42,6 +43,7 @@ def _build_local_provider() -> LocalEmbeddingProvider:
         )
     except LocalEmbeddingProviderInitializationError as exc:
         pytest.skip(f"Local embedding model/runtime not available for integration test: {exc}")
+    raise AssertionError("pytest.skip should have exited the test before reaching this point.")
 
 
 def test_local_embedding_provider_with_real_model() -> None:
