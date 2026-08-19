@@ -15,3 +15,7 @@ class UnknownToolError(ToolRuntimeError, LookupError):
 
 class ToolInputValidationError(ToolRuntimeError, ValueError):
     """Raised when tool invocation input fails schema validation."""
+
+
+class ToolPolicyDeniedError(ToolRuntimeError, PermissionError):
+    """Raised when tool invocation is denied by deterministic policy."""

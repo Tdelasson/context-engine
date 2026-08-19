@@ -29,6 +29,8 @@ from context_engine.tools import (
     ToolInputField,
     ToolInputSchema,
     ToolInvocation,
+    ToolNamePolicy,
+    ToolPolicyDecision,
     ToolRegistry,
     ToolResultStatus,
     ToolRuntime,
@@ -754,6 +756,63 @@ def test_runtime_run_tool_call_unknown_tool_error_is_returned_to_model_for_recov
     assert second_request.messages[-1].tool_result.status is ModelToolResultStatus.ERROR
     assert second_request.messages[-1].tool_result.error_type == "UnknownToolError"
     assert second_request.messages[-1].tool_result.error_message == "Unknown tool: missing"
+
+
+def test_runtime_run_denied_tool_call_is_returned_to_model_for_recovery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_interpret_model_decisions(
+        monkeypatch,
+        [
+            ModelDecision.tool_call(tool_name="add", arguments={"a": 2, "b": 3}),
+            ModelDecision(kind=ModelDecisionKind.RESPOND, proposed_response="Denied by policy."),
+        ],
+    )
+    registry = ToolRegistry()
+    add_tool = _AddTool()
+    registry.register(add_tool)
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="respond",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
+    )
+    runtime = AgentRuntime(
+        model_gateway=gateway,
+        tool_runtime=ToolRuntime(
+            registry,
+            policy=ToolNamePolicy.from_mapping({"add": ToolPolicyDecision.DENY}),
+        ),
+    )
+
+    result = runtime.run(model_id="mock-model", user_prompt="What is 2+3?")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert result.proposed_response == "Denied by policy."
+    assert result.model_iterations == 2
+    assert add_tool.was_executed is False
+    assert len(runtime.tool_results) == 1
+    assert runtime.tool_results[0].status is ToolResultStatus.ERROR
+    assert runtime.tool_results[0].error is not None
+    assert runtime.tool_results[0].error.error_type == "ToolPolicyDeniedError"
+    assert runtime.tool_results[0].error.message == "Tool invocation denied by policy: add"
+    second_request = gateway.requests[1]
+    assert second_request.messages[-1].role is ModelRole.TOOL
+    assert second_request.messages[-1].tool_result is not None
+    assert second_request.messages[-1].tool_result.status is ModelToolResultStatus.ERROR
+    assert second_request.messages[-1].tool_result.error_type == "ToolPolicyDeniedError"
+    assert (
+        second_request.messages[-1].tool_result.error_message
+        == "Tool invocation denied by policy: add"
+    )
 
 
 def test_runtime_run_tool_call_invalid_arguments_can_be_corrected_by_model(
