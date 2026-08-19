@@ -7,311 +7,185 @@
 
 ## Context
 
-Context Engine is designed to support applications that can register and
-execute tools.
+Context Engine is designed to support applications that can register and execute tools. Tools may eventually perform meaningful side effects such as filesystem writes, HTTP requests, external data mutations, playlist changes, messaging, or system operations.
 
-Tools may eventually perform operations with meaningful side effects, such
-as:
-
-- reading or writing files
-- making HTTP requests
-- modifying external data
-- creating playlists
-- sending messages
-- executing system-level operations
-
-Tools are therefore an important security boundary.
-
-The project also allows applications to register their own tools. This is
-necessary for Context Engine to be useful as a platform, but it introduces a
-trust boundary: application-provided tools cannot automatically be assumed
-to be safe.
-
-The LLM must also not be trusted to decide whether a tool is safe to execute.
-
-The architecture therefore needs a central mechanism that controls whether
-a proposed tool action is allowed to execute.
+The LLM must not be trusted to decide whether a proposed action is safe to execute. Application-provided tools must also not be able to bypass a platform-controlled execution boundary.
 
 ## Decision
 
-Context Engine will enforce a runtime-owned security boundary between agent
-tool proposals and tool execution.
+Context Engine enforces a runtime-owned security boundary between model-generated tool proposals and actual tool execution.
 
-The execution flow will be:
+The implemented execution flow is:
 
 ```text
 LLM
- |
- v
+ ↓
 Structured Tool Proposal
- |
- v
-Runtime Validation
- |
- v
-Policy / Permission Check
- |
- v
-Tool Execution
- |
- v
-Structured Tool Result
- |
- v
-Agent Runtime
+ ↓
+Tool Registry Lookup
+ ↓
+Input Schema Validation
+ ↓
+Policy Evaluation
+ ├── ALLOW ───────────────┐
+ ├── DENY                 │
+ └── REQUIRE_APPROVAL     │
+          ↓              │
+     Approval Resolver   │
+       ├─ APPROVED ──────┘
+       └─ REJECTED
+                ↓
+          Tool Execution
+                ↓
+            ToolResult
+                ↓
+        ToolExecutionTrace
+                ↓
+               Agent
 ```
 
-The Agent Runtime owns the execution boundary.
-
-Application code may register tools, but registered tools do not receive
-authority to bypass runtime validation, policy checks, or permission
-mechanisms.
-
-The LLM may propose a tool call, but it cannot directly execute a tool.
-
-The runtime must validate the proposed tool call before execution,
-including the tool identity and arguments.
-
-Policy and permission checks must occur before a tool capable of external
-side effects is executed.
-
-Tools that require human approval must not execute until the required
-approval has been obtained.
+The Agent Runtime and Tool Runtime own this boundary. A model can propose a tool call, but it cannot execute the tool, bypass validation, override policy, or approve its own request.
 
 ## Trust Model
-Context Engine treats the following components differently:
 
 ### Runtime
 
-The runtime is responsible for enforcing execution rules.
-
-It is the authoritative component for:
-
-execution state
-transition validation
-tool-call validation
-policy enforcement
-permission checks
-execution control
+The runtime is authoritative for execution state, transition validation, tool-call validation, policy enforcement, approval handling, and execution control.
 
 ### Model
 
-The model is considered an untrusted decision-making component.
-
-Model output may contain:
-
-invalid tool names
-invalid arguments
-unsafe requests
-malformed structured output
-attempts to perform actions outside the permitted scope
-
-Model output must therefore be validated before it can affect external
-systems.
+The model is an untrusted decision-making component. Model output may contain invalid tool names, invalid arguments, unsafe requests, or malformed structured data.
 
 ### Application
 
-Applications are allowed to register tools.
-
-Application-provided tools are not automatically trusted merely because they
-are registered.
-
-The runtime must maintain the ability to control whether and how a tool
-executes.
+Applications may register tools, but registration does not grant unrestricted execution authority.
 
 ### Tool
 
-A tool is an execution capability.
+A tool is an execution capability. It cannot grant itself additional permissions or bypass the runtime security boundary.
 
-A tool should not be able to grant itself additional permissions or bypass
-the runtime security boundary.
+## Validation and Authorization Boundary
+
+Every model-generated tool proposal must establish that:
+
+- the requested tool is registered;
+- arguments conform to the tool's input schema;
+- the policy decision permits execution; and
+- any required approval has been obtained.
+
+Only then may the runtime invoke the tool.
+
+The current policy model supports three decisions:
+
+```text
+ALLOW
+DENY
+REQUIRE_APPROVAL
+```
+
+`ALLOW` executes immediately. `DENY` produces a structured failure without executing. `REQUIRE_APPROVAL` invokes the configured provider-independent approval resolver; the tool executes only after `APPROVED`.
+
+## Human Approval
+
+Human approval is deliberately modeled as a runtime abstraction rather than a UI concern.
+
+The current implementation provides a synchronous `ToolApprovalResolver` that receives the proposed invocation and policy evaluation and returns an explicit `APPROVED` or `REJECTED` decision.
+
+If approval is required but no resolver is configured, the runtime fails explicitly with an approval-required error and does not execute the tool. This is distinct from an explicit rejection: no approval resolution occurred.
+
+The current implementation does not provide interactive UI, asynchronous suspension/resumption, persistent approval requests, or an external approval service. Those concerns belong to a later application/API layer.
 
 ## Tool Registration
 
-Applications may register tools with Context Engine.
-
-A registered tool should expose, at minimum:
-
-a unique identifier
-a description
-an input schema
-an output contract
-execution behavior
-relevant permission or policy metadata
-
-Registration makes a tool available to the runtime; it does not by itself
-grant unrestricted execution authority.
-
-## Validation Boundary
-
-Every model-generated tool proposal must pass through runtime validation
-before execution.
-
-At minimum, validation must establish that:
-
-the requested tool exists
-the tool is registered
-the proposed arguments conform to the tool's schema
-the requested operation is permitted by the applicable policy
-required permissions or approvals are present
-
-Only after these checks succeed may the runtime invoke the tool.
+A registered tool exposes a unique name, description, input schema, and execution behavior. Registration makes a tool available to the runtime but does not bypass validation or policy.
 
 ## Side Effects
 
-Tools capable of external side effects require explicit policy handling.
+Side-effecting operations require explicit policy handling. Examples include filesystem writes, external API mutations, messaging, playlist changes, and system commands.
 
-Examples include:
+The runtime distinguishes these operations from unrestricted model behavior by requiring every tool call to cross the validation and authorization boundary.
 
-filesystem writes
-external API mutations
-sending messages
-creating or modifying playlists
-system command execution
+## Observability
 
-The runtime must not treat these operations as equivalent to read-only or
-pure operations.
+Tool execution produces a structured `ToolExecutionTrace`. The trace records the invocation, policy decision, approval decision when applicable, result status, output, errors, and tool-call identity.
 
-The policy layer will determine whether an operation is:
-
-allowed automatically
-denied
-requires explicit permission
-requires human approval
-
-The exact policy model will be defined during M3.
-
+This provides deterministic runtime observability without requiring an external telemetry or persistence system.
 
 ## Rationale
 
 This design preserves the project's core principle:
 
-LLMs should propose actions, not directly execute them.
+> LLMs propose actions; the runtime determines what is allowed to happen.
 
-It also creates a clear security boundary between:
-
-Decision
-
-and
-
-Execution
-
-The model can determine what it wants to accomplish, while the runtime
-determines whether the requested action is valid and permitted.
-
-This prevents a malicious or malformed tool proposal from directly causing
-an external side effect.
-
-It also prevents an application-provided tool from becoming an uncontrolled
-escape hatch around the runtime's security model.
+It creates a clear security boundary between model decision-making and side-effecting execution, while keeping policy and approval independently testable from model behavior.
 
 ## Alternatives Considered
 
 ### Direct model-to-tool execution
 
-The model could directly invoke registered tools.
-
-Rejected because:
-
-model output would have direct access to side effects
-validation and authorization would be harder to enforce centrally
-malformed or malicious model output could cause unintended actions
-observability and auditing would be weaker
+Rejected because model output would have direct access to side effects and central validation and authorization would be weaker.
 
 ### Application-owned security checks
 
-Each application could independently decide whether its tools are safe.
-
-Rejected because:
-
-security behavior would become inconsistent across applications
-individual applications could accidentally bypass important controls
-the platform would not have a consistent security boundary
-common policy enforcement would be duplicated
-
-Applications may still define application-specific policy, but execution
-must remain subject to the Context Engine runtime boundary.
+Rejected because security behavior would become inconsistent across applications and could be bypassed accidentally.
 
 ### Trust all registered tools
 
-Any tool registered by an application could execute without additional
-runtime checks.
-
-Rejected because:
-
-registration does not prove that a tool is safe
-malicious or compromised application code could introduce unsafe tools
-tools could bypass intended permission boundaries
-the runtime would lose meaningful control over execution
-
+Rejected because registration does not prove that a tool is safe and would remove meaningful runtime control.
 
 ### Prompt-based safety rules
 
-The model could be instructed through prompts not to perform unsafe actions.
-
-Rejected because:
-
-prompts are not a reliable security boundary
-model behavior is probabilistic
-prompt instructions can be misunderstood or ignored
-critical security controls should be executable and enforceable in code
-
+Rejected because prompts are not an enforceable security boundary for critical execution controls.
 
 ## Consequences
 
 ### Positive
-Tool execution has a clear security boundary.
-Model output cannot directly cause side effects.
-Application-provided tools remain possible without giving them unrestricted
-authority.
-Policy enforcement can be centralized.
-Human approval can be integrated into the execution flow.
-Tool execution can be consistently validated and observed.
-Security behavior can be tested independently of individual models.
+
+- Model output cannot directly execute tools.
+- Validation and authorization are centralized.
+- Human approval can be introduced without coupling the runtime to a UI.
+- Tool execution and failures are structured and observable.
+- Security behavior can be tested independently of individual models.
 
 ### Negative
-Tool execution requires additional runtime infrastructure.
-Tools must provide explicit schemas and metadata.
-Policy handling adds complexity to the execution path.
-Some operations will require explicit permission or human approval,
-increasing latency and reducing automation.
+
+- Tool execution requires runtime infrastructure and explicit schemas/policies.
+- Approval-required actions can add latency and reduce automation.
+- A future interactive approval flow will require an application/API layer beyond the current synchronous resolver.
 
 ## Security Properties
 
-The architecture should preserve the following invariants:
+The implementation preserves these invariants:
 
-No LLM output directly invokes a tool.
-No tool executes before runtime validation.
-No side-effecting tool executes before applicable policy checks.
-Required permissions or approvals must exist before execution.
-A registered tool cannot bypass the runtime security boundary.
-Tool execution should produce an observable execution result.
-Security failures must fail explicitly rather than silently degrading into
-unrestricted execution.
+- No LLM output directly invokes a tool.
+- No tool executes before runtime validation.
+- No side-effecting tool executes before policy evaluation.
+- A tool requiring approval does not execute before explicit approval.
+- A model cannot approve its own tool call.
+- A registered tool cannot bypass the runtime security boundary.
+- Tool execution produces an observable structured result/trace.
+- Security failures fail explicitly rather than silently degrading into unrestricted execution.
 
-## Implementation Direction
+## Implementation Status
 
-The detailed implementation will be developed as part of M3 — Deterministic
-Tool Use.
+The M3 implementation is complete. The relevant components are:
 
-Planned components include:
+- Tool interface
+- Tool registry
+- Tool input schemas and validation
+- Tool execution runtime
+- Policy layer
+- Human approval resolver
+- Structured tool errors
+- Tool execution tracing
 
-Tool interface
-Tool registry
-Tool schemas
-Argument validation
-Tool execution engine
-Policy layer
-Permission model
-Human approval mechanism
-Tool execution tracing
-
-The implementation should preserve the security invariants defined in this
-ADR.
+See `docs/architecture/tool-runtime.md` and `docs/product/roadmap.md` for the current implementation details and milestone status.
 
 ## Related Documentation
-AGENTS.md
-docs/product/roadmap.md
-docs/architecture/overview.md
-docs/architecture/decisions/ADR-001-explicit-agent-state-machine.md
-M3 — Deterministic Tool Use
+
+- `AGENTS.md`
+- `docs/product/roadmap.md`
+- `docs/product/PROJECT_CONTEXT.md`
+- `docs/architecture/overview.md`
+- `docs/architecture/tool-runtime.md`
+- `docs/architecture/decisions/ADR-001-explicit-agent-state-machine.md`

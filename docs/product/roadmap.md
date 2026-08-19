@@ -3,7 +3,7 @@
 **Version:** 0.1
 **Status:** Active
 **Project:** Context Engine
-**Last Updated:** 2026-08-11
+**Last Updated:** 2026-08-19
 
 ---
 
@@ -19,19 +19,13 @@ Each milestone should:
 4. Leave the codebase in a usable state.
 5. Be documented well enough for another developer or AI agent to understand.
 
-The initial roadmap is planned as approximately **16 weeks of development**.
-
-The exact duration of individual milestones may change as implementation progresses.
+The initial roadmap is planned as approximately **16 weeks of development**. The exact duration of individual milestones may change as implementation progresses.
 
 ---
 
 # 2. Development Philosophy
 
-Context Engine should be developed incrementally.
-
-The project should not begin by implementing the complete agent architecture.
-
-Instead, complexity should be introduced progressively:
+Context Engine should be developed incrementally. Complexity should be introduced progressively:
 
 ```text
 Foundation
@@ -55,26 +49,26 @@ Evaluation & MLOps
 v1.0
 ```
 
-Each phase should build on capabilities established in previous phases.
-
 ---
 
 # 3. Milestone Overview
 
-| Milestone | Focus                      | Approx. Duration |
-| --------- | -------------------------- | ---------------: |
-| M1        | Foundation                 |           Week 1 |
-| M2        | Agent Runtime              |        Weeks 2–3 |
-| M3        | Deterministic Tool Use     |           Week 4 |
-| M4        | Embeddings & Vector Search |        Weeks 5–6 |
-| M5        | Modern RAG                 |        Weeks 7–8 |
-| M6        | Context Engine             |       Weeks 9–10 |
-| M7        | Local LLM Inference        |          Week 11 |
-| M8        | Context-Aware DJ           |      Weeks 12–13 |
-| M9        | Evaluation & MLOps         |          Week 14 |
-| M10       | Hardening & v1.0           |      Weeks 15–16 |
+| Milestone | Focus | Approx. Duration |
+| --- | --- | ---: |
+| M1 | Foundation | Week 1 |
+| M2 | Agent Runtime | Weeks 2–3 |
+| M3 | Deterministic Tool Use | Week 4 |
+| M4 | Embeddings & Vector Search | Weeks 5–6 |
+| M5 | Modern RAG | Weeks 7–8 |
+| M6 | Context Engine | Weeks 9–10 |
+| M7 | Local LLM Inference | Week 11 |
+| M8 | Context-Aware DJ | Weeks 12–13 |
+| M9 | Evaluation & MLOps | Week 14 |
+| M10 | Hardening & v1.0 | Weeks 15–16 |
 
-The schedule is a target rather than a hard deadline.
+**Current milestone:** M4 — Embeddings & Vector Search
+
+**Completed milestones:** M1, M2, M3
 
 ---
 
@@ -119,6 +113,8 @@ Establish a clean software engineering foundation before implementing AI functio
 * CI runs automatically on pull requests.
 * A new AI agent can understand the repository from its documentation.
 
+**Status:** Complete.
+
 ---
 
 # 5. M2 — Agent Runtime
@@ -127,21 +123,7 @@ Establish a clean software engineering foundation before implementing AI functio
 
 ## Objective
 
-Build the first minimal agent runtime.
-
-The runtime should support:
-
-```text
-User Request
-     ↓
-Model
-     ↓
-Structured Response
-     ↓
-Agent State
-     ↓
-Final Response
-```
+Build the first minimal agent runtime supporting a controlled multi-step reasoning workflow.
 
 ## Deliverables
 
@@ -164,9 +146,9 @@ Final Response
 
 ## Exit Criteria
 
-A user should be able to provide a request and have the agent execute a controlled multi-step reasoning workflow.
+A user can provide a request and have the agent execute a controlled multi-step reasoning workflow. No external side effects are required yet.
 
-No external side effects are required yet.
+**Status:** Complete.
 
 ---
 
@@ -176,9 +158,9 @@ No external side effects are required yet.
 
 ## Objective
 
-Introduce controlled tool execution.
+Introduce controlled, deterministic tool execution between model proposals and external side effects.
 
-The architecture should become:
+## Implemented Architecture
 
 ```text
 LLM
@@ -188,12 +170,21 @@ Tool Proposal
 Schema Validation
  ↓
 Policy
- ↓
-Tool Execution
- ↓
-Tool Result
- ↓
-LLM
+ ├── ALLOW ───────────────┐
+ ├── DENY                 │
+ └── REQUIRE_APPROVAL     │
+          ↓               │
+       Approval            │
+       ├── APPROVED ──────┘
+       └── REJECTED
+                ↓
+          Tool Execution
+                ↓
+            ToolResult
+                ↓
+        ToolExecutionTrace
+                ↓
+               LLM
 ```
 
 ## Deliverables
@@ -209,17 +200,14 @@ LLM
 * Tool execution tracing
 * Human approval mechanism for selected tools
 
-## Example Tools
+## Implementation Sequence
 
-Initial tools may include:
+* **#29** — End-to-end calculator agent integration
+* **#32** — Tool policy enforcement
+* **#34** — Deterministic tool execution tracing
+* **#36** — Human approval for selected tool calls
 
-* calculator
-* filesystem read
-* filesystem write
-* HTTP request
-* mock external API
-
-External side effects should initially be tested using controlled or mock implementations.
+The calculator and local Ollama integration provide the current end-to-end demonstration. The model can propose a calculator call, while the runtime owns validation, policy, approval, execution, result propagation, and tracing.
 
 ## Learning Focus
 
@@ -232,17 +220,19 @@ External side effects should initially be tested using controlled or mock implem
 
 ## Exit Criteria
 
-The LLM cannot directly execute a tool.
-
-Every tool execution must pass through:
+The LLM cannot directly execute a tool. Every tool execution must pass through:
 
 ```text
 Validation
     ↓
 Policy
     ↓
+Approval when required
+    ↓
 Execution
 ```
+
+**Status:** Complete.
 
 ---
 
@@ -268,9 +258,7 @@ Build the foundation for semantic retrieval.
 
 ## Experiments
 
-Compare multiple embedding approaches.
-
-Measure:
+Compare multiple embedding approaches and measure:
 
 * retrieval relevance
 * latency
@@ -304,6 +292,8 @@ Retrieved
 
 and retrieval quality can be measured.
 
+**Status:** Next.
+
 ---
 
 # 8. M5 — Modern RAG
@@ -327,52 +317,6 @@ Build a production-oriented retrieval pipeline rather than a basic vector search
 * Query transformation where useful
 * Retrieval evaluation framework
 
-## Retrieval Pipeline
-
-The target architecture is:
-
-```text
-User Query
-    ↓
-Query Processing
-    ↓
-┌───────────────┐
-│ Dense Search  │
-│ Sparse Search │
-└───────┬───────┘
-        ↓
-   Candidate Set
-        ↓
-    Reranking
-        ↓
- Context Selection
-        ↓
-       Agent
-```
-
-## Experiments
-
-Compare:
-
-```text
-Vector Search
-vs.
-Sparse Search
-vs.
-Hybrid Search
-vs.
-Hybrid + Reranking
-```
-
-## Learning Focus
-
-* Modern RAG
-* Retrieval evaluation
-* Reranking
-* Chunking
-* Search quality
-* Information retrieval
-
 ## Exit Criteria
 
 The project has measurable retrieval benchmarks and can demonstrate why one retrieval strategy performs better than another.
@@ -387,34 +331,6 @@ The project has measurable retrieval benchmarks and can demonstrate why one retr
 
 Combine context, knowledge, retrieval, agents, and tools into the first actual Context Engine runtime.
 
-## Target Architecture
-
-```text
-                  Context Engine
-                        │
-        ┌───────────────┼───────────────┐
-        │               │               │
-        ▼               ▼               ▼
-     Context         Knowledge        Tools
-        │               │               │
-        └───────┬───────┴───────┬───────┘
-                ▼               │
-             Retrieval          │
-                │               │
-                └───────┬───────┘
-                        ▼
-                      Agent
-                        │
-                        ▼
-                    Policies
-                        │
-                        ▼
-                     Tools
-                        │
-                        ▼
-                     Result
-```
-
 ## Deliverables
 
 * Context model
@@ -427,29 +343,9 @@ Combine context, knowledge, retrieval, agents, and tools into the first actual C
 * Knowledge/context integration
 * Context-aware tool selection
 
-## Learning Focus
-
-* Context engineering
-* Agent architecture
-* Memory vs. knowledge
-* Context selection
-* Token efficiency
-
 ## Exit Criteria
 
-The runtime can combine:
-
-```text
-Current Context
-+
-Historical Context
-+
-Retrieved Knowledge
-+
-User Intent
-```
-
-to produce an agent workflow.
+The runtime can combine current context, historical context, retrieved knowledge, and user intent to produce an agent workflow.
 
 ---
 
@@ -474,8 +370,6 @@ Introduce local model serving and inference optimization.
 
 ## Benchmark Metrics
 
-Measure:
-
 * time to first token
 * tokens per second
 * total latency
@@ -483,27 +377,6 @@ Measure:
 * VRAM usage
 * CPU utilization
 * GPU utilization
-
-## Experiments
-
-Compare:
-
-* model sizes
-* quantization levels
-* inference configurations
-* local inference backends
-
-## Learning Focus
-
-* Local LLM serving
-* Inference optimization
-* Quantization
-* Hardware utilization
-* Model benchmarking
-
-## Exit Criteria
-
-Context Engine can perform its core AI workflow using at least one locally served model.
 
 ---
 
@@ -514,10 +387,6 @@ Context Engine can perform its core AI workflow using at least one locally serve
 ## Objective
 
 Build the first complete end-to-end application using Context Engine.
-
-## Example Request
-
-> "I'm working on deep learning and I'm getting tired. Build me a focused playlist based on what I normally listen to in this kind of situation, but avoid songs with vocals."
 
 ## System Flow
 
@@ -558,31 +427,6 @@ Result
 * Permission flow
 * User interface
 * Execution visualization
-
-## UX Goals
-
-The application should make it easy to understand:
-
-* what the user requested
-* what context was considered
-* what was retrieved
-* what the agent decided
-* what action was taken
-* what the final result was
-
-The interface should be polished enough to serve as the primary demonstration of Context Engine.
-
-## Learning Focus
-
-* End-to-end agent systems
-* External API integration
-* Context-aware recommendation
-* Production UX
-* Tool orchestration
-
-## Exit Criteria
-
-A user can interact with the application naturally and have Context Engine create a useful playlist based on contextual information.
 
 ---
 
@@ -631,18 +475,6 @@ Turn the project from an engineering prototype into a measurable AI system.
 * RAM
 * VRAM
 
-## Learning Focus
-
-* MLOps
-* AI evaluation
-* Experiment tracking
-* Observability
-* Regression testing
-
-## Exit Criteria
-
-A model, retrieval strategy, or agent implementation can be changed and quantitatively compared against a baseline.
-
 ---
 
 # 13. M10 — Hardening & v1.0
@@ -670,26 +502,6 @@ Turn the accumulated prototype into a coherent, documented, demonstrable first r
 * Release notes
 * v1.0 tag
 
-## Documentation
-
-The repository should clearly document:
-
-```text
-What is Context Engine?
-        ↓
-Why does it exist?
-        ↓
-How is it architected?
-        ↓
-How does it work?
-        ↓
-How do I run it?
-        ↓
-How do I build on it?
-        ↓
-What did we learn?
-```
-
 ## Exit Criteria
 
 A technically capable developer should be able to clone the repository, follow the documentation, run Context Engine locally, and understand its architecture.
@@ -698,81 +510,29 @@ A technically capable developer should be able to clone the repository, follow t
 
 # 14. Cross-Cutting Work
 
-Some activities span multiple milestones.
-
-## Testing
-
-Testing should be introduced from M1 and continuously improved.
-
----
-
-## Documentation
+Testing, documentation, AI-assisted development, and the GitHub issue → branch → PR → review → merge workflow span all milestones.
 
 Documentation should be updated whenever architecture or behavior changes.
 
 ---
 
-## AI-Assisted Development
-
-AI agents should be used throughout development for:
-
-* planning
-* implementation
-* debugging
-* testing
-* refactoring
-* code review
-* documentation
-
-The project should document significant lessons learned from AI-assisted development.
-
----
-
-## GitHub Workflow
-
-Development should generally follow:
-
-```text
-Issue
- ↓
-Agent Plan
- ↓
-Feature Branch
- ↓
-Implementation
- ↓
-Tests
- ↓
-Pull Request
- ↓
-AI Review
- ↓
-Human Review
- ↓
-Merge
-```
-
----
-
 # 15. Learning Map
 
-The roadmap is intentionally aligned with the project's learning goals.
-
-| Learning Goal            | Primary Milestone |
-| ------------------------ | ----------------- |
-| Agentic AI               | M2                |
-| Deterministic Tool Use   | M3                |
-| Embeddings               | M4                |
-| Vector Databases         | M4                |
-| Modern RAG               | M5                |
-| Context Engineering      | M6                |
-| Local LLM Serving        | M7                |
-| Inference Optimization   | M7                |
-| External AI Integrations | M8                |
-| MLOps                    | M9                |
-| AI Evaluation            | M9                |
-| Observability            | M9                |
-| Production Engineering   | M10               |
+| Learning Goal | Primary Milestone |
+| --- | --- |
+| Agentic AI | M2 |
+| Deterministic Tool Use | M3 |
+| Embeddings | M4 |
+| Vector Databases | M4 |
+| Modern RAG | M5 |
+| Context Engineering | M6 |
+| Local LLM Serving | M7 |
+| Inference Optimization | M7 |
+| External AI Integrations | M8 |
+| MLOps | M9 |
+| AI Evaluation | M9 |
+| Observability | M9 |
+| Production Engineering | M10 |
 
 ---
 
@@ -794,25 +554,13 @@ Evaluation
 Demonstrable Result
 ```
 
-Where measurable evaluation is applicable, it should be included.
+M3 satisfies this rule through its deterministic tool runtime implementation, automated unit/runtime coverage, architecture documentation, and local Ollama end-to-end calculator demonstration. Quantitative retrieval or model-quality evaluation is not applicable to M3 and begins in later milestones.
 
 ---
 
 # 17. Roadmap Changes
 
-The roadmap is allowed to evolve.
-
-Changes should be made when:
-
-* experiments invalidate an assumption
-* a technical dependency changes
-* a milestone proves larger or smaller than expected
-* a more valuable learning opportunity is discovered
-* architectural constraints require reprioritization
-
-Major roadmap changes should be documented in Git history and, where appropriate, an Architecture Decision Record.
-
-The roadmap should guide development without preventing useful iteration.
+The roadmap is allowed to evolve when experiments, technical dependencies, milestone scope, learning opportunities, or architectural constraints justify reprioritization. Major changes should be documented in Git history and, where appropriate, an ADR.
 
 ---
 
@@ -821,9 +569,9 @@ The roadmap should guide development without preventing useful iteration.
 Context Engine v1.0 should demonstrate:
 
 * [ ] Context-aware agent execution
-* [ ] Deterministic tool execution
-* [ ] Schema validation
-* [ ] Policy-controlled actions
+* [x] Deterministic tool execution
+* [x] Schema validation
+* [x] Policy-controlled actions
 * [ ] Embedding generation
 * [ ] Vector search
 * [ ] Modern RAG
@@ -834,35 +582,37 @@ Context Engine v1.0 should demonstrate:
 * [ ] Agent evaluation
 * [ ] Retrieval evaluation
 * [ ] Observability
-* [ ] Human-in-the-loop actions
+* [x] Human-in-the-loop actions
 * [ ] Context-Aware DJ reference application
 * [ ] Polished user interface
 * [ ] Complete developer documentation
-* [ ] Automated CI
-* [ ] Reproducible local setup
+* [x] Automated CI
+* [x] Reproducible local setup
 
 ---
 
 # 19. Current Status
 
-**Current milestone:** M1 — Foundation
+**Current milestone:** M4 — Embeddings & Vector Search
 
-**Project phase:** Initial setup
+**Project phase:** Embeddings and semantic retrieval foundation
 
-**Completed:**
+**Completed milestones:**
 
-* [x] Git repository created
-* [x] Initial repository structure created
-* [x] `AGENTS.md` created
-* [x] Initial `README.md` created
-* [x] PRD created
-* [x] PRD committed
+* [x] M1 — Foundation
+* [x] M2 — Agent Runtime
+* [x] M3 — Deterministic Tool Use
+
+**M3 implementation sequence:**
+
+* [x] #29 — End-to-end calculator agent integration
+* [x] #32 — Tool policy enforcement
+* [x] #34 — Deterministic tool execution tracing
+* [x] #36 — Human approval for selected tool calls
 
 **Next:**
 
-* [ ] Create roadmap
-* [ ] Create initial architecture overview
-* [ ] Configure GitHub Project
-* [ ] Create M1 issues
-* [ ] Configure CI
-* [ ] Begin implementation
+* [ ] Define the M4 embedding abstraction and provider-independent contract.
+* [ ] Implement embedding generation and vector storage foundations.
+* [ ] Add ingestion, metadata, similarity search, and filtering.
+* [ ] Establish retrieval-quality and performance experiments.

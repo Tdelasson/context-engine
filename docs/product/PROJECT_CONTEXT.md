@@ -2,14 +2,13 @@
 
 ## Project
 
-Context Engine is a local-first context-aware agent runtime for
-building intelligent, controllable AI applications.
+Context Engine is a local-first context-aware agent runtime for building intelligent, controllable AI applications.
 
 The first reference application will be Context-Aware DJ.
 
 ## Current milestone
 
-M2 — Agent Runtime
+M4 — Embeddings & Vector Search
 
 ## Development workflow
 
@@ -30,73 +29,65 @@ GitHub AI Agents are used for issue-driven implementation.
 - Product requirements: `docs/product/prd.md`
 - Roadmap: `docs/product/roadmap.md`
 - Architecture: `docs/architecture/overview.md`
-- AI agent rules: `AGENTS.md
+- Tool Runtime architecture: `docs/architecture/tool-runtime.md`
+- Architecture decisions: `docs/architecture/decisions/`
+- AI agent rules: `AGENTS.md`
 
 ## Core architecture decisions
 
-- Agent Runtime owns execution state.
-- Agent Runtime owns state transitions.
+- Agent Runtime owns execution state and state transitions.
 - State transitions are explicit and deterministic.
 - AgentExecutionState is immutable.
-- Runtime transitions are defined in an explicit transition map.
-- Runtime action/state types are controlled by the runtime.
-- Applications may register Tools.
-- Tools must pass through validation and policy before execution.
-- Model access must be provider-independent.
-- Context will eventually support both application context and agent/user context.
-- Context storage is logically separated from retrieval and knowledge.
-- Security boundaries must prevent malicious tools from bypassing runtime policy.
+- Applications may register tools, but tools must pass through runtime validation and policy before execution.
+- Tool policy can allow, deny, or require human approval.
+- Human approval is resolved through a provider-independent runtime abstraction.
+- Tool execution produces structured ToolResults and execution traces.
+- Model access is provider-independent.
+- Context is logically separated from knowledge and retrieval.
+- Security boundaries must prevent model-generated actions and tools from bypassing runtime policy.
 
 ## Current implementation
 
 ### M1 Foundation
 
-Completed:
-- repository structure
-- AGENTS.md
-- README.md
-- PRD
-- roadmap
-- architecture documentation
-- pyproject.toml
-- pytest
-- ruff
-- mypy
-- pre-commit
+Complete:
+- repository structure and documentation
+- Python project configuration
+- pytest, ruff, mypy, and pre-commit
 - GitHub Actions CI
 
 ### M2 Agent Runtime
 
-Completed:
-- AgentExecutionStatus
-- AgentExecutionState
-- explicit transition map
-- transition validation
-- AgentRuntime skeleton
+Complete:
+- explicit AgentExecutionState and transition map
+- deterministic AgentRuntime execution loop
+- provider-independent ModelGateway
+- structured model/tool-call contracts
+- Ollama gateway integration
 
-Current work:
-- Model Gateway abstraction
+### M3 Deterministic Tool Use
 
-## Current issue
+Complete:
+- typed tool interface and registry
+- input schema validation
+- deterministic ToolRuntime execution
+- ALLOW / DENY / REQUIRE_APPROVAL policy decisions
+- structured tool errors
+- ToolExecutionTrace
+- provider-independent human approval resolver
+- end-to-end local Ollama calculator tool-calling integration
 
-Issue #4:
-Define provider-independent Model Gateway abstraction.
+Implementation sequence:
+- #29 End-to-end calculator agent integration
+- #32 Tool policy enforcement
+- #34 Deterministic tool execution tracing
+- #36 Human approval for selected tool calls
 
-Scope:
-- model interface
-- typed request/response boundary
-- explicit model errors
-- mockable interface
+## Current work
 
-Out of scope:
-- OpenAI
-- Anthropic
-- Ollama
-- llama.cpp
-- local inference
-- embeddings
-- RAG
-- tool calling
+M4 — Embeddings & Vector Search.
+
+The next implementation focus is the provider-independent embedding abstraction and the foundations for vector storage, ingestion, similarity search, filtering, and retrieval evaluation.
 
 ## Roadmap
 
