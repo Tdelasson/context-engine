@@ -177,7 +177,7 @@ Optional environment variables:
 You can verify the `QdrantVectorStore` implementation with a local Qdrant instance.
 
 1. Install optional dependency:
-   - `pip install qdrant-client`
+   - `pip install "qdrant-client>=1.11"`
 2. Start Qdrant locally with Docker:
 
 ```bash

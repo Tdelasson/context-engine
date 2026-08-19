@@ -52,17 +52,16 @@ def _record(
     content: str,
     metadata: dict[str, object],
     vector: tuple[float, float],
+    embedding_model_id: str = "integration-model",
 ) -> VectorStoreRecord:
     return VectorStoreRecord(
         document=Document.from_mapping(document_id=document_id, content=content, metadata=metadata),
-        embedding=Embedding.from_sequence(
-            vector=vector, model_id="integration-model", dimensions=2
-        ),
+        embedding=Embedding.from_sequence(vector=vector, model_id=embedding_model_id, dimensions=2),
     )
 
 
-def _query(vector: tuple[float, float]) -> Embedding:
-    return Embedding.from_sequence(vector=vector, model_id="integration-model", dimensions=2)
+def _query(vector: tuple[float, float], embedding_model_id: str = "integration-model") -> Embedding:
+    return Embedding.from_sequence(vector=vector, model_id=embedding_model_id, dimensions=2)
 
 
 def test_qdrant_vector_store_upsert_search_filter_and_delete() -> None:
@@ -120,3 +119,28 @@ def test_qdrant_vector_store_rejects_collection_with_different_embedding_model()
 
     with pytest.raises(VectorStoreCompatibilityError, match="embedding model mismatch"):
         _build_store(collection_name=collection_name, embedding_model_id="model-b")
+
+
+def test_qdrant_vector_store_reopens_collection_with_metadata_compatibility() -> None:
+    _skip_unless_qdrant_integration_enabled()
+    collection_name = f"context-engine-it-{uuid.uuid4().hex}"
+    model_id = "model-a"
+    try:
+        store = _build_store(collection_name=collection_name, embedding_model_id=model_id)
+        reopened = _build_store(collection_name=collection_name, embedding_model_id=model_id)
+    except VectorStoreConfigurationError as exc:
+        pytest.skip(f"Qdrant integration dependencies/runtime unavailable: {exc}")
+
+    reopened.upsert(
+        (
+            _record(
+                document_id="doc-1",
+                content="metadata compatibility check",
+                metadata={"topic": "compatibility"},
+                vector=(1.0, 0.0),
+                embedding_model_id=model_id,
+            ),
+        )
+    )
+    results = store.search(_query((1.0, 0.0), embedding_model_id=model_id), top_k=1)
+    assert [result.document.document_id for result in results] == ["doc-1"]

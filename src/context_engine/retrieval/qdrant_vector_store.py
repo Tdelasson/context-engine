@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib
-import inspect
 import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, cast
@@ -20,8 +19,6 @@ from context_engine.retrieval.vector_store import (
     VectorStoreRecord,
 )
 
-_SYSTEM_RECORD_PAYLOAD_KEY = "_context_engine_system_record"
-_COLLECTION_CONFIG_PAYLOAD_KEY = "_context_engine_collection_config"
 _COLLECTION_METADATA_KEY = "_context_engine_collection_config"
 
 
@@ -126,12 +123,9 @@ class QdrantVectorStore(VectorStore):
                 size=self._config.dimensions,
                 distance=self._to_qdrant_distance(self._config.distance_metric),
             ),
+            "metadata": self._collection_config_payload(),
         }
-        if "metadata" in inspect.signature(self._client.create_collection).parameters:
-            create_collection_kwargs["metadata"] = self._collection_config_payload()
         self._client.create_collection(**create_collection_kwargs)
-        if "metadata" not in create_collection_kwargs:
-            self._persist_collection_config()
 
     def _validate_collection_compatibility(self) -> None:
         collection = self._client.get_collection(self._config.collection_name)
@@ -185,12 +179,6 @@ class QdrantVectorStore(VectorStore):
                 match=self._qdrant_models.MatchValue(value=self._config.embedding_model_id),
             )
         ]
-        must_not_conditions = [
-            self._qdrant_models.FieldCondition(
-                key=_SYSTEM_RECORD_PAYLOAD_KEY,
-                match=self._qdrant_models.MatchValue(value=True),
-            )
-        ]
         if metadata_filter is not None:
             for metadata_key, metadata_value in metadata_filter.equals:
                 must_conditions.append(
@@ -199,27 +187,7 @@ class QdrantVectorStore(VectorStore):
                         match=self._qdrant_models.MatchValue(value=metadata_value),
                     )
                 )
-        return self._qdrant_models.Filter(must=must_conditions, must_not=must_not_conditions)
-
-    def _persist_collection_config(self) -> None:
-        self._client.upsert(
-            collection_name=self._config.collection_name,
-            points=[
-                self._qdrant_models.PointStruct(
-                    id=_qdrant_collection_config_point_id(
-                        collection_name=self._config.collection_name
-                    ),
-                    vector=[0.0] * self._config.dimensions,
-                    payload={
-                        _SYSTEM_RECORD_PAYLOAD_KEY: True,
-                        _COLLECTION_CONFIG_PAYLOAD_KEY: True,
-                        "embedding_model_id": self._config.embedding_model_id,
-                        "embedding_dimensions": self._config.dimensions,
-                    },
-                )
-            ],
-            wait=True,
-        )
+        return self._qdrant_models.Filter(must=must_conditions)
 
     def _read_collection_embedding_model_id(self) -> str | None:
         collection = self._client.get_collection(self._config.collection_name)
@@ -227,32 +195,6 @@ class QdrantVectorStore(VectorStore):
         config_payload = collection_metadata.get(_COLLECTION_METADATA_KEY)
         if isinstance(config_payload, Mapping):
             embedding_model_id = config_payload.get("embedding_model_id")
-            if isinstance(embedding_model_id, str) and embedding_model_id:
-                return embedding_model_id
-
-        points = self._client.retrieve(
-            collection_name=self._config.collection_name,
-            ids=[_qdrant_collection_config_point_id(collection_name=self._config.collection_name)],
-            with_payload=True,
-            with_vectors=False,
-        )
-        if points:
-            payload = cast(dict[str, Any], points[0].payload or {})
-            embedding_model_id = payload.get("embedding_model_id")
-            if isinstance(embedding_model_id, str) and embedding_model_id:
-                return embedding_model_id
-
-        points_page, _ = self._client.scroll(
-            collection_name=self._config.collection_name,
-            limit=1,
-            with_payload=True,
-            with_vectors=False,
-        )
-        for point in points_page:
-            payload = cast(dict[str, Any], point.payload or {})
-            if payload.get(_SYSTEM_RECORD_PAYLOAD_KEY) is True:
-                continue
-            embedding_model_id = payload.get("embedding_model_id")
             if isinstance(embedding_model_id, str) and embedding_model_id:
                 return embedding_model_id
         return None
@@ -321,11 +263,6 @@ def _load_qdrant_client_dependencies() -> tuple[Any, Any]:
 def _qdrant_point_id_for_document_id(*, collection_name: str, document_id: str) -> str:
     namespace = uuid.uuid5(uuid.NAMESPACE_URL, f"context-engine:qdrant:{collection_name}")
     return str(uuid.uuid5(namespace, document_id))
-
-
-def _qdrant_collection_config_point_id(*, collection_name: str) -> str:
-    namespace = uuid.uuid5(uuid.NAMESPACE_URL, f"context-engine:qdrant-config:{collection_name}")
-    return str(uuid.uuid5(namespace, "collection-config"))
 
 
 def _extract_collection_metadata(collection: Any) -> Mapping[str, object]:
