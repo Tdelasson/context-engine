@@ -351,8 +351,7 @@ def test_tool_runtime_returns_error_when_approval_is_required_without_resolver()
     assert trace.error is not None
     assert trace.error.error_type == "ToolApprovalRequiredError"
     assert (
-        trace.error.message
-        == "Tool invocation requires explicit human approval, "
+        trace.error.message == "Tool invocation requires explicit human approval, "
         "but no approval resolver is configured."
     )
 
