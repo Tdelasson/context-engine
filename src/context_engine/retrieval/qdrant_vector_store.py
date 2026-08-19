@@ -167,9 +167,10 @@ class QdrantVectorStore(VectorStore):
         if hasattr(vectors_config, "size") and hasattr(vectors_config, "distance"):
             return vectors_config
         if isinstance(vectors_config, Mapping):
-            for value in vectors_config.values():
-                if hasattr(value, "size") and hasattr(value, "distance"):
-                    return value
+            raise VectorStoreCompatibilityError(
+                "Named-vector or multi-vector Qdrant collections are not supported. "
+                "Configure a single dense vector collection."
+            )
         return None
 
     def _build_qdrant_filter(self, metadata_filter: MetadataFilter | None) -> Any:
