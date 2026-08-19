@@ -18,7 +18,7 @@ dev = [
     "pre-commit>=4.0",
 ]
 qdrant = [
-    "qdrant-client>=1.11",
+    "qdrant-client>=1.16",
 ]
 
 [tool.setuptools.packages.find]
