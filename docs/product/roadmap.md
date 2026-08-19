@@ -242,28 +242,102 @@ Execution
 
 ## Objective
 
-Build the foundation for semantic retrieval.
+Build the provider-independent foundation for dense semantic retrieval. M4 should establish a correct, measurable, locally runnable retrieval primitive without prematurely implementing the full Modern RAG pipeline planned for M5.
+
+## Architecture
+
+```text
+Document
+   │
+   ▼
+LocalEmbeddingProvider
+   │
+   ▼
+Embedding
+   │
+   ▼
+QdrantVectorStore
+   │
+   ▼
+Retriever
+   │
+   ▼
+SearchResult[]
+```
+
+The architectural boundary is:
+
+> **EmbeddingProvider creates vectors. VectorStore stores and searches vectors. Retriever coordinates retrieval.**
 
 ## Deliverables
 
-* Embedding abstraction
-* Embedding generation pipeline
-* Vector storage abstraction
-* Vector database integration
-* Document/data ingestion
-* Metadata support
-* Similarity search
-* Filtering
-* Retrieval API
+* Structured `Document` representation with ID, content, and metadata.
+* Structured `Embedding` representation including model and dimensionality metadata.
+* Provider-independent `EmbeddingProvider` abstraction.
+* Direct local inference through `LocalEmbeddingProvider`.
+* Batch document embedding.
+* Separate document and query embedding operations.
+* Provider-independent `VectorStore` abstraction.
+* `QdrantVectorStore` implementation with local Docker deployment.
+* One embedding model/configuration per vector-store collection.
+* Cosine similarity as the initial metric, with support for model-appropriate alternatives.
+* Metadata filtering through a provider-independent filter abstraction.
+* Structured `SearchResult` values.
+* Dedicated `Retriever` abstraction.
+* Simple document ingestion pipeline.
+* Initial hand-curated retrieval benchmark.
 
-## Experiments
+## Candidate Embedding Models
 
-Compare multiple embedding approaches and measure:
+The initial local-model experiment will compare:
 
-* retrieval relevance
-* latency
+* BGE-M3
+* Qwen3-Embedding-0.6B
+* Qwen3-Embedding-8B
+* nomic-embed-text
+* all-MiniLM-L6-v2
+
+The final default embedding model will be selected from benchmark results rather than fixed in the architecture beforehand.
+
+Ollama is not required for embedding inference. A future Ollama-backed provider remains possible.
+
+## Document Storage
+
+For M4, vector-store records will contain document content, document ID, metadata, and the embedding. A separate document store is intentionally deferred until a concrete requirement justifies the additional infrastructure.
+
+## Evaluation
+
+M4 will use a small hand-curated dataset containing documents, queries, and explicit relevance judgments. The benchmark will be model-independent: every candidate model uses the same dataset and retrieval configuration.
+
+Quality metrics:
+
+* Recall@K
+* MRR
+* NDCG@K
+
+Performance measurements:
+
+* document embedding throughput
+* query embedding latency
+* vector-search latency
 * memory usage
-* storage requirements
+* model size
+* vector dimensionality
+
+The benchmark is an M4 experiment, not the full evaluation framework. It will not run as part of normal CI. M9 will introduce the broader evaluation and MLOps infrastructure and can build on the M4 dataset and metrics.
+
+## Explicitly Deferred to M5+
+
+* document chunking
+* advanced document parsing
+* metadata extraction pipelines
+* sparse retrieval
+* hybrid retrieval
+* reranking
+* context selection
+* query transformation
+* large-scale/asynchronous ingestion
+* full evaluation framework
 
 ## Learning Focus
 
@@ -273,6 +347,8 @@ Compare multiple embedding approaches and measure:
 * Indexing
 * Metadata filtering
 * Retrieval engineering
+* Local model inference
+* Retrieval evaluation
 
 ## Exit Criteria
 
@@ -290,7 +366,7 @@ Queried
 Retrieved
 ```
 
-and retrieval quality can be measured.
+and retrieval quality/performance can be measured reproducibly across the candidate embedding models.
 
 **Status:** Next.
 
@@ -554,7 +630,7 @@ Evaluation
 Demonstrable Result
 ```
 
-M3 satisfies this rule through its deterministic tool runtime implementation, automated unit/runtime coverage, architecture documentation, and local Ollama end-to-end calculator demonstration. Quantitative retrieval or model-quality evaluation is not applicable to M3 and begins in later milestones.
+M3 satisfies this rule through its deterministic tool runtime implementation, automated unit/runtime coverage, architecture documentation, and local Ollama end-to-end calculator demonstration. Quantitative retrieval or model-quality evaluation begins in M4 through the focused embedding/retrieval benchmark and will be expanded into the broader evaluation framework in M9.
 
 ---
 
@@ -610,9 +686,23 @@ Context Engine v1.0 should demonstrate:
 * [x] #34 — Deterministic tool execution tracing
 * [x] #36 — Human approval for selected tool calls
 
+**M4 architecture decisions:**
+
+* [x] Provider-independent `EmbeddingProvider` with direct local inference.
+* [x] `LocalEmbeddingProvider` with separate query/document embedding operations and batch document embedding.
+* [x] Structured embeddings with model/dimensionality metadata.
+* [x] One embedding model/configuration per vector-store collection.
+* [x] Provider-independent `VectorStore` abstraction with Qdrant as the first implementation.
+* [x] Cosine similarity as the initial metric, subject to model recommendations.
+* [x] Metadata filtering through the vector-store boundary.
+* [x] Dedicated `Retriever` abstraction.
+* [x] Simple ingestion pipeline.
+* [x] Small hand-curated, model-independent retrieval benchmark.
+
 **Next:**
 
-* [ ] Define the M4 embedding abstraction and provider-independent contract.
-* [ ] Implement embedding generation and vector storage foundations.
-* [ ] Add ingestion, metadata, similarity search, and filtering.
-* [ ] Establish retrieval-quality and performance experiments.
+* [ ] Implement the M4 embedding contracts and local provider.
+* [ ] Implement Qdrant-backed vector storage and filtering.
+* [ ] Add the Retriever and simple ingestion pipeline.
+* [ ] Build and run the embedding/retrieval benchmark.
+* [ ] Select the default embedding model based on benchmark results.
