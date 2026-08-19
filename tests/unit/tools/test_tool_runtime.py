@@ -218,6 +218,14 @@ def test_tool_runtime_rejects_invalid_input_without_execution() -> None:
     assert result.error.error_type == "ToolInputValidationError"
     assert "Type mismatches: a expected int, got str" in result.error.message
     assert tool.was_executed is False
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.tool_name == "add"
+    assert trace.invocation.arguments_as_mapping() == {"a": "2", "b": 3}
+    assert trace.policy_decision is None
+    assert trace.status is ToolResultStatus.ERROR
+    assert trace.error is not None
+    assert trace.error.error_type == "ToolInputValidationError"
 
 
 def test_tool_runtime_validates_input_before_policy_evaluation() -> None:
@@ -244,6 +252,14 @@ def test_tool_runtime_rejects_unknown_tool_invocation_deterministically() -> Non
     assert result.error is not None
     assert result.error.error_type == "UnknownToolError"
     assert result.error.message == "Unknown tool: unknown"
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.tool_name == "unknown"
+    assert trace.invocation.arguments_as_mapping() == {"a": 1}
+    assert trace.policy_decision is None
+    assert trace.status is ToolResultStatus.ERROR
+    assert trace.error is not None
+    assert trace.error.error_type == "UnknownToolError"
 
 
 def test_tool_runtime_captures_execution_failure_as_structured_error_result() -> None:

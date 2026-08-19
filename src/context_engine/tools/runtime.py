@@ -147,7 +147,7 @@ class ToolExecutionTrace:
     """Provider-independent structured trace for one tool invocation."""
 
     invocation: ToolInvocation
-    policy_decision: ToolPolicyDecision
+    policy_decision: ToolPolicyDecision | None
     status: ToolResultStatus
     output: tuple[tuple[str, object], ...] | None = None
     error: ToolExecutionErrorDetails | None = None
@@ -200,7 +200,7 @@ class ToolRuntime:
 
     def execute(self, invocation: ToolInvocation) -> ToolResult:
         """Resolve, validate, and execute one invocation deterministically."""
-        policy_decision = ToolPolicyDecision.ALLOW
+        policy_decision: ToolPolicyDecision | None = None
         try:
             tool = self._registry.get(invocation.tool_name)
             arguments = invocation.arguments_as_mapping()
