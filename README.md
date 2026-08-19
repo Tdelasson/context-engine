@@ -172,6 +172,31 @@ Optional environment variables:
 - `CONTEXT_ENGINE_EMBEDDING_QUERY_PREFIX` (default: empty string)
 - `CONTEXT_ENGINE_EMBEDDING_DOCUMENT_PREFIX` (default: empty string)
 
+## Qdrant Vector Store Verification (Optional)
+
+You can verify the `QdrantVectorStore` implementation with a local Qdrant instance.
+
+1. Install optional dependency:
+   - `pip install qdrant-client`
+2. Start Qdrant locally with Docker:
+
+```bash
+docker run --rm -p 6333:6333 qdrant/qdrant
+```
+
+3. Run the opt-in integration test:
+
+```bash
+CONTEXT_ENGINE_RUN_QDRANT_INTEGRATION=1 \
+pytest tests/integration/test_qdrant_vector_store_integration.py
+```
+
+Optional environment variables:
+
+- `CONTEXT_ENGINE_QDRANT_URL` (default: `http://localhost:6333`)
+- `CONTEXT_ENGINE_QDRANT_API_KEY` (default: unset)
+- `CONTEXT_ENGINE_QDRANT_TIMEOUT_SECONDS` (default: `5`)
+
 ## License
 
 ...
