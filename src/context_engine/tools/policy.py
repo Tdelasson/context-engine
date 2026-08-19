@@ -14,6 +14,7 @@ class ToolPolicyDecision(StrEnum):
 
     ALLOW = "allow"
     DENY = "deny"
+    REQUIRE_APPROVAL = "require_approval"
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,5 +67,12 @@ class ToolNamePolicy:
             return ToolPolicyEvaluation(
                 decision=ToolPolicyDecision.DENY,
                 reason=f"Tool invocation denied by policy: {invocation.tool_name}",
+            )
+        if decision is ToolPolicyDecision.REQUIRE_APPROVAL:
+            return ToolPolicyEvaluation(
+                decision=ToolPolicyDecision.REQUIRE_APPROVAL,
+                reason=(
+                    f"Tool invocation requires explicit human approval: {invocation.tool_name}"
+                ),
             )
         return ToolPolicyEvaluation(decision=ToolPolicyDecision.ALLOW)

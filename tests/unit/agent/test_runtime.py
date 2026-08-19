@@ -26,6 +26,9 @@ from context_engine.models import (
     normalize_messages,
 )
 from context_engine.tools import (
+    ToolApprovalDecision,
+    ToolApprovalRequest,
+    ToolApprovalResolution,
     ToolInputField,
     ToolInputSchema,
     ToolInvocation,
@@ -115,6 +118,17 @@ class _FailingTool:
     def execute(self, invocation: ToolInvocation) -> dict[str, object]:
         message = invocation.arguments_as_mapping()["message"]
         raise RuntimeError(f"failed: {message}")
+
+
+class _RecordingApprovalResolver:
+    def __init__(self, decision: ToolApprovalDecision, reason: str | None = None) -> None:
+        self._decision = decision
+        self._reason = reason
+        self.requests: list[ToolApprovalRequest] = []
+
+    def resolve(self, request: ToolApprovalRequest) -> ToolApprovalResolution:
+        self.requests.append(request)
+        return ToolApprovalResolution(decision=self._decision, reason=self._reason)
 
 
 def _capture_runtime_transitions(monkeypatch: pytest.MonkeyPatch) -> list[AgentExecutionStatus]:
@@ -866,6 +880,80 @@ def test_runtime_run_denied_tool_call_is_returned_to_model_for_recovery(
     assert (
         second_request.messages[-1].tool_result.error_message
         == "Tool invocation denied by policy: add"
+    )
+
+
+def test_runtime_run_rejected_approval_is_returned_to_model_without_execution(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_interpret_model_decisions(
+        monkeypatch,
+        [
+            ModelDecision.tool_call(
+                tool_name="add",
+                arguments={"a": 2, "b": 3},
+                tool_call_id="provider-call-approval-1",
+            ),
+            ModelDecision(kind=ModelDecisionKind.RESPOND, proposed_response="Approval rejected."),
+        ],
+    )
+    registry = ToolRegistry()
+    add_tool = _AddTool()
+    registry.register(add_tool)
+    approval_resolver = _RecordingApprovalResolver(
+        ToolApprovalDecision.REJECTED,
+        reason="Human reviewer rejected invocation.",
+    )
+    gateway = _SequenceStubModelGateway(
+        responses=[
+            ModelResponse(
+                model_id="mock-model",
+                output_text="tool-call",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+            ModelResponse(
+                model_id="mock-model",
+                output_text="respond",
+                finish_reason=ModelFinishReason.STOP,
+            ),
+        ]
+    )
+    runtime = AgentRuntime(
+        model_gateway=gateway,
+        tool_runtime=ToolRuntime(
+            registry,
+            policy=ToolNamePolicy.from_mapping({"add": ToolPolicyDecision.REQUIRE_APPROVAL}),
+            approval_resolver=approval_resolver,
+        ),
+    )
+
+    result = runtime.run(model_id="mock-model", user_prompt="What is 2+3?")
+
+    assert result.outcome is AgentRuntimeExecutionOutcome.RESPONDED
+    assert result.proposed_response == "Approval rejected."
+    assert add_tool.was_executed is False
+    assert len(approval_resolver.requests) == 1
+    assert approval_resolver.requests[0].invocation.invocation_id == "provider-call-approval-1"
+    assert len(runtime.tool_results) == 1
+    assert runtime.tool_results[0].status is ToolResultStatus.ERROR
+    assert runtime.tool_results[0].error is not None
+    assert runtime.tool_results[0].error.error_type == "ToolApprovalRejectedError"
+    assert runtime.tool_results[0].error.message == "Human reviewer rejected invocation."
+    assert len(runtime.tool_execution_traces) == 1
+    trace = runtime.tool_execution_traces[0]
+    assert trace.invocation.invocation_id == "provider-call-approval-1"
+    assert trace.policy_decision is ToolPolicyDecision.REQUIRE_APPROVAL
+    assert trace.approval_decision is ToolApprovalDecision.REJECTED
+    assert trace.status is ToolResultStatus.ERROR
+    second_request = gateway.requests[1]
+    assert second_request.messages[-1].role is ModelRole.TOOL
+    assert second_request.messages[-1].tool_result is not None
+    assert second_request.messages[-1].tool_result.tool_call_id == "provider-call-approval-1"
+    assert second_request.messages[-1].tool_result.status is ModelToolResultStatus.ERROR
+    assert second_request.messages[-1].tool_result.error_type == "ToolApprovalRejectedError"
+    assert (
+        second_request.messages[-1].tool_result.error_message
+        == "Human reviewer rejected invocation."
     )
 
 

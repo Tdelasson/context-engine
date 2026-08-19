@@ -4,6 +4,9 @@ from context_engine.tools import (
     AllowAllToolPolicy,
     DuplicateToolRegistrationError,
     Tool,
+    ToolApprovalDecision,
+    ToolApprovalRequest,
+    ToolApprovalResolution,
     ToolInputField,
     ToolInputSchema,
     ToolInvocation,
@@ -82,6 +85,17 @@ class _RecordingPolicy:
         return ToolPolicyEvaluation(decision=self._decision)
 
 
+class _RecordingApprovalResolver:
+    def __init__(self, decision: ToolApprovalDecision, reason: str | None = None) -> None:
+        self._decision = decision
+        self._reason = reason
+        self.requests: list[ToolApprovalRequest] = []
+
+    def resolve(self, request: ToolApprovalRequest) -> ToolApprovalResolution:
+        self.requests.append(request)
+        return ToolApprovalResolution(decision=self._decision, reason=self._reason)
+
+
 def test_tool_registry_registers_and_looks_up_tool_deterministically() -> None:
     registry = ToolRegistry()
     tool = _AddTool()
@@ -135,6 +149,7 @@ def test_tool_runtime_executes_valid_tool_invocation_and_returns_structured_resu
     assert trace.invocation.tool_name == "add"
     assert trace.invocation.arguments_as_mapping() == {"a": 2, "b": 3}
     assert trace.policy_decision is ToolPolicyDecision.ALLOW
+    assert trace.approval_decision is None
     assert trace.status is ToolResultStatus.SUCCESS
     assert trace.output_as_mapping() == {"value": 5}
     assert trace.error is None
@@ -178,6 +193,7 @@ def test_tool_runtime_denies_tool_invocation_without_execution() -> None:
     assert trace.invocation.arguments_as_mapping() == {"a": 2, "b": 3}
     assert trace.invocation.invocation_id == "tool-call-1"
     assert trace.policy_decision is ToolPolicyDecision.DENY
+    assert trace.approval_decision is None
     assert trace.status is ToolResultStatus.ERROR
     assert trace.error is not None
     assert trace.error.error_type == "ToolPolicyDeniedError"
@@ -205,6 +221,135 @@ def test_tool_runtime_policy_can_distinguish_tools_deterministically() -> None:
     assert multiply_tool.was_executed is True
 
 
+def test_tool_name_policy_can_require_human_approval_for_selected_tool() -> None:
+    policy = ToolNamePolicy.from_mapping({"add": ToolPolicyDecision.REQUIRE_APPROVAL})
+    invocation = ToolInvocation.from_mapping("add", {"a": 2, "b": 3})
+
+    evaluation = policy.evaluate(invocation)
+
+    assert evaluation.decision is ToolPolicyDecision.REQUIRE_APPROVAL
+    assert evaluation.reason == "Tool invocation requires explicit human approval: add"
+
+
+def test_tool_runtime_requests_approval_before_execution_and_executes_once_when_approved() -> None:
+    registry = ToolRegistry()
+    resolver = _RecordingApprovalResolver(ToolApprovalDecision.APPROVED)
+
+    class _ApprovalOrderTool:
+        name = "add"
+        description = "Add two integers."
+        input_schema = ToolInputSchema(
+            fields=(
+                ToolInputField(name="a", value_type=int),
+                ToolInputField(name="b", value_type=int),
+            )
+        )
+
+        def __init__(self) -> None:
+            self.execute_count = 0
+            self.approval_request_count_at_execute: int | None = None
+
+        def execute(self, invocation: ToolInvocation) -> dict[str, object]:
+            self.execute_count += 1
+            self.approval_request_count_at_execute = len(resolver.requests)
+            arguments = invocation.arguments_as_mapping()
+            a = arguments["a"]
+            b = arguments["b"]
+            if not isinstance(a, int) or not isinstance(b, int):
+                raise RuntimeError("validated add tool received invalid argument types")
+            return {"value": a + b}
+
+    tool = _ApprovalOrderTool()
+    registry.register(tool)
+    runtime = ToolRuntime(
+        registry,
+        policy=ToolNamePolicy.from_mapping({"add": ToolPolicyDecision.REQUIRE_APPROVAL}),
+        approval_resolver=resolver,
+    )
+    invocation = ToolInvocation.from_mapping(
+        "add",
+        {"a": 2, "b": 3},
+        invocation_id="tool-call-approval-1",
+    )
+
+    result = runtime.execute(invocation)
+
+    assert result.status is ToolResultStatus.SUCCESS
+    assert result.output_as_mapping() == {"value": 5}
+    assert tool.execute_count == 1
+    assert tool.approval_request_count_at_execute == 1
+    assert len(resolver.requests) == 1
+    assert resolver.requests[0].invocation is invocation
+    assert resolver.requests[0].invocation.invocation_id == "tool-call-approval-1"
+    assert resolver.requests[0].policy_evaluation.decision is ToolPolicyDecision.REQUIRE_APPROVAL
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.invocation_id == "tool-call-approval-1"
+    assert trace.policy_decision is ToolPolicyDecision.REQUIRE_APPROVAL
+    assert trace.approval_decision is ToolApprovalDecision.APPROVED
+    assert trace.status is ToolResultStatus.SUCCESS
+
+
+def test_tool_runtime_rejected_approval_does_not_execute_and_returns_structured_error() -> None:
+    registry = ToolRegistry()
+    tool = _AddTool()
+    registry.register(tool)
+    resolver = _RecordingApprovalResolver(
+        ToolApprovalDecision.REJECTED,
+        reason="Human rejected this invocation.",
+    )
+    runtime = ToolRuntime(
+        registry,
+        policy=ToolNamePolicy.from_mapping({"add": ToolPolicyDecision.REQUIRE_APPROVAL}),
+        approval_resolver=resolver,
+    )
+    invocation = ToolInvocation.from_mapping(
+        "add",
+        {"a": 2, "b": 3},
+        invocation_id="tool-call-approval-2",
+    )
+
+    result = runtime.execute(invocation)
+
+    assert result.status is ToolResultStatus.ERROR
+    assert result.error is not None
+    assert result.error.error_type == "ToolApprovalRejectedError"
+    assert result.error.message == "Human rejected this invocation."
+    assert tool.was_executed is False
+    assert len(resolver.requests) == 1
+    assert resolver.requests[0].invocation.invocation_id == "tool-call-approval-2"
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.invocation.invocation_id == "tool-call-approval-2"
+    assert trace.policy_decision is ToolPolicyDecision.REQUIRE_APPROVAL
+    assert trace.approval_decision is ToolApprovalDecision.REJECTED
+    assert trace.status is ToolResultStatus.ERROR
+    assert trace.error is not None
+    assert trace.error.error_type == "ToolApprovalRejectedError"
+
+
+def test_tool_runtime_returns_error_when_approval_is_required_without_resolver() -> None:
+    registry = ToolRegistry()
+    tool = _AddTool()
+    registry.register(tool)
+    runtime = ToolRuntime(
+        registry,
+        policy=ToolNamePolicy.from_mapping({"add": ToolPolicyDecision.REQUIRE_APPROVAL}),
+    )
+
+    result = runtime.execute(ToolInvocation.from_mapping("add", {"a": 2, "b": 3}))
+
+    assert result.status is ToolResultStatus.ERROR
+    assert result.error is not None
+    assert result.error.error_type == "ToolApprovalRequiredError"
+    assert tool.was_executed is False
+    assert len(runtime.execution_traces) == 1
+    trace = runtime.execution_traces[0]
+    assert trace.policy_decision is ToolPolicyDecision.REQUIRE_APPROVAL
+    assert trace.approval_decision is None
+    assert trace.status is ToolResultStatus.ERROR
+
+
 def test_tool_runtime_rejects_invalid_input_without_execution() -> None:
     registry = ToolRegistry()
     tool = _AddTool()
@@ -223,6 +368,7 @@ def test_tool_runtime_rejects_invalid_input_without_execution() -> None:
     assert trace.invocation.tool_name == "add"
     assert trace.invocation.arguments_as_mapping() == {"a": "2", "b": 3}
     assert trace.policy_decision is None
+    assert trace.approval_decision is None
     assert trace.status is ToolResultStatus.ERROR
     assert trace.error is not None
     assert trace.error.error_type == "ToolInputValidationError"
@@ -257,6 +403,7 @@ def test_tool_runtime_rejects_unknown_tool_invocation_deterministically() -> Non
     assert trace.invocation.tool_name == "unknown"
     assert trace.invocation.arguments_as_mapping() == {"a": 1}
     assert trace.policy_decision is None
+    assert trace.approval_decision is None
     assert trace.status is ToolResultStatus.ERROR
     assert trace.error is not None
     assert trace.error.error_type == "UnknownToolError"
@@ -279,6 +426,7 @@ def test_tool_runtime_captures_execution_failure_as_structured_error_result() ->
     assert trace.invocation.tool_name == "explode"
     assert trace.invocation.arguments_as_mapping() == {"message": "boom"}
     assert trace.policy_decision is ToolPolicyDecision.ALLOW
+    assert trace.approval_decision is None
     assert trace.status is ToolResultStatus.ERROR
     assert trace.output is None
     assert trace.error is not None
@@ -303,7 +451,9 @@ def test_tool_runtime_records_distinct_traces_in_deterministic_execution_order()
     assert len(traces) == 2
     assert traces[0].invocation.tool_name == "add"
     assert traces[0].invocation.invocation_id == "call-a"
+    assert traces[0].approval_decision is None
     assert traces[0].output_as_mapping() == {"value": 3}
     assert traces[1].invocation.tool_name == "multiply"
     assert traces[1].invocation.invocation_id == "call-b"
+    assert traces[1].approval_decision is None
     assert traces[1].output_as_mapping() == {"value": 12}
