@@ -25,7 +25,9 @@ class _FakeEmbeddingProvider(EmbeddingProvider):
 
     def embed_documents(self, documents: Sequence[Document]) -> Sequence[Embedding]:
         del documents
-        raise AssertionError("This fake should not be used for document embedding in retriever tests.")
+        raise AssertionError(
+            "This fake should not be used for document embedding in retriever tests."
+        )
 
     def embed_query(self, query: str) -> Embedding:
         self.queries.append(query)
@@ -50,7 +52,9 @@ class _FakeVectorStore(VectorStore):
         self.calls.append((query_embedding, top_k, metadata_filter))
         return self.results
 
-    def delete(self, document_ids: Sequence[str]) -> None:  # pragma: no cover - protocol placeholder
+    def delete(
+        self, document_ids: Sequence[str]
+    ) -> None:  # pragma: no cover - protocol placeholder
         del document_ids
 
 
@@ -66,10 +70,15 @@ def test_embedding_vector_store_retriever_satisfies_retriever_protocol() -> None
 
 
 def test_retriever_embeds_query_and_searches_vector_store() -> None:
-    query_embedding = Embedding.from_sequence(vector=(0.8, 0.2), model_id="test-model", dimensions=2)
+    query_embedding = Embedding.from_sequence(
+        vector=(0.8, 0.2), model_id="test-model", dimensions=2
+    )
     provider = _FakeEmbeddingProvider(query_embedding)
     expected_results = (
-        SearchResult(document=Document.from_mapping(document_id="doc-1", content="music"), score=0.9),
+        SearchResult(
+            document=Document.from_mapping(document_id="doc-1", content="music"),
+            score=0.9,
+        ),
     )
     store = _FakeVectorStore(results=expected_results)
     retriever = EmbeddingVectorStoreRetriever(embedding_provider=provider, vector_store=store)
@@ -89,7 +98,10 @@ def test_retriever_embeds_query_and_searches_vector_store() -> None:
 
 @pytest.mark.parametrize("invalid_top_k", [0, -1, True])
 def test_retrieval_request_rejects_invalid_top_k(invalid_top_k: int) -> None:
-    with pytest.raises(RetrieverConfigurationError, match="top_k must be an integer greater than zero"):
+    with pytest.raises(
+        RetrieverConfigurationError,
+        match="top_k must be an integer greater than zero",
+    ):
         RetrievalRequest(query="valid query", top_k=invalid_top_k)
 
 

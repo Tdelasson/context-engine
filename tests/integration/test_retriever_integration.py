@@ -23,7 +23,9 @@ from context_engine.retrieval.qdrant_vector_store import QdrantVectorStore
 
 def _skip_unless_retriever_integration_enabled() -> None:
     if os.getenv("CONTEXT_ENGINE_RUN_RETRIEVER_INTEGRATION") != "1":
-        pytest.skip("Set CONTEXT_ENGINE_RUN_RETRIEVER_INTEGRATION=1 to run retriever integration tests.")
+        pytest.skip(
+            "Set CONTEXT_ENGINE_RUN_RETRIEVER_INTEGRATION=1 to run retriever integration tests."
+        )
 
 
 def _build_local_provider() -> LocalEmbeddingProvider:
