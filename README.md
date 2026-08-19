@@ -148,6 +148,30 @@ Optional environment variables:
 
 The integration test verifies that the model receives the registered calculator tool, requests it, the runtime executes it, the result is returned to the model, and a final response is produced. The test is opt-in and does not run as part of the normal test suite unless explicitly enabled.
 
+## Local Embedding Provider Verification (Optional)
+
+You can verify local embedding inference with a real embedding model available on your machine.
+
+1. Install a local embedding runtime dependency:
+   - `pip install sentence-transformers`
+2. Ensure a local embedding model is available (for example a Hugging Face model id or a local model path).
+3. Set integration environment variables.
+4. Run the optional integration test:
+
+```bash
+CONTEXT_ENGINE_RUN_LOCAL_EMBEDDING_INTEGRATION=1 \
+CONTEXT_ENGINE_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2 \
+pytest tests/integration/test_local_embedding_provider_integration.py
+```
+
+Optional environment variables:
+
+- `CONTEXT_ENGINE_EMBEDDING_MODEL_ID` (default: same as `CONTEXT_ENGINE_EMBEDDING_MODEL`)
+- `CONTEXT_ENGINE_EMBEDDING_BATCH_SIZE` (default: `8`)
+- `CONTEXT_ENGINE_EMBEDDING_NORMALIZE` (`1` enables normalized vectors, default: `0`)
+- `CONTEXT_ENGINE_EMBEDDING_QUERY_PREFIX` (default: empty string)
+- `CONTEXT_ENGINE_EMBEDDING_DOCUMENT_PREFIX` (default: empty string)
+
 ## License
 
 ...
