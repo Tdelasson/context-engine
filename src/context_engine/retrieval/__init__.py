@@ -6,6 +6,11 @@ from context_engine.retrieval.embeddings import (
     EmbeddingProvider,
     normalize_document_metadata,
 )
+from context_engine.retrieval.ingestor import (
+    Ingestor,
+    IngestorError,
+    LengthMismatchError,
+)
 from context_engine.retrieval.local_embedding_provider import (
     LocalEmbeddingProvider,
     LocalEmbeddingProviderConfig,
@@ -60,4 +65,7 @@ __all__ = [
     "VectorStoreError",
     "VectorStoreRecord",
     "normalize_document_metadata",
+    "Ingestor",
+    "IngestorError",
+    "LengthMismatchError",
 ]
