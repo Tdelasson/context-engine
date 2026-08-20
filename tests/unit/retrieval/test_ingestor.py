@@ -2,6 +2,8 @@ from collections.abc import Sequence
 
 from context_engine.retrieval import Document, Embedding, Ingestor
 from context_engine.retrieval.vector_store import (
+    MetadataFilter,
+    SearchResult,
     VectorStore,
     VectorStoreCollectionConfig,
     VectorStoreRecord,
@@ -13,7 +15,8 @@ class _FakeEmbeddingProvider:
         self.model_id = "mini-model"
         self.dimensions = 3
 
-    def embed_documents(self, documents: tuple[Document, ...]) -> tuple[Embedding, ...]:
+    def embed_documents(self, documents: Sequence[Document]) -> Sequence[Embedding]:
+        self.provided_documents = documents
         self.embeddings = list(
             Embedding.from_sequence(
                 vector=(float(index), float(len(document.content)), 1.0),
@@ -38,9 +41,24 @@ class _InMemoryVectorStore(VectorStore):
         self._records: dict[str, VectorStoreRecord] = {}
 
     def upsert(self, records: Sequence[VectorStoreRecord]) -> None:
+        self.provided_records = records
         for record in records:
             self._config.ensure_embedding_compatible(record.embedding)
             self._records[record.document.document_id] = record
+
+    def search(
+        self,
+        query_embedding: Embedding,
+        *,
+        top_k: int = 5,
+        metadata_filter: MetadataFilter | None = None,
+    ) -> Sequence[SearchResult]:
+        del query_embedding, top_k, metadata_filter
+        return ()
+
+    def delete(self, document_ids: Sequence[str]) -> None:
+        for document_id in document_ids:
+            self._records.pop(document_id, None)
 
 
 def _build_store() -> _InMemoryVectorStore:
@@ -54,9 +72,10 @@ def _build_store() -> _InMemoryVectorStore:
 
 
 def test_ingestor_handles_empty_document_list() -> None:
-    ingestor = Ingestor(embedding_provider=_FakeEmbeddingProvider(), vector_store=_build_store())
-    result = ingestor.ingest_documents([])
-    assert result is None
+    vector_store = _build_store()
+    ingestor = Ingestor(embedding_provider=_FakeEmbeddingProvider(), vector_store=vector_store)
+    ingestor.ingest_documents([])
+    assert len(vector_store._records) == 0
 
 
 def test_ingestor_docs_passed_to_provider() -> None:
@@ -70,6 +89,7 @@ def test_ingestor_docs_passed_to_provider() -> None:
     ingestor.ingest_documents(documents)
 
     assert len(embedding_provider.embeddings) == len(documents)
+    assert embedding_provider.provided_documents == documents
 
 
 def test_ingestor_docs_and_embeddings_pairing() -> None:
@@ -98,3 +118,4 @@ def test_ingestor_records_passed_to_vector_store() -> None:
     ingestor.ingest_documents(documents)
 
     assert len(vector_store._records) == len(documents)
+    assert vector_store.provided_records == vector_store.provided_records
