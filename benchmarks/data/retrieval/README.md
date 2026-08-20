@@ -27,6 +27,7 @@ BenchmarkDataset
 
 - Manually authored and manually reviewed in-repo.
 - Relevance judgments were assigned by human curation, not by LLM judging.
+- Judgments include only documents that directly satisfy query intent; merely related documents are excluded.
 - Queries are paraphrased and phrased in natural language to exercise semantic retrieval.
 - Includes both single-relevant-document and multi-relevant-document queries.
 - Includes similar-but-irrelevant documents to reduce pure keyword-matching shortcuts.

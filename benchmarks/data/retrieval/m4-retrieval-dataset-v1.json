@@ -133,10 +133,10 @@
     },
     {
       "document_id": "doc-017",
-      "content": "The retrieval benchmark dataset is manually curated and version-controlled so relevance judgments remain explicit and stable over time.",
+      "content": "Runtime policy decisions are recorded as ALLOW, DENY, or REQUIRE_APPROVAL with rationale so behavior can be audited later.",
       "metadata": {
-        "concept": "evaluation",
-        "kind": "dataset-note"
+        "concept": "observability",
+        "kind": "policy-trace-note"
       }
     },
     {
@@ -197,10 +197,10 @@
     },
     {
       "document_id": "doc-025",
-      "content": "Benchmark queries should use natural paraphrases and user-style language, not only class names or exact implementation tokens.",
+      "content": "top_k limits how many ranked results are returned to callers, but it does not modify vectors already stored in the index.",
       "metadata": {
-        "concept": "evaluation",
-        "kind": "query-design-note"
+        "concept": "retrieval",
+        "kind": "behavior-note"
       }
     },
     {
@@ -237,22 +237,54 @@
     },
     {
       "document_id": "doc-030",
-      "content": "The initial M4 benchmark excludes chunking, reranking, and hybrid retrieval so the experiment stays narrow and reproducible.",
+      "content": "Long-running tool calls should use explicit timeout and cancellation handling so one slow dependency cannot stall the agent loop.",
       "metadata": {
-        "concept": "evaluation",
-        "kind": "scope-note"
+        "concept": "tool-execution",
+        "kind": "reliability-note"
+      }
+    },
+    {
+      "document_id": "doc-031",
+      "content": "The admin dashboard displays a pending-approvals counter for operators, but the UI itself does not enforce execution policy.",
+      "metadata": {
+        "concept": "distractor",
+        "kind": "similar-but-irrelevant"
+      }
+    },
+    {
+      "document_id": "doc-032",
+      "content": "A migration script can rename database columns while preserving row counts and index definitions.",
+      "metadata": {
+        "concept": "distractor",
+        "kind": "similar-but-irrelevant"
+      }
+    },
+    {
+      "document_id": "doc-033",
+      "content": "HTTP middleware records request latency percentiles for API endpoints and exports them to a metrics dashboard.",
+      "metadata": {
+        "concept": "distractor",
+        "kind": "similar-but-irrelevant"
+      }
+    },
+    {
+      "document_id": "doc-034",
+      "content": "A playlist tagging feature filters songs by mood labels, but it does not perform semantic vector retrieval.",
+      "metadata": {
+        "concept": "distractor",
+        "kind": "similar-but-irrelevant"
       }
     }
   ],
   "queries": [
     {
       "query_id": "query-001",
-      "text": "Which agent states cover normal running and waiting for approval?",
+      "text": "When a run pauses for human sign-off, which lifecycle stage names describe that situation?",
       "intent": "Find explicit runtime states related to execution and approval waits."
     },
     {
       "query_id": "query-002",
-      "text": "If a model asks to call a tool, who actually performs the side effect?",
+      "text": "The assistant proposes deleting a file. Which layer is actually allowed to perform that real-world action?",
       "intent": "Identify the runtime-side execution boundary."
     },
     {
@@ -262,22 +294,22 @@
     },
     {
       "query_id": "query-004",
-      "text": "Where do we define the mapping from tool name to schema and executor?",
+      "text": "Where is the canonical catalog that tells the system how each capability is wired and validated?",
       "intent": "Locate tool registry responsibility."
     },
     {
       "query_id": "query-005",
-      "text": "What prevents vectors from different embedding models from being stored together?",
+      "text": "Why can't representations from different embedding setups share one search collection?",
       "intent": "Find embedding-space isolation guidance."
     },
     {
       "query_id": "query-006",
-      "text": "Can semantic retrieval also enforce metadata constraints?",
+      "text": "If I only want results from a specific tag, where is that restriction combined with meaning-based search?",
       "intent": "Find metadata filtering behavior and role."
     },
     {
       "query_id": "query-007",
-      "text": "What happens to a search question before the vector search call?",
+      "text": "Before nearest-neighbor lookup runs, what conversion happens to a user's question?",
       "intent": "Find retriever query processing steps."
     },
     {
@@ -287,13 +319,13 @@
     },
     {
       "query_id": "query-009",
-      "text": "How can we inspect which tool ran and how long it took?",
+      "text": "What records let me reconstruct which action executed and how long it took?",
       "intent": "Find tracing and correlation details."
     },
     {
       "query_id": "query-010",
-      "text": "Was the retrieval benchmark relevance data generated automatically by an LLM?",
-      "intent": "Find manual curation policy for benchmark judgments."
+      "text": "Where are allow/deny/needs-approval policy decisions captured for later auditing?",
+      "intent": "Find where policy decisions are recorded for auditability."
     },
     {
       "query_id": "query-011",
@@ -307,7 +339,7 @@
     },
     {
       "query_id": "query-013",
-      "text": "Do heavy integration tests run in normal CI by default?",
+      "text": "Are external-service integration checks included in the default fast CI run?",
       "intent": "Find default CI scope for integration checks."
     },
     {
@@ -317,27 +349,25 @@
     },
     {
       "query_id": "query-015",
-      "text": "Which retrieval request mistakes should fail fast as invalid input?",
+      "text": "Which malformed search request inputs are rejected immediately?",
       "intent": "Find retrieval request validation errors."
     },
     {
       "query_id": "query-016",
-      "text": "Does the first M4 benchmark already include reranking or hybrid search?",
-      "intent": "Find explicit benchmark non-goals."
+      "text": "How does the runtime avoid getting stuck forever on a slow external action?",
+      "intent": "Find timeout/cancellation guidance for tool execution reliability."
     }
   ],
   "relevance_judgments": [
     {
       "query_id": "query-001",
       "relevant_document_ids": [
-        "doc-001",
-        "doc-003"
+        "doc-001"
       ]
     },
     {
       "query_id": "query-002",
       "relevant_document_ids": [
-        "doc-007",
         "doc-026"
       ]
     },

@@ -72,8 +72,10 @@ def test_every_query_has_exactly_one_judgment_entry() -> None:
     dataset = _load_dataset()
 
     query_ids = {query["query_id"] for query in dataset["queries"]}
-    judged_query_ids = {judgment["query_id"] for judgment in dataset["relevance_judgments"]}
+    judged_query_id_list = [judgment["query_id"] for judgment in dataset["relevance_judgments"]]
+    judged_query_ids = set(judged_query_id_list)
 
+    assert len(judged_query_id_list) == len(judged_query_ids)
     assert judged_query_ids == query_ids
 
 
