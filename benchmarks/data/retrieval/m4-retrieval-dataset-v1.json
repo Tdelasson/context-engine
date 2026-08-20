@@ -55,9 +55,9 @@
     {"query_id":"query-014","text":"What commands should I run locally before opening a PR?","intent":"Find local validation workflow."},
     {"query_id":"query-015","text":"Which malformed search request inputs are rejected immediately?","intent":"Find retrieval request validation errors."},
     {"query_id":"query-016","text":"How does the runtime avoid getting stuck forever on a slow external action?","intent":"Find timeout/cancellation guidance for tool execution reliability."},
-    {"query_id":"query-017","text":"If two encoders produce vectors for the same text, why would mixing their outputs make similarity results unreliable?","intent":"Find the reason embedding spaces must remain isolated."},
+    {"query_id":"query-017","text":"Which abstraction prevents the database implementation from determining how vectors are produced?","intent":"Find the provider/storage boundary for embedding generation."},
     {"query_id":"query-018","text":"A search can be narrowed to documents carrying a particular label without changing what semantic similarity means. Where is that behavior defined?","intent":"Find the distinction between metadata constraints and semantic similarity."},
-    {"query_id":"query-019","text":"After someone asks a natural-language question, what representation must exist before the vector index can compare it with stored documents?","intent":"Find the query-to-vector retrieval step."},
+    {"query_id":"query-019","text":"Where should embedding computation preferably happen when the application is designed to work without relying on a remote service?","intent":"Find preferred inference location for local-first embedding architecture."},
     {"query_id":"query-020","text":"If a tool invocation is slow, what prevents that single dependency from holding the whole agent execution open indefinitely?","intent":"Find timeout and cancellation behavior for long-running tools."}
   ],
   "relevance_judgments": [
@@ -77,9 +77,9 @@
     {"query_id":"query-014","relevant_document_ids":["doc-028"]},
     {"query_id":"query-015","relevant_document_ids":["doc-029"]},
     {"query_id":"query-016","relevant_document_ids":["doc-030"]},
-    {"query_id":"query-017","relevant_document_ids":["doc-011"]},
+    {"query_id":"query-017","relevant_document_ids":["doc-009"]},
     {"query_id":"query-018","relevant_document_ids":["doc-012","doc-022"]},
-    {"query_id":"query-019","relevant_document_ids":["doc-013"]},
+    {"query_id":"query-019","relevant_document_ids":["doc-020"]},
     {"query_id":"query-020","relevant_document_ids":["doc-030"]}
   ]
 }
