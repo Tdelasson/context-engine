@@ -54,6 +54,38 @@ def test_dataset_has_expected_top_level_sections() -> None:
     assert isinstance(dataset["relevance_judgments"], list)
 
 
+def test_dataset_entries_have_expected_fields_and_types() -> None:
+    dataset = _load_dataset()
+
+    for document in dataset["documents"]:
+        assert set(document.keys()) == {"document_id", "content", "metadata"}
+        assert isinstance(document["document_id"], str)
+        assert document["document_id"]
+        assert isinstance(document["content"], str)
+        assert document["content"]
+        assert isinstance(document["metadata"], dict)
+
+    for query in dataset["queries"]:
+        assert set(query.keys()) == {"query_id", "text", "intent"}
+        assert isinstance(query["query_id"], str)
+        assert query["query_id"]
+        assert isinstance(query["text"], str)
+        assert query["text"]
+        assert isinstance(query["intent"], str)
+        assert query["intent"]
+
+    for judgment in dataset["relevance_judgments"]:
+        assert set(judgment.keys()) == {"query_id", "relevant_document_ids"}
+        assert isinstance(judgment["query_id"], str)
+        assert judgment["query_id"]
+        assert isinstance(judgment["relevant_document_ids"], list)
+        assert judgment["relevant_document_ids"]
+        assert all(
+            isinstance(document_id, str) and document_id
+            for document_id in judgment["relevant_document_ids"]
+        )
+
+
 def test_document_ids_are_unique() -> None:
     dataset = _load_dataset()
 

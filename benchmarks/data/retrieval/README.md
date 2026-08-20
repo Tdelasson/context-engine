@@ -15,6 +15,7 @@ The JSON document uses three explicit benchmark components:
 - `relevance_judgments`: deterministic mapping from each `query_id` to `relevant_document_ids`
 
 Current v1 snapshot size: 34 documents, 20 queries, and 20 relevance-judgment entries.
+Relevance semantics are binary: listed documents are relevant for that query; any unlisted document is treated as non-relevant.
 
 Conceptually:
 
@@ -30,6 +31,8 @@ BenchmarkDataset
 - Manually authored and manually reviewed in-repo.
 - Relevance judgments were assigned by human curation, not by LLM judging.
 - Judgments include only documents that directly satisfy query intent; merely related documents are excluded.
+- Each query and judgment set is cross-checked against distractor documents with overlapping vocabulary to reduce lexical shortcut bias.
+- Ground truth is finalized only after independent pass/review cycles to verify precision (no weakly related positives) and consistency across similar queries.
 - Queries are paraphrased and phrased in natural language to exercise semantic retrieval.
 - Includes both single-relevant-document and multi-relevant-document queries.
 - Includes similar-but-irrelevant documents to reduce pure keyword-matching shortcuts.
