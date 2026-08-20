@@ -27,9 +27,9 @@ class RetrievalRequest:
     metadata_filter: MetadataFilter | None = None
 
     def __post_init__(self) -> None:
-        if not self.query:
+        if not isinstance(self.query, str) or not self.query:
             raise RetrieverConfigurationError("query must be a non-empty string.")
-        if isinstance(self.top_k, bool) or self.top_k <= 0:
+        if isinstance(self.top_k, bool) or not isinstance(self.top_k, int) or self.top_k <= 0:
             raise RetrieverConfigurationError("top_k must be an integer greater than zero.")
 
 
