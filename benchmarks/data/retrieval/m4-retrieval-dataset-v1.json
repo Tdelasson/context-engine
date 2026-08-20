@@ -3,460 +3,83 @@
   "version": "1.0.0",
   "description": "Small, fixed, hand-curated retrieval benchmark dataset for M4 model-independent embedding evaluation.",
   "documents": [
-    {
-      "document_id": "doc-001",
-      "content": "The agent runtime uses explicit states such as READY, RUNNING, WAITING_APPROVAL, and FAILED so transitions are deterministic and debuggable.",
-      "metadata": {
-        "concept": "agent-state",
-        "kind": "architecture-note"
-      }
-    },
-    {
-      "document_id": "doc-002",
-      "content": "Each agent turn stores an immutable log of model output, selected tools, and execution outcomes for auditability.",
-      "metadata": {
-        "concept": "agent-execution",
-        "kind": "design-note"
-      }
-    },
-    {
-      "document_id": "doc-003",
-      "content": "Tools marked high risk require human approval before runtime execution, even if the model requests them.",
-      "metadata": {
-        "concept": "tool-execution",
-        "kind": "policy-note"
-      }
-    },
-    {
-      "document_id": "doc-004",
-      "content": "The model gateway normalizes provider-specific outputs into typed messages and structured tool-call proposals.",
-      "metadata": {
-        "concept": "model-gateway",
-        "kind": "architecture-note"
-      }
-    },
-    {
-      "document_id": "doc-005",
-      "content": "Transient model transport failures can be retried by gateway policy, but invalid structured output is rejected instead of silently repaired.",
-      "metadata": {
-        "concept": "model-gateway",
-        "kind": "reliability-note"
-      }
-    },
-    {
-      "document_id": "doc-006",
-      "content": "A tool registry maps each unique tool name to its input schema, policy settings, and deterministic executor.",
-      "metadata": {
-        "concept": "tool-execution",
-        "kind": "architecture-note"
-      }
-    },
-    {
-      "document_id": "doc-007",
-      "content": "Tool input is schema-validated before side effects, ensuring malformed arguments cannot trigger execution.",
-      "metadata": {
-        "concept": "tool-execution",
-        "kind": "validation-note"
-      }
-    },
-    {
-      "document_id": "doc-008",
-      "content": "Tool execution returns structured results with explicit success or failure outcomes and machine-readable error details.",
-      "metadata": {
-        "concept": "tool-execution",
-        "kind": "api-note"
-      }
-    },
-    {
-      "document_id": "doc-009",
-      "content": "EmbeddingProvider separates embedding generation from storage so retrievers and vector stores stay provider-independent.",
-      "metadata": {
-        "concept": "embeddings",
-        "kind": "architecture-note"
-      }
-    },
-    {
-      "document_id": "doc-010",
-      "content": "LocalEmbeddingProvider may apply distinct query and document prefixes to support models that use instruction-tuned embedding prompts.",
-      "metadata": {
-        "concept": "embeddings",
-        "kind": "implementation-note"
-      }
-    },
-    {
-      "document_id": "doc-011",
-      "content": "Vector-store collections must isolate embedding spaces by model identity and dimensionality so incompatible vectors never mix.",
-      "metadata": {
-        "concept": "vector-search",
-        "kind": "architecture-note"
-      }
-    },
-    {
-      "document_id": "doc-012",
-      "content": "QdrantVectorStore supports provider-independent metadata filtering with exact-match predicates combined using logical AND.",
-      "metadata": {
-        "concept": "vector-search",
-        "kind": "implementation-note"
-      }
-    },
-    {
-      "document_id": "doc-013",
-      "content": "Retriever behavior is: embed the natural-language query, then call vector_store.search with top_k and optional metadata filters.",
-      "metadata": {
-        "concept": "retrieval",
-        "kind": "architecture-note"
-      }
-    },
-    {
-      "document_id": "doc-014",
-      "content": "M4 ingestion uses whole documents as the knowledge unit; automatic chunking is intentionally deferred to M5.",
-      "metadata": {
-        "concept": "ingestion",
-        "kind": "scope-note"
-      }
-    },
-    {
-      "document_id": "doc-015",
-      "content": "Execution tracing records tool name, validated arguments, duration_ms, and outcome to make deterministic flows observable.",
-      "metadata": {
-        "concept": "observability",
-        "kind": "trace-note"
-      }
-    },
-    {
-      "document_id": "doc-016",
-      "content": "A request identifier can link model calls, tool runs, and retrieval events into a single correlated execution timeline.",
-      "metadata": {
-        "concept": "observability",
-        "kind": "trace-note"
-      }
-    },
-    {
-      "document_id": "doc-017",
-      "content": "Runtime policy decisions are recorded as ALLOW, DENY, or REQUIRE_APPROVAL with rationale so behavior can be audited later.",
-      "metadata": {
-        "concept": "observability",
-        "kind": "policy-trace-note"
-      }
-    },
-    {
-      "document_id": "doc-018",
-      "content": "M4 retrieval quality metrics include Recall@K, Mean Reciprocal Rank, and NDCG@K.",
-      "metadata": {
-        "concept": "evaluation",
-        "kind": "metrics-note"
-      }
-    },
-    {
-      "document_id": "doc-019",
-      "content": "Every candidate embedding model must be evaluated against the same documents, queries, and relevance judgments for fair comparison.",
-      "metadata": {
-        "concept": "evaluation",
-        "kind": "benchmark-note"
-      }
-    },
-    {
-      "document_id": "doc-020",
-      "content": "Local-first architecture favors running embedding inference on local hardware when practical, while still allowing portable abstractions.",
-      "metadata": {
-        "concept": "local-first",
-        "kind": "architecture-note"
-      }
-    },
-    {
-      "document_id": "doc-021",
-      "content": "Provider independence means domain APIs must not leak Qdrant-specific payload or client types to callers.",
-      "metadata": {
-        "concept": "architecture",
-        "kind": "boundary-note"
-      }
-    },
-    {
-      "document_id": "doc-022",
-      "content": "Document metadata can represent source, domain, or tags, but metadata filtering is complementary to semantic similarity rather than a replacement.",
-      "metadata": {
-        "concept": "retrieval",
-        "kind": "guidance-note"
-      }
-    },
-    {
-      "document_id": "doc-023",
-      "content": "A playlist utility can sort tracks alphabetically by artist name for deterministic UI ordering.",
-      "metadata": {
-        "concept": "distractor",
-        "kind": "similar-but-irrelevant"
-      }
-    },
-    {
-      "document_id": "doc-024",
-      "content": "A SQL diagnostics tool supports exact-match filtering on log severity and source service fields.",
-      "metadata": {
-        "concept": "distractor",
-        "kind": "similar-but-irrelevant"
-      }
-    },
-    {
-      "document_id": "doc-025",
-      "content": "top_k limits how many ranked results are returned to callers, but it does not modify vectors already stored in the index.",
-      "metadata": {
-        "concept": "retrieval",
-        "kind": "behavior-note"
-      }
-    },
-    {
-      "document_id": "doc-026",
-      "content": "The model may suggest actions, but policy-checked runtime logic is solely responsible for executing external side effects.",
-      "metadata": {
-        "concept": "security-boundary",
-        "kind": "architecture-note"
-      }
-    },
-    {
-      "document_id": "doc-027",
-      "content": "Qdrant and Ollama integration tests are opt-in and excluded from the default CI test path to keep routine checks lightweight.",
-      "metadata": {
-        "concept": "testing",
-        "kind": "ci-note"
-      }
-    },
-    {
-      "document_id": "doc-028",
-      "content": "Local validation commonly includes pytest, ruff check, ruff format --check, mypy, and pre-commit run --all-files.",
-      "metadata": {
-        "concept": "testing",
-        "kind": "workflow-note"
-      }
-    },
-    {
-      "document_id": "doc-029",
-      "content": "Retrieval requests should reject empty query text and non-positive top_k values as configuration errors.",
-      "metadata": {
-        "concept": "retrieval",
-        "kind": "validation-note"
-      }
-    },
-    {
-      "document_id": "doc-030",
-      "content": "Long-running tool calls should use explicit timeout and cancellation handling so one slow dependency cannot stall the agent loop.",
-      "metadata": {
-        "concept": "tool-execution",
-        "kind": "reliability-note"
-      }
-    },
-    {
-      "document_id": "doc-031",
-      "content": "The admin dashboard displays a pending-approvals counter for operators, but the UI itself does not enforce execution policy.",
-      "metadata": {
-        "concept": "distractor",
-        "kind": "similar-but-irrelevant"
-      }
-    },
-    {
-      "document_id": "doc-032",
-      "content": "A migration script can rename database columns while preserving row counts and index definitions.",
-      "metadata": {
-        "concept": "distractor",
-        "kind": "similar-but-irrelevant"
-      }
-    },
-    {
-      "document_id": "doc-033",
-      "content": "HTTP middleware records request latency percentiles for API endpoints and exports them to a metrics dashboard.",
-      "metadata": {
-        "concept": "distractor",
-        "kind": "similar-but-irrelevant"
-      }
-    },
-    {
-      "document_id": "doc-034",
-      "content": "A playlist tagging feature filters songs by mood labels, but it does not perform semantic vector retrieval.",
-      "metadata": {
-        "concept": "distractor",
-        "kind": "similar-but-irrelevant"
-      }
-    }
+    {"document_id":"doc-001","content":"The agent runtime uses explicit states such as READY, RUNNING, WAITING_APPROVAL, and FAILED so transitions are deterministic and debuggable.","metadata":{"concept":"agent-state","kind":"architecture-note"}},
+    {"document_id":"doc-002","content":"Each agent turn stores an immutable log of model output, selected tools, and execution outcomes for auditability.","metadata":{"concept":"agent-execution","kind":"design-note"}},
+    {"document_id":"doc-003","content":"Tools marked high risk require human approval before runtime execution, even if the model requests them.","metadata":{"concept":"tool-execution","kind":"policy-note"}},
+    {"document_id":"doc-004","content":"The model gateway normalizes provider-specific outputs into typed messages and structured tool-call proposals.","metadata":{"concept":"model-gateway","kind":"architecture-note"}},
+    {"document_id":"doc-005","content":"Transient model transport failures can be retried by gateway policy, but invalid structured output is rejected instead of silently repaired.","metadata":{"concept":"model-gateway","kind":"reliability-note"}},
+    {"document_id":"doc-006","content":"A tool registry maps each unique tool name to its input schema, policy settings, and deterministic executor.","metadata":{"concept":"tool-execution","kind":"architecture-note"}},
+    {"document_id":"doc-007","content":"Tool input is schema-validated before side effects, ensuring malformed arguments cannot trigger execution.","metadata":{"concept":"tool-execution","kind":"validation-note"}},
+    {"document_id":"doc-008","content":"Tool execution returns structured results with explicit success or failure outcomes and machine-readable error details.","metadata":{"concept":"tool-execution","kind":"api-note"}},
+    {"document_id":"doc-009","content":"EmbeddingProvider separates embedding generation from storage so retrievers and vector stores stay provider-independent.","metadata":{"concept":"embeddings","kind":"architecture-note"}},
+    {"document_id":"doc-010","content":"LocalEmbeddingProvider may apply distinct query and document prefixes to support models that use instruction-tuned embedding prompts.","metadata":{"concept":"embeddings","kind":"implementation-note"}},
+    {"document_id":"doc-011","content":"Vector-store collections must isolate embedding spaces by model identity and dimensionality so incompatible vectors never mix.","metadata":{"concept":"vector-search","kind":"architecture-note"}},
+    {"document_id":"doc-012","content":"QdrantVectorStore supports provider-independent metadata filtering with exact-match predicates combined using logical AND.","metadata":{"concept":"vector-search","kind":"implementation-note"}},
+    {"document_id":"doc-013","content":"Retriever behavior is: embed the natural-language query, then call vector_store.search with top_k and optional metadata filters.","metadata":{"concept":"retrieval","kind":"architecture-note"}},
+    {"document_id":"doc-014","content":"M4 ingestion uses whole documents as the knowledge unit; automatic chunking is intentionally deferred to M5.","metadata":{"concept":"ingestion","kind":"scope-note"}},
+    {"document_id":"doc-015","content":"Execution tracing records tool name, validated arguments, duration_ms, and outcome to make deterministic flows observable.","metadata":{"concept":"observability","kind":"trace-note"}},
+    {"document_id":"doc-016","content":"A request identifier can link model calls, tool runs, and retrieval events into a single correlated execution timeline.","metadata":{"concept":"observability","kind":"trace-note"}},
+    {"document_id":"doc-017","content":"Runtime policy decisions are recorded as ALLOW, DENY, or REQUIRE_APPROVAL with rationale so behavior can be audited later.","metadata":{"concept":"observability","kind":"policy-trace-note"}},
+    {"document_id":"doc-018","content":"M4 retrieval quality metrics include Recall@K, Mean Reciprocal Rank, and NDCG@K.","metadata":{"concept":"evaluation","kind":"metrics-note"}},
+    {"document_id":"doc-019","content":"Every candidate embedding model must be evaluated against the same documents, queries, and relevance judgments for fair comparison.","metadata":{"concept":"evaluation","kind":"benchmark-note"}},
+    {"document_id":"doc-020","content":"Local-first architecture favors running embedding inference on local hardware when practical, while still allowing portable abstractions.","metadata":{"concept":"local-first","kind":"architecture-note"}},
+    {"document_id":"doc-021","content":"Provider independence means domain APIs must not leak Qdrant-specific payload or client types to callers.","metadata":{"concept":"architecture","kind":"boundary-note"}},
+    {"document_id":"doc-022","content":"Document metadata can represent source, domain, or tags, but metadata filtering is complementary to semantic similarity rather than a replacement.","metadata":{"concept":"retrieval","kind":"guidance-note"}},
+    {"document_id":"doc-023","content":"A playlist utility can sort tracks alphabetically by artist name for deterministic UI ordering.","metadata":{"concept":"distractor","kind":"similar-but-irrelevant"}},
+    {"document_id":"doc-024","content":"A SQL diagnostics tool supports exact-match filtering on log severity and source service fields.","metadata":{"concept":"distractor","kind":"similar-but-irrelevant"}},
+    {"document_id":"doc-025","content":"top_k limits how many ranked results are returned to callers, but it does not modify vectors already stored in the index.","metadata":{"concept":"retrieval","kind":"behavior-note"}},
+    {"document_id":"doc-026","content":"The model may suggest actions, but policy-checked runtime logic is solely responsible for executing external side effects.","metadata":{"concept":"security-boundary","kind":"architecture-note"}},
+    {"document_id":"doc-027","content":"Qdrant and Ollama integration tests are opt-in and excluded from the default CI test path to keep routine checks lightweight.","metadata":{"concept":"testing","kind":"ci-note"}},
+    {"document_id":"doc-028","content":"Local validation commonly includes pytest, ruff check, ruff format --check, mypy, and pre-commit run --all-files.","metadata":{"concept":"testing","kind":"workflow-note"}},
+    {"document_id":"doc-029","content":"Retrieval requests should reject empty query text and non-positive top_k values as configuration errors.","metadata":{"concept":"retrieval","kind":"validation-note"}},
+    {"document_id":"doc-030","content":"Long-running tool calls should use explicit timeout and cancellation handling so one slow dependency cannot stall the agent loop.","metadata":{"concept":"tool-execution","kind":"reliability-note"}},
+    {"document_id":"doc-031","content":"The admin dashboard displays a pending-approvals counter for operators, but the UI itself does not enforce execution policy.","metadata":{"concept":"distractor","kind":"similar-but-irrelevant"}},
+    {"document_id":"doc-032","content":"A migration script can rename database columns while preserving row counts and index definitions.","metadata":{"concept":"distractor","kind":"similar-but-irrelevant"}},
+    {"document_id":"doc-033","content":"HTTP middleware records request latency percentiles for API endpoints and exports them to a metrics dashboard.","metadata":{"concept":"distractor","kind":"similar-but-irrelevant"}},
+    {"document_id":"doc-034","content":"A playlist tagging feature filters songs by mood labels, but it does not perform semantic vector retrieval.","metadata":{"concept":"distractor","kind":"similar-but-irrelevant"}}
   ],
   "queries": [
-    {
-      "query_id": "query-001",
-      "text": "When a run pauses for human sign-off, which lifecycle stage names describe that situation?",
-      "intent": "Find explicit runtime states related to execution and approval waits."
-    },
-    {
-      "query_id": "query-002",
-      "text": "The assistant proposes deleting a file. Which layer is actually allowed to perform that real-world action?",
-      "intent": "Identify the runtime-side execution boundary."
-    },
-    {
-      "query_id": "query-003",
-      "text": "How are tool arguments checked before a tool is allowed to run?",
-      "intent": "Find schema validation behavior for tool inputs."
-    },
-    {
-      "query_id": "query-004",
-      "text": "Where is the canonical catalog that tells the system how each capability is wired and validated?",
-      "intent": "Locate tool registry responsibility."
-    },
-    {
-      "query_id": "query-005",
-      "text": "Why can't representations from different embedding setups share one search collection?",
-      "intent": "Find embedding-space isolation guidance."
-    },
-    {
-      "query_id": "query-006",
-      "text": "If I only want results from a specific tag, where is that restriction combined with meaning-based search?",
-      "intent": "Find metadata filtering behavior and role."
-    },
-    {
-      "query_id": "query-007",
-      "text": "Before nearest-neighbor lookup runs, what conversion happens to a user's question?",
-      "intent": "Find retriever query processing steps."
-    },
-    {
-      "query_id": "query-008",
-      "text": "Are documents chunked in M4 ingestion, or is that postponed?",
-      "intent": "Find ingestion scope decision."
-    },
-    {
-      "query_id": "query-009",
-      "text": "What records let me reconstruct which action executed and how long it took?",
-      "intent": "Find tracing and correlation details."
-    },
-    {
-      "query_id": "query-010",
-      "text": "Where are allow/deny/needs-approval policy decisions captured for later auditing?",
-      "intent": "Find where policy decisions are recorded for auditability."
-    },
-    {
-      "query_id": "query-011",
-      "text": "Which quality metrics are used to score M4 retrieval?",
-      "intent": "Find benchmark quality metrics."
-    },
-    {
-      "query_id": "query-012",
-      "text": "Why do all candidate embedding models need to use the exact same benchmark inputs?",
-      "intent": "Find fairness and reproducibility requirement."
-    },
-    {
-      "query_id": "query-013",
-      "text": "Are external-service integration checks included in the default fast CI run?",
-      "intent": "Find default CI scope for integration checks."
-    },
-    {
-      "query_id": "query-014",
-      "text": "What commands should I run locally before opening a PR?",
-      "intent": "Find local validation workflow."
-    },
-    {
-      "query_id": "query-015",
-      "text": "Which malformed search request inputs are rejected immediately?",
-      "intent": "Find retrieval request validation errors."
-    },
-    {
-      "query_id": "query-016",
-      "text": "How does the runtime avoid getting stuck forever on a slow external action?",
-      "intent": "Find timeout/cancellation guidance for tool execution reliability."
-    }
+    {"query_id":"query-001","text":"When a run pauses for human sign-off, which lifecycle stage names describe that situation?","intent":"Find explicit runtime states related to execution and approval waits."},
+    {"query_id":"query-002","text":"The assistant proposes deleting a file. Which layer is actually allowed to perform that real-world action?","intent":"Identify the runtime-side execution boundary."},
+    {"query_id":"query-003","text":"How are tool arguments checked before a tool is allowed to run?","intent":"Find schema validation behavior for tool inputs."},
+    {"query_id":"query-004","text":"Where is the canonical catalog that tells the system how each capability is wired and validated?","intent":"Locate tool registry responsibility."},
+    {"query_id":"query-005","text":"Why can't representations from different embedding setups share one search collection?","intent":"Find embedding-space isolation guidance."},
+    {"query_id":"query-006","text":"If I only want results from a specific tag, where is that restriction combined with meaning-based search?","intent":"Find metadata filtering behavior and role."},
+    {"query_id":"query-007","text":"Before nearest-neighbor lookup runs, what conversion happens to a user's question?","intent":"Find retriever query processing steps."},
+    {"query_id":"query-008","text":"Are documents chunked in M4 ingestion, or is that postponed?","intent":"Find ingestion scope decision."},
+    {"query_id":"query-009","text":"What records let me reconstruct which action executed and how long it took?","intent":"Find tracing and correlation details."},
+    {"query_id":"query-010","text":"Where are allow/deny/needs-approval policy decisions captured for later auditing?","intent":"Find where policy decisions are recorded for auditability."},
+    {"query_id":"query-011","text":"Which quality metrics are used to score M4 retrieval?","intent":"Find benchmark quality metrics."},
+    {"query_id":"query-012","text":"Why do all candidate embedding models need to use the exact same benchmark inputs?","intent":"Find fairness and reproducibility requirement."},
+    {"query_id":"query-013","text":"Are external-service integration checks included in the default fast CI run?","intent":"Find default CI scope for integration checks."},
+    {"query_id":"query-014","text":"What commands should I run locally before opening a PR?","intent":"Find local validation workflow."},
+    {"query_id":"query-015","text":"Which malformed search request inputs are rejected immediately?","intent":"Find retrieval request validation errors."},
+    {"query_id":"query-016","text":"How does the runtime avoid getting stuck forever on a slow external action?","intent":"Find timeout/cancellation guidance for tool execution reliability."},
+    {"query_id":"query-017","text":"If two encoders produce vectors for the same text, why would mixing their outputs make similarity results unreliable?","intent":"Find the reason embedding spaces must remain isolated."},
+    {"query_id":"query-018","text":"A search can be narrowed to documents carrying a particular label without changing what semantic similarity means. Where is that behavior defined?","intent":"Find the distinction between metadata constraints and semantic similarity."},
+    {"query_id":"query-019","text":"After someone asks a natural-language question, what representation must exist before the vector index can compare it with stored documents?","intent":"Find the query-to-vector retrieval step."},
+    {"query_id":"query-020","text":"If a tool invocation is slow, what prevents that single dependency from holding the whole agent execution open indefinitely?","intent":"Find timeout and cancellation behavior for long-running tools."}
   ],
   "relevance_judgments": [
-    {
-      "query_id": "query-001",
-      "relevant_document_ids": [
-        "doc-001"
-      ]
-    },
-    {
-      "query_id": "query-002",
-      "relevant_document_ids": [
-        "doc-026"
-      ]
-    },
-    {
-      "query_id": "query-003",
-      "relevant_document_ids": [
-        "doc-007"
-      ]
-    },
-    {
-      "query_id": "query-004",
-      "relevant_document_ids": [
-        "doc-006"
-      ]
-    },
-    {
-      "query_id": "query-005",
-      "relevant_document_ids": [
-        "doc-011"
-      ]
-    },
-    {
-      "query_id": "query-006",
-      "relevant_document_ids": [
-        "doc-012",
-        "doc-022"
-      ]
-    },
-    {
-      "query_id": "query-007",
-      "relevant_document_ids": [
-        "doc-009",
-        "doc-013"
-      ]
-    },
-    {
-      "query_id": "query-008",
-      "relevant_document_ids": [
-        "doc-014"
-      ]
-    },
-    {
-      "query_id": "query-009",
-      "relevant_document_ids": [
-        "doc-015",
-        "doc-016"
-      ]
-    },
-    {
-      "query_id": "query-010",
-      "relevant_document_ids": [
-        "doc-017"
-      ]
-    },
-    {
-      "query_id": "query-011",
-      "relevant_document_ids": [
-        "doc-018"
-      ]
-    },
-    {
-      "query_id": "query-012",
-      "relevant_document_ids": [
-        "doc-019"
-      ]
-    },
-    {
-      "query_id": "query-013",
-      "relevant_document_ids": [
-        "doc-027"
-      ]
-    },
-    {
-      "query_id": "query-014",
-      "relevant_document_ids": [
-        "doc-028"
-      ]
-    },
-    {
-      "query_id": "query-015",
-      "relevant_document_ids": [
-        "doc-029"
-      ]
-    },
-    {
-      "query_id": "query-016",
-      "relevant_document_ids": [
-        "doc-030"
-      ]
-    }
+    {"query_id":"query-001","relevant_document_ids":["doc-001"]},
+    {"query_id":"query-002","relevant_document_ids":["doc-026"]},
+    {"query_id":"query-003","relevant_document_ids":["doc-007"]},
+    {"query_id":"query-004","relevant_document_ids":["doc-006"]},
+    {"query_id":"query-005","relevant_document_ids":["doc-011"]},
+    {"query_id":"query-006","relevant_document_ids":["doc-012","doc-022"]},
+    {"query_id":"query-007","relevant_document_ids":["doc-013"]},
+    {"query_id":"query-008","relevant_document_ids":["doc-014"]},
+    {"query_id":"query-009","relevant_document_ids":["doc-015"]},
+    {"query_id":"query-010","relevant_document_ids":["doc-017"]},
+    {"query_id":"query-011","relevant_document_ids":["doc-018"]},
+    {"query_id":"query-012","relevant_document_ids":["doc-019"]},
+    {"query_id":"query-013","relevant_document_ids":["doc-027"]},
+    {"query_id":"query-014","relevant_document_ids":["doc-028"]},
+    {"query_id":"query-015","relevant_document_ids":["doc-029"]},
+    {"query_id":"query-016","relevant_document_ids":["doc-030"]},
+    {"query_id":"query-017","relevant_document_ids":["doc-011"]},
+    {"query_id":"query-018","relevant_document_ids":["doc-012","doc-022"]},
+    {"query_id":"query-019","relevant_document_ids":["doc-013"]},
+    {"query_id":"query-020","relevant_document_ids":["doc-030"]}
   ]
 }
