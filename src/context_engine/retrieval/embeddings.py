@@ -85,7 +85,9 @@ class Embedding:
 
 @runtime_checkable
 class EmbeddingProvider(Protocol):
-    """Provider-independent embedding generation abstraction. Returns one embedding for each input document, in the same order as the input documents."""
+    """Provider-independent embedding generation abstraction.
+    Returns one embedding for each input document,
+    in the same order as the input documents."""
 
     def embed_documents(self, documents: Sequence[Document]) -> Sequence[Embedding]:
         """Embed multiple documents in one batch operation."""
