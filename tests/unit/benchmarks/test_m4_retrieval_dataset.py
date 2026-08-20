@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-
+from typing import Any, TypedDict, cast
 
 DATASET_PATH = (
     Path(__file__).resolve().parents[3]
@@ -13,9 +13,35 @@ DATASET_PATH = (
 )
 
 
-def _load_dataset() -> dict[str, object]:
+class DatasetDocument(TypedDict):
+    document_id: str
+    content: str
+    metadata: dict[str, Any]
+
+
+class DatasetQuery(TypedDict):
+    query_id: str
+    text: str
+    intent: str
+
+
+class RelevanceJudgment(TypedDict):
+    query_id: str
+    relevant_document_ids: list[str]
+
+
+class BenchmarkDataset(TypedDict):
+    dataset_id: str
+    version: str
+    description: str
+    documents: list[DatasetDocument]
+    queries: list[DatasetQuery]
+    relevance_judgments: list[RelevanceJudgment]
+
+
+def _load_dataset() -> BenchmarkDataset:
     with DATASET_PATH.open("r", encoding="utf-8") as dataset_file:
-        return json.load(dataset_file)
+        return cast(BenchmarkDataset, json.load(dataset_file))
 
 
 def test_dataset_has_expected_top_level_sections() -> None:
@@ -63,7 +89,9 @@ def test_relevance_judgments_reference_only_existing_documents() -> None:
 def test_dataset_has_single_and_multi_relevance_queries() -> None:
     dataset = _load_dataset()
 
-    cardinalities = [len(judgment["relevant_document_ids"]) for judgment in dataset["relevance_judgments"]]
+    cardinalities = [
+        len(judgment["relevant_document_ids"]) for judgment in dataset["relevance_judgments"]
+    ]
     assert any(count == 1 for count in cardinalities)
     assert any(count > 1 for count in cardinalities)
 
