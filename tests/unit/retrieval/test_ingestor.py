@@ -118,4 +118,11 @@ def test_ingestor_records_passed_to_vector_store() -> None:
     ingestor.ingest_documents(documents)
 
     assert len(vector_store._records) == len(documents)
-    assert vector_store.provided_records == vector_store.provided_records
+    assert vector_store._records["doc1"].document == documents[0]
+    assert vector_store._records["doc1"].embedding == embedding_provider.embeddings[0]
+    assert vector_store._records["doc1"].embedding.model_id == embedding_provider.model_id
+    assert vector_store._records["doc1"].embedding.dimensions == embedding_provider.dimensions
+    assert vector_store._records["doc2"].document == documents[1]
+    assert vector_store._records["doc2"].embedding == embedding_provider.embeddings[1]
+    assert vector_store._records["doc2"].embedding.model_id == embedding_provider.model_id
+    assert vector_store._records["doc2"].embedding.dimensions == embedding_provider.dimensions
