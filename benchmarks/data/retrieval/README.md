@@ -14,6 +14,8 @@ The JSON document uses three explicit benchmark components:
 - `queries`: stable `query_id`, natural-language `text`, and retrieval `intent`
 - `relevance_judgments`: deterministic mapping from each `query_id` to `relevant_document_ids`
 
+Current v1 snapshot size: 34 documents, 20 queries, and 20 relevance-judgment entries.
+
 Conceptually:
 
 ```text
