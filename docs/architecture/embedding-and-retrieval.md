@@ -131,7 +131,12 @@ M4 will benchmark:
 - nomic-embed-text
 - all-MiniLM-L6-v2
 
-The architecture does not select one of these models in advance. The benchmark will establish the default based on retrieval quality and local performance trade-offs.
+The architecture did not select one of these models in advance. The completed M4 benchmark selected
+`sentence-transformers/all-MiniLM-L6-v2` as the initial default for the recorded local CPU
+environment. It achieved NDCG@10 of 0.9210, MRR of 0.9125, and Recall@10 of 1.0 while providing the
+smallest measured parameter footprint and the strongest local latency/throughput results among the
+quality-equivalent candidates. Qwen3-Embedding-8B was recorded as a hardware exclusion and remains a
+future re-evaluation candidate.
 
 ## 5. Vector Store
 
@@ -280,6 +285,19 @@ The same dataset is used for every candidate model. This makes the benchmark mod
 - vector dimensionality.
 
 The benchmark is a focused M4 experiment. It is not part of the normal CI test suite and does not attempt to replace the full evaluation/MLOps framework planned for M9.
+
+The implemented benchmark fixes K at 1, 5, and 10 and uses a portable in-memory cosine
+`VectorStore` so every model follows the same `EmbeddingProvider` → `Ingestor` → `Retriever`
+execution path without requiring Qdrant for the experiment. The runner records machine-readable
+results, environment details, per-model failures, and a generated human-readable comparison.
+
+The default-selection policy is quality-first. The runner successively keeps models within 0.01 of
+the best NDCG@10, MRR, and Recall@10, followed by parameter footprint and mean query latency. A run
+with failed or unexplained unevaluated candidates produces a provisional decision rather than
+silently excluding them; deliberate local-hardware exclusions are recorded separately.
+
+See `docs/experiments/m4-retrieval-benchmark.md` for the fixed methodology and
+`docs/experiments/m4-embedding-model-comparison.md` for measured results after execution.
 
 ## 10. M4 vs M5
 

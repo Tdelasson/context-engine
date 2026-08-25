@@ -6,6 +6,14 @@ from context_engine.retrieval.embeddings import (
     EmbeddingProvider,
     normalize_document_metadata,
 )
+from context_engine.retrieval.evaluation import (
+    RetrievalEvaluationError,
+    RetrievalQualityMetrics,
+    evaluate_rankings,
+    ndcg_at_k,
+    recall_at_k,
+    reciprocal_rank,
+)
 from context_engine.retrieval.ingestor import (
     Ingestor,
     IngestorError,
@@ -43,6 +51,8 @@ __all__ = [
     "Document",
     "Embedding",
     "EmbeddingProvider",
+    "RetrievalEvaluationError",
+    "RetrievalQualityMetrics",
     "MetadataFilter",
     "LocalEmbeddingProvider",
     "LocalEmbeddingProviderConfig",
@@ -68,4 +78,8 @@ __all__ = [
     "Ingestor",
     "IngestorError",
     "LengthMismatchError",
+    "evaluate_rankings",
+    "ndcg_at_k",
+    "recall_at_k",
+    "reciprocal_rank",
 ]
