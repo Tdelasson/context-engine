@@ -701,8 +701,8 @@ Context Engine v1.0 should demonstrate:
 
 **Next:**
 
-* [ ] Implement the M4 embedding contracts and local provider.
-* [ ] Implement Qdrant-backed vector storage and filtering.
-* [ ] Add the Retriever and simple ingestion pipeline.
-* [ ] Build and run the embedding/retrieval benchmark.
-* [ ] Select the default embedding model based on benchmark results.
+* [x] Implement the M4 embedding contracts and local provider.
+* [x] Implement Qdrant-backed vector storage and filtering.
+* [x] Add the Retriever and simple ingestion pipeline.
+* [x] Build and run the embedding/retrieval benchmark.
+* [x] Select `sentence-transformers/all-MiniLM-L6-v2` as the initial default based on benchmark results.

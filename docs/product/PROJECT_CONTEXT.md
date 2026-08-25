@@ -107,7 +107,11 @@ Architecture is documented before implementation. The immediate implementation f
 - nomic-embed-text
 - all-MiniLM-L6-v2
 
-The final default model will be selected based on benchmark results rather than being predetermined.
+The initial default is `sentence-transformers/all-MiniLM-L6-v2`, selected by the M4 benchmark on
+the recorded local CPU environment. It matched the strongest measured retrieval quality while using
+the smallest parameter footprint and providing the best local throughput and query latency. The
+Qwen3-Embedding-8B candidate remains a documented hardware exclusion and should be evaluated when
+suitable hardware is available.
 
 ## M4 Evaluation
 

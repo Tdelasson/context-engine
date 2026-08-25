@@ -17,6 +17,7 @@ class _FakeBackend:
     def __init__(self) -> None:
         self.model_id = "fake-local-embedding-model-v1"
         self.dimensions = 3
+        self.model_parameter_bytes = 1_024
         self.embedded_documents: tuple[str, ...] = ()
         self.embedded_queries: tuple[str, ...] = ()
 
@@ -58,6 +59,14 @@ def _build_provider(
 def test_local_provider_satisfies_embedding_provider_protocol() -> None:
     provider = _build_provider()
     assert isinstance(provider, EmbeddingProvider)
+
+
+def test_local_provider_exposes_benchmark_metadata() -> None:
+    provider = _build_provider()
+
+    assert provider.model_id == "fake-local-embedding-model-v1"
+    assert provider.dimensions == 3
+    assert provider.model_parameter_bytes == 1_024
 
 
 def test_local_provider_embeds_documents_in_batch_with_metadata() -> None:

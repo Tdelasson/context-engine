@@ -126,9 +126,27 @@ Rejected for the initial benchmark because a small hand-curated dataset provides
 - Small datasets cannot fully represent production retrieval behavior.
 - Local performance measurements vary with hardware and runtime configuration.
 
+## M4 Outcome
+
+The benchmark was executed on the version 1 dataset using the fixed K values 1, 5, and 10. BGE-M3,
+Qwen3-Embedding-0.6B, nomic-embed-text, and all-MiniLM-L6-v2 completed on the recorded Windows CPU
+environment. Qwen3-Embedding-8B was excluded because the local machine could not run it reliably.
+
+`sentence-transformers/all-MiniLM-L6-v2` is the initial default. It achieved NDCG@10 of 0.9210, MRR
+of 0.9125, and Recall@10 of 1.0. Its retrieval quality was equivalent to the strongest candidate
+under the documented 0.01 quality tolerances, while its measured parameter footprint (0.085 GiB),
+mean query latency (approximately 4.8 ms), and document throughput (approximately 397 documents per
+second) were substantially better on the benchmark machine.
+
+This is a workload- and hardware-specific initial choice, not a universal model ranking. The 8B
+candidate should be evaluated on suitable hardware, and M5 retrieval changes should trigger a new
+recorded comparison rather than relying on these values indefinitely.
+
 ## Related Documentation
 
 - `docs/architecture/embedding-and-retrieval.md`
+- `docs/experiments/m4-retrieval-benchmark.md`
+- `docs/experiments/m4-embedding-model-comparison.md` (generated benchmark results)
 - `docs/architecture/decisions/ADR-003-embedding-provider-abstraction.md`
 - `docs/architecture/decisions/ADR-004-vector-store-and-retrieval-architecture.md`
 - `docs/product/roadmap.md`

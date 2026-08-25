@@ -36,6 +36,7 @@ class LocalEmbeddingProviderConfig:
     normalize_embeddings: bool = False
     document_prefix: str = ""
     query_prefix: str = ""
+    trust_remote_code: bool = False
 
     def __post_init__(self) -> None:
         if not self.model_id:
@@ -58,6 +59,9 @@ class _LocalEmbeddingInferenceBackend(Protocol):
 
     @property
     def dimensions(self) -> int: ...
+
+    @property
+    def model_parameter_bytes(self) -> int | None: ...
 
     def embed_documents(
         self,
@@ -103,6 +107,21 @@ class LocalEmbeddingProvider(EmbeddingProvider):
             raise LocalEmbeddingProviderInitializationError(
                 "Local embedding backend dimensions must be greater than zero."
             )
+
+    @property
+    def model_id(self) -> str:
+        """Return the stable model identity reported by the inference backend."""
+        return self._backend.model_id
+
+    @property
+    def dimensions(self) -> int:
+        """Return the embedding dimensionality reported by the inference backend."""
+        return self._backend.dimensions
+
+    @property
+    def model_parameter_bytes(self) -> int | None:
+        """Return the in-memory parameter footprint when it can be measured."""
+        return self._backend.model_parameter_bytes
 
     def embed_documents(self, documents: Sequence[Document]) -> tuple[Embedding, ...]:
         if not documents:
@@ -177,7 +196,10 @@ class _SentenceTransformerEmbeddingBackend:
             ) from exc
 
         try:
-            self._model: Any = sentence_transformer_cls(config.model_reference)
+            self._model: Any = sentence_transformer_cls(
+                config.model_reference,
+                trust_remote_code=config.trust_remote_code,
+            )
         except Exception as exc:
             raise LocalEmbeddingProviderInitializationError(
                 f"Failed to load local embedding model '{config.model_reference}'."
@@ -199,6 +221,16 @@ class _SentenceTransformerEmbeddingBackend:
     @property
     def dimensions(self) -> int:
         return self._dimensions
+
+    @property
+    def model_parameter_bytes(self) -> int | None:
+        try:
+            return sum(
+                int(parameter.numel()) * int(parameter.element_size())
+                for parameter in self._model.parameters()
+            )
+        except (AttributeError, TypeError):
+            return None
 
     def embed_documents(
         self,
