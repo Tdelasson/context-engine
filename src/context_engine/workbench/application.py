@@ -26,15 +26,15 @@ from context_engine.workbench.presentation import (
 )
 
 SYSTEM_PROMPT = """You are the Context Engine workbench assistant.
-Use search_documents when the answer may be in indexed project or uploaded documents.
-Use calculator for arithmetic. Keep the final answer concise and explicitly use tool evidence.
+Use search_documents whenever the answer may be in indexed project or uploaded documents, or just seems like a general question more than a calculation. 
+Use calculator for arithmetic. Keep the final answer concise and explicitly use tool evidence. Dont use the calculator for non-arithmetic questions.
 Never claim a tool ran unless its structured result appears in the conversation."""
 
 PROMPT_PRESETS: dict[str, str] = {
     "Project architecture": (
         "How does Context Engine keep model proposals separate from tool execution?"
     ),
-    "Project roadmap": "What is implemented in M4, and what remains future M5/M6 work?",
+    "Project roadmap": "What has been implemented in M4, and what remains future M5 and M6 work?",
     "Calculator": "Use the calculator to compute (144 / 12) + 7.",
     "Uploaded fact": "Search the uploaded documents and answer using the most relevant fact.",
 }
