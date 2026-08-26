@@ -5,11 +5,11 @@ from collections.abc import Sequence
 import pytest
 
 from benchmarks import benchmark_embedding_models as benchmark
-from context_engine.retrieval import Document, Embedding
+from context_engine.retrieval import Document, Embedding, LocalEmbeddingProviderConfig
 
 
 class _FakeLocalEmbeddingProvider:
-    def __init__(self, config: benchmark.LocalEmbeddingProviderConfig) -> None:
+    def __init__(self, config: LocalEmbeddingProviderConfig) -> None:
         self.model_id = config.model_id
         self.dimensions = 2
         self.model_parameter_bytes = 2_048

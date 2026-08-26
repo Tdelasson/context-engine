@@ -32,6 +32,12 @@ model for the recorded local CPU environment. See the generated
 [model comparison](docs/experiments/m4-embedding-model-comparison.md) for measured results and the
 documented Qwen3-Embedding-8B hardware exclusion.
 
+The current M3/M4 integration exposes semantic retrieval as a read-only
+`search_documents` tool. A model may propose a search, but the Tool Runtime still
+owns schema validation, policy evaluation, Retriever execution, structured results,
+and tracing. This tool-mediated search is deliberately separate from the automatic
+context assembly and advanced RAG work planned for M5/M6.
+
 ## Goals
 
 - Agentic AI
@@ -201,6 +207,35 @@ Optional environment variables:
 - `CONTEXT_ENGINE_QDRANT_URL` (default: `http://localhost:6333`)
 - `CONTEXT_ENGINE_QDRANT_API_KEY` (default: unset)
 - `CONTEXT_ENGINE_QDRANT_TIMEOUT_SECONDS` (default: `5`)
+
+## Retriever Tool Agent Verification (Optional)
+
+You can verify the complete local agent search loop with a local embedding model,
+Qdrant, and Ollama:
+
+```text
+local model proposal
+  → Tool Runtime validation and policy
+  → search_documents
+  → Retriever
+  → structured ToolResult
+  → local model response
+```
+
+1. Complete the local embedding, Qdrant, and Ollama setup described above.
+2. Ensure the configured embedding and Ollama models are available locally.
+3. Run the opt-in integration test:
+
+```bash
+CONTEXT_ENGINE_RUN_SEARCH_TOOL_INTEGRATION=1 \
+CONTEXT_ENGINE_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2 \
+CONTEXT_ENGINE_OLLAMA_MODEL=llama3.2 \
+pytest tests/integration/test_search_documents_agent_integration.py
+```
+
+The test also honors the optional embedding, Qdrant, and Ollama environment variables
+documented in the preceding sections. It remains opt-in because it requires local model
+inference and a running Qdrant service.
 
 ## M4 Embedding Model Benchmark (Optional)
 

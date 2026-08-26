@@ -158,7 +158,44 @@ The model receives registered tool definitions through the provider-independent 
 
 The Tool Runtime then executes the proposal deterministically.
 
-## 9. Provider Independence
+## 9. Retriever-Backed Search Tool
+
+The read-only `search_documents` tool composes the M3 Tool Runtime boundary with the
+M4 `Retriever` abstraction:
+
+```text
+ModelResponse(tool_call)
+        ↓
+Tool Runtime
+        ↓
+registry + schema + policy
+        ↓
+search_documents
+        ↓
+Retriever.retrieve(RetrievalRequest)
+        ↓
+bounded JSON-safe results
+        ↓
+ToolResult + ToolExecutionTrace
+        ↓
+next model request
+```
+
+The tool accepts one required query string. Result count and content-length limits are
+runtime configuration rather than model-controlled arguments. Results preserve
+Retriever ordering and contain provider-independent document IDs, scores, bounded
+content, and supported JSON-safe metadata.
+
+The tool does not access Qdrant or an embedding provider directly. Retrieval and
+serialization failures remain inside the existing structured Tool Runtime error path.
+Because this is a read-only tool, applications can use the normal policy boundary to
+allow, deny, or require approval without creating a separate execution path.
+
+This integration is deliberately narrower than automatic context assembly or modern
+RAG. The model selects the tool call; the runtime does not automatically retrieve or
+inject context before model reasoning.
+
+## 10. Provider Independence
 
 The Tool Runtime has no dependency on Ollama or another model provider.
 
@@ -166,7 +203,7 @@ Ollama is currently used only to demonstrate that a real local model can partici
 
 This separation allows deterministic tool behavior to be tested with a fake gateway and allows model providers to change without rewriting the tool execution layer.
 
-## 10. Security Boundary
+## 11. Security Boundary
 
 The core invariant is:
 
@@ -196,7 +233,7 @@ Execution
 
 See `docs/architecture/decisions/ADR-002-tool-security-boundary.md` for the architectural decision behind this boundary.
 
-## 11. Current Scope and Future Work
+## 12. Current Scope and Future Work
 
 Implemented in M3:
 
@@ -208,6 +245,13 @@ Implemented in M3:
 - structured tool errors
 - execution tracing
 - model/tool integration
+
+Added as an M3/M4 composition:
+
+- read-only, Retriever-backed `search_documents` tool
+- runtime-configured result and content bounds
+- deterministic JSON-safe search result serialization
+- agent loop propagation through structured `ToolResult`
 
 Not yet implemented:
 
