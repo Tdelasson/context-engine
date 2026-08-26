@@ -1,0 +1,1257 @@
+{
+  "benchmark": {
+    "all_candidate_model_ids": [
+      "bge-m3",
+      "qwen3-embedding-0.6b",
+      "qwen3-embedding-8b",
+      "nomic-embed-text",
+      "all-minilm-l6-v2"
+    ],
+    "dataset_id": "m4-retrieval-benchmark-v1",
+    "dataset_sha256": "60886b5dcd84beab03a933d0e88d21b982aa96ec93de5d4274de0b64858959ea",
+    "dataset_version": "1.0.0",
+    "distance_metric": "cosine",
+    "document_count": 34,
+    "hardware_exclusions": {
+      "qwen3-embedding-8b": "Excluded because the local machine cannot run this model reliably."
+    },
+    "k_values": [
+      1,
+      5,
+      10
+    ],
+    "query_count": 20,
+    "requested_model_ids": [
+      "bge-m3",
+      "qwen3-embedding-0.6b",
+      "nomic-embed-text",
+      "all-minilm-l6-v2"
+    ]
+  },
+  "environment": {
+    "cpu_count": 12,
+    "machine": "AMD64",
+    "packages": {
+      "sentence-transformers": "6.0.0",
+      "torch": "2.13.0",
+      "transformers": "5.15.1"
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "python_implementation": "CPython",
+    "python_version": "3.12.10",
+    "release": "11",
+    "system": "Windows",
+    "torch_cuda_available": false,
+    "torch_cuda_device_count": 0,
+    "torch_cuda_devices": []
+  },
+  "generated_at": "2026-08-25T19:08:48.988248+00:00",
+  "models": [
+    {
+      "configuration": {
+        "batch_size": 8,
+        "document_prefix": "",
+        "model_id": "bge-m3",
+        "model_reference": "BAAI/bge-m3",
+        "normalize_embeddings": true,
+        "query_prefix": "",
+        "trust_remote_code": false
+      },
+      "dimensions": 1024,
+      "model_id": "bge-m3",
+      "model_parameter_bytes": 2271019008,
+      "model_reference": "BAAI/bge-m3",
+      "performance": {
+        "document_embedding_seconds": 1.93360709999979,
+        "document_embeddings_per_second": 17.583716981595533,
+        "initialization_seconds": 8.338008499999887,
+        "query_embedding_latency_ms": {
+          "maximum": 97.23899999971763,
+          "mean": 78.15152999987731,
+          "median": 76.06914999996661,
+          "minimum": 67.09799999953248,
+          "p95": 97.23899999971763
+        },
+        "vector_search_latency_ms": {
+          "maximum": 3.829799999948591,
+          "mean": 3.4037449999232194,
+          "median": 3.7351499995565973,
+          "minimum": 2.293399999871326,
+          "p95": 3.829799999948591
+        }
+      },
+      "process_rss_bytes": {
+        "after_model_load": 742518784,
+        "before_model_load": 24526848,
+        "increase_after_model_load": 717991936
+      },
+      "quality": {
+        "mean_reciprocal_rank": 0.9166666666666666,
+        "ndcg_at_k": {
+          "1": 0.85,
+          "10": 0.9199993866554633,
+          "5": 0.9090790148145551
+        },
+        "recall_at_k": {
+          "1": 0.825,
+          "10": 0.975,
+          "5": 0.95
+        }
+      },
+      "rankings": {
+        "query-001": [
+          "doc-001",
+          "doc-017",
+          "doc-003",
+          "doc-030",
+          "doc-015",
+          "doc-026",
+          "doc-016",
+          "doc-007",
+          "doc-031",
+          "doc-002"
+        ],
+        "query-002": [
+          "doc-003",
+          "doc-026",
+          "doc-030",
+          "doc-031",
+          "doc-024",
+          "doc-014",
+          "doc-001",
+          "doc-017",
+          "doc-007",
+          "doc-033"
+        ],
+        "query-003": [
+          "doc-007",
+          "doc-005",
+          "doc-026",
+          "doc-003",
+          "doc-001",
+          "doc-030",
+          "doc-017",
+          "doc-031",
+          "doc-011",
+          "doc-025"
+        ],
+        "query-004": [
+          "doc-006",
+          "doc-002",
+          "doc-007",
+          "doc-001",
+          "doc-015",
+          "doc-024",
+          "doc-019",
+          "doc-016",
+          "doc-017",
+          "doc-008"
+        ],
+        "query-005": [
+          "doc-011",
+          "doc-019",
+          "doc-009",
+          "doc-029",
+          "doc-010",
+          "doc-013",
+          "doc-034",
+          "doc-025",
+          "doc-022",
+          "doc-014"
+        ],
+        "query-006": [
+          "doc-034",
+          "doc-025",
+          "doc-022",
+          "doc-029",
+          "doc-024",
+          "doc-012",
+          "doc-013",
+          "doc-026",
+          "doc-006",
+          "doc-008"
+        ],
+        "query-007": [
+          "doc-013",
+          "doc-017",
+          "doc-001",
+          "doc-025",
+          "doc-028",
+          "doc-029",
+          "doc-007",
+          "doc-019",
+          "doc-020",
+          "doc-016"
+        ],
+        "query-008": [
+          "doc-014",
+          "doc-018",
+          "doc-017",
+          "doc-007",
+          "doc-022",
+          "doc-010",
+          "doc-003",
+          "doc-019",
+          "doc-008",
+          "doc-027"
+        ],
+        "query-009": [
+          "doc-015",
+          "doc-017",
+          "doc-008",
+          "doc-016",
+          "doc-001",
+          "doc-002",
+          "doc-030",
+          "doc-007",
+          "doc-031",
+          "doc-026"
+        ],
+        "query-010": [
+          "doc-017",
+          "doc-031",
+          "doc-002",
+          "doc-001",
+          "doc-026",
+          "doc-006",
+          "doc-007",
+          "doc-003",
+          "doc-015",
+          "doc-005"
+        ],
+        "query-011": [
+          "doc-017",
+          "doc-018",
+          "doc-001",
+          "doc-025",
+          "doc-013",
+          "doc-019",
+          "doc-033",
+          "doc-015",
+          "doc-026",
+          "doc-034"
+        ],
+        "query-012": [
+          "doc-019",
+          "doc-010",
+          "doc-011",
+          "doc-009",
+          "doc-003",
+          "doc-020",
+          "doc-006",
+          "doc-007",
+          "doc-002",
+          "doc-004"
+        ],
+        "query-013": [
+          "doc-027",
+          "doc-028",
+          "doc-007",
+          "doc-001",
+          "doc-026",
+          "doc-024",
+          "doc-030",
+          "doc-017",
+          "doc-033",
+          "doc-003"
+        ],
+        "query-014": [
+          "doc-028",
+          "doc-003",
+          "doc-017",
+          "doc-010",
+          "doc-007",
+          "doc-030",
+          "doc-001",
+          "doc-026",
+          "doc-020",
+          "doc-031"
+        ],
+        "query-015": [
+          "doc-029",
+          "doc-030",
+          "doc-003",
+          "doc-028",
+          "doc-013",
+          "doc-025",
+          "doc-019",
+          "doc-007",
+          "doc-016",
+          "doc-024"
+        ],
+        "query-016": [
+          "doc-030",
+          "doc-026",
+          "doc-001",
+          "doc-007",
+          "doc-017",
+          "doc-005",
+          "doc-020",
+          "doc-031",
+          "doc-033",
+          "doc-015"
+        ],
+        "query-017": [
+          "doc-009",
+          "doc-031",
+          "doc-011",
+          "doc-025",
+          "doc-032",
+          "doc-034",
+          "doc-012",
+          "doc-026",
+          "doc-005",
+          "doc-013"
+        ],
+        "query-018": [
+          "doc-022",
+          "doc-034",
+          "doc-019",
+          "doc-024",
+          "doc-006",
+          "doc-025",
+          "doc-032",
+          "doc-013",
+          "doc-029",
+          "doc-026"
+        ],
+        "query-019": [
+          "doc-020",
+          "doc-009",
+          "doc-021",
+          "doc-010",
+          "doc-011",
+          "doc-030",
+          "doc-019",
+          "doc-007",
+          "doc-026",
+          "doc-003"
+        ],
+        "query-020": [
+          "doc-030",
+          "doc-001",
+          "doc-007",
+          "doc-003",
+          "doc-002",
+          "doc-031",
+          "doc-006",
+          "doc-016",
+          "doc-026",
+          "doc-015"
+        ]
+      },
+      "resolved_model_revision": "5617a9f61b028005a4858fdac845db406aefb181",
+      "status": "completed"
+    },
+    {
+      "configuration": {
+        "batch_size": 8,
+        "document_prefix": "",
+        "model_id": "qwen3-embedding-0.6b",
+        "model_reference": "Qwen/Qwen3-Embedding-0.6B",
+        "normalize_embeddings": true,
+        "query_prefix": "Instruct: Retrieve the most relevant Context Engine document for the query.\nQuery: ",
+        "trust_remote_code": false
+      },
+      "dimensions": 1024,
+      "model_id": "qwen3-embedding-0.6b",
+      "model_parameter_bytes": 1191553024,
+      "model_reference": "Qwen/Qwen3-Embedding-0.6B",
+      "performance": {
+        "document_embedding_seconds": 0.8316285000000789,
+        "document_embeddings_per_second": 40.883639750197084,
+        "initialization_seconds": 4.038406200000281,
+        "query_embedding_latency_ms": {
+          "maximum": 68.44149999960791,
+          "mean": 60.86498500003472,
+          "median": 59.12854999996853,
+          "minimum": 53.60530000052677,
+          "p95": 68.44149999960791
+        },
+        "vector_search_latency_ms": {
+          "maximum": 3.8105000003270106,
+          "mean": 3.3978349999415514,
+          "median": 3.7524999997913255,
+          "minimum": 2.322400000593916,
+          "p95": 3.8105000003270106
+        }
+      },
+      "process_rss_bytes": {
+        "after_model_load": 2068930560,
+        "before_model_load": 2002092032,
+        "increase_after_model_load": 66838528
+      },
+      "quality": {
+        "mean_reciprocal_rank": 0.8625,
+        "ndcg_at_k": {
+          "1": 0.75,
+          "10": 0.887566583842273,
+          "5": 0.887566583842273
+        },
+        "recall_at_k": {
+          "1": 0.7,
+          "10": 1.0,
+          "5": 1.0
+        }
+      },
+      "rankings": {
+        "query-001": [
+          "doc-001",
+          "doc-030",
+          "doc-031",
+          "doc-017",
+          "doc-003",
+          "doc-002",
+          "doc-015",
+          "doc-008",
+          "doc-026",
+          "doc-005"
+        ],
+        "query-002": [
+          "doc-017",
+          "doc-026",
+          "doc-003",
+          "doc-031",
+          "doc-002",
+          "doc-021",
+          "doc-015",
+          "doc-008",
+          "doc-014",
+          "doc-020"
+        ],
+        "query-003": [
+          "doc-026",
+          "doc-007",
+          "doc-003",
+          "doc-005",
+          "doc-017",
+          "doc-004",
+          "doc-008",
+          "doc-031",
+          "doc-015",
+          "doc-002"
+        ],
+        "query-004": [
+          "doc-017",
+          "doc-004",
+          "doc-021",
+          "doc-006",
+          "doc-007",
+          "doc-003",
+          "doc-024",
+          "doc-005",
+          "doc-031",
+          "doc-022"
+        ],
+        "query-005": [
+          "doc-011",
+          "doc-009",
+          "doc-019",
+          "doc-010",
+          "doc-013",
+          "doc-012",
+          "doc-025",
+          "doc-022",
+          "doc-034",
+          "doc-027"
+        ],
+        "query-006": [
+          "doc-022",
+          "doc-025",
+          "doc-013",
+          "doc-012",
+          "doc-034",
+          "doc-029",
+          "doc-024",
+          "doc-003",
+          "doc-010",
+          "doc-018"
+        ],
+        "query-007": [
+          "doc-013",
+          "doc-025",
+          "doc-010",
+          "doc-012",
+          "doc-029",
+          "doc-018",
+          "doc-004",
+          "doc-019",
+          "doc-011",
+          "doc-016"
+        ],
+        "query-008": [
+          "doc-014",
+          "doc-018",
+          "doc-027",
+          "doc-010",
+          "doc-004",
+          "doc-005",
+          "doc-033",
+          "doc-012",
+          "doc-013",
+          "doc-015"
+        ],
+        "query-009": [
+          "doc-015",
+          "doc-002",
+          "doc-016",
+          "doc-017",
+          "doc-013",
+          "doc-033",
+          "doc-008",
+          "doc-026",
+          "doc-024",
+          "doc-001"
+        ],
+        "query-010": [
+          "doc-017",
+          "doc-031",
+          "doc-003",
+          "doc-002",
+          "doc-026",
+          "doc-024",
+          "doc-033",
+          "doc-001",
+          "doc-015",
+          "doc-006"
+        ],
+        "query-011": [
+          "doc-025",
+          "doc-018",
+          "doc-019",
+          "doc-015",
+          "doc-017",
+          "doc-023",
+          "doc-008",
+          "doc-013",
+          "doc-003",
+          "doc-027"
+        ],
+        "query-012": [
+          "doc-019",
+          "doc-011",
+          "doc-010",
+          "doc-009",
+          "doc-020",
+          "doc-003",
+          "doc-027",
+          "doc-004",
+          "doc-016",
+          "doc-013"
+        ],
+        "query-013": [
+          "doc-027",
+          "doc-015",
+          "doc-028",
+          "doc-003",
+          "doc-008",
+          "doc-026",
+          "doc-024",
+          "doc-030",
+          "doc-017",
+          "doc-033"
+        ],
+        "query-014": [
+          "doc-028",
+          "doc-027",
+          "doc-010",
+          "doc-020",
+          "doc-015",
+          "doc-003",
+          "doc-021",
+          "doc-013",
+          "doc-017",
+          "doc-007"
+        ],
+        "query-015": [
+          "doc-029",
+          "doc-025",
+          "doc-013",
+          "doc-012",
+          "doc-005",
+          "doc-016",
+          "doc-021",
+          "doc-011",
+          "doc-003",
+          "doc-018"
+        ],
+        "query-016": [
+          "doc-030",
+          "doc-026",
+          "doc-001",
+          "doc-015",
+          "doc-008",
+          "doc-033",
+          "doc-003",
+          "doc-005",
+          "doc-017",
+          "doc-016"
+        ],
+        "query-017": [
+          "doc-011",
+          "doc-009",
+          "doc-012",
+          "doc-020",
+          "doc-021",
+          "doc-013",
+          "doc-010",
+          "doc-025",
+          "doc-004",
+          "doc-032"
+        ],
+        "query-018": [
+          "doc-022",
+          "doc-013",
+          "doc-012",
+          "doc-025",
+          "doc-010",
+          "doc-034",
+          "doc-011",
+          "doc-024",
+          "doc-019",
+          "doc-021"
+        ],
+        "query-019": [
+          "doc-020",
+          "doc-009",
+          "doc-010",
+          "doc-011",
+          "doc-019",
+          "doc-021",
+          "doc-027",
+          "doc-014",
+          "doc-013",
+          "doc-004"
+        ],
+        "query-020": [
+          "doc-030",
+          "doc-002",
+          "doc-001",
+          "doc-015",
+          "doc-016",
+          "doc-008",
+          "doc-006",
+          "doc-031",
+          "doc-026",
+          "doc-021"
+        ]
+      },
+      "resolved_model_revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+      "status": "completed"
+    },
+    {
+      "configuration": {
+        "batch_size": 8,
+        "document_prefix": "search_document: ",
+        "model_id": "nomic-embed-text",
+        "model_reference": "nomic-ai/nomic-embed-text-v1.5",
+        "normalize_embeddings": true,
+        "query_prefix": "search_query: ",
+        "trust_remote_code": true
+      },
+      "dimensions": 768,
+      "model_id": "nomic-embed-text",
+      "model_parameter_bytes": 546926592,
+      "model_reference": "nomic-ai/nomic-embed-text-v1.5",
+      "performance": {
+        "document_embedding_seconds": 0.7272637000005489,
+        "document_embeddings_per_second": 46.75058029154259,
+        "initialization_seconds": 4.735049399999298,
+        "query_embedding_latency_ms": {
+          "maximum": 33.08130000004894,
+          "mean": 29.72397999997156,
+          "median": 29.279050000241114,
+          "minimum": 25.841899999250018,
+          "p95": 33.08130000004894
+        },
+        "vector_search_latency_ms": {
+          "maximum": 2.9173000002629124,
+          "mean": 2.600940000047558,
+          "median": 2.8419499999472464,
+          "minimum": 1.7876000001706416,
+          "p95": 2.9173000002629124
+        }
+      },
+      "process_rss_bytes": {
+        "after_model_load": 3630948352,
+        "before_model_load": 3005558784,
+        "increase_after_model_load": 625389568
+      },
+      "quality": {
+        "mean_reciprocal_rank": 0.8383333333333333,
+        "ndcg_at_k": {
+          "1": 0.75,
+          "10": 0.8709644470980574,
+          "5": 0.8472824209431847
+        },
+        "recall_at_k": {
+          "1": 0.725,
+          "10": 1.0,
+          "5": 0.925
+        }
+      },
+      "rankings": {
+        "query-001": [
+          "doc-001",
+          "doc-026",
+          "doc-030",
+          "doc-015",
+          "doc-016",
+          "doc-003",
+          "doc-017",
+          "doc-031",
+          "doc-028",
+          "doc-007"
+        ],
+        "query-002": [
+          "doc-001",
+          "doc-030",
+          "doc-026",
+          "doc-003",
+          "doc-017",
+          "doc-014",
+          "doc-002",
+          "doc-005",
+          "doc-016",
+          "doc-007"
+        ],
+        "query-003": [
+          "doc-003",
+          "doc-007",
+          "doc-026",
+          "doc-014",
+          "doc-030",
+          "doc-001",
+          "doc-005",
+          "doc-019",
+          "doc-029",
+          "doc-025"
+        ],
+        "query-004": [
+          "doc-004",
+          "doc-026",
+          "doc-017",
+          "doc-002",
+          "doc-015",
+          "doc-020",
+          "doc-003",
+          "doc-001",
+          "doc-028",
+          "doc-006"
+        ],
+        "query-005": [
+          "doc-011",
+          "doc-009",
+          "doc-019",
+          "doc-010",
+          "doc-013",
+          "doc-020",
+          "doc-012",
+          "doc-029",
+          "doc-022",
+          "doc-016"
+        ],
+        "query-006": [
+          "doc-034",
+          "doc-013",
+          "doc-012",
+          "doc-022",
+          "doc-029",
+          "doc-019",
+          "doc-010",
+          "doc-025",
+          "doc-016",
+          "doc-024"
+        ],
+        "query-007": [
+          "doc-013",
+          "doc-029",
+          "doc-019",
+          "doc-012",
+          "doc-028",
+          "doc-025",
+          "doc-010",
+          "doc-024",
+          "doc-020",
+          "doc-032"
+        ],
+        "query-008": [
+          "doc-014",
+          "doc-007",
+          "doc-015",
+          "doc-003",
+          "doc-018",
+          "doc-022",
+          "doc-010",
+          "doc-001",
+          "doc-019",
+          "doc-017"
+        ],
+        "query-009": [
+          "doc-015",
+          "doc-016",
+          "doc-002",
+          "doc-017",
+          "doc-018",
+          "doc-026",
+          "doc-014",
+          "doc-030",
+          "doc-008",
+          "doc-031"
+        ],
+        "query-010": [
+          "doc-017",
+          "doc-031",
+          "doc-003",
+          "doc-026",
+          "doc-019",
+          "doc-027",
+          "doc-029",
+          "doc-001",
+          "doc-002",
+          "doc-007"
+        ],
+        "query-011": [
+          "doc-018",
+          "doc-025",
+          "doc-019",
+          "doc-015",
+          "doc-001",
+          "doc-029",
+          "doc-017",
+          "doc-024",
+          "doc-014",
+          "doc-031"
+        ],
+        "query-012": [
+          "doc-019",
+          "doc-010",
+          "doc-011",
+          "doc-009",
+          "doc-020",
+          "doc-007",
+          "doc-003",
+          "doc-028",
+          "doc-004",
+          "doc-013"
+        ],
+        "query-013": [
+          "doc-027",
+          "doc-028",
+          "doc-026",
+          "doc-020",
+          "doc-017",
+          "doc-001",
+          "doc-031",
+          "doc-003",
+          "doc-005",
+          "doc-024"
+        ],
+        "query-014": [
+          "doc-028",
+          "doc-020",
+          "doc-010",
+          "doc-001",
+          "doc-030",
+          "doc-026",
+          "doc-003",
+          "doc-017",
+          "doc-027",
+          "doc-031"
+        ],
+        "query-015": [
+          "doc-029",
+          "doc-013",
+          "doc-019",
+          "doc-028",
+          "doc-003",
+          "doc-016",
+          "doc-012",
+          "doc-010",
+          "doc-018",
+          "doc-025"
+        ],
+        "query-016": [
+          "doc-030",
+          "doc-026",
+          "doc-001",
+          "doc-020",
+          "doc-017",
+          "doc-003",
+          "doc-015",
+          "doc-028",
+          "doc-016",
+          "doc-013"
+        ],
+        "query-017": [
+          "doc-011",
+          "doc-009",
+          "doc-007",
+          "doc-013",
+          "doc-030",
+          "doc-002",
+          "doc-015",
+          "doc-024",
+          "doc-020",
+          "doc-008"
+        ],
+        "query-018": [
+          "doc-022",
+          "doc-013",
+          "doc-034",
+          "doc-019",
+          "doc-016",
+          "doc-014",
+          "doc-010",
+          "doc-011",
+          "doc-012",
+          "doc-024"
+        ],
+        "query-019": [
+          "doc-020",
+          "doc-009",
+          "doc-010",
+          "doc-019",
+          "doc-011",
+          "doc-013",
+          "doc-028",
+          "doc-021",
+          "doc-014",
+          "doc-003"
+        ],
+        "query-020": [
+          "doc-030",
+          "doc-007",
+          "doc-003",
+          "doc-001",
+          "doc-002",
+          "doc-016",
+          "doc-015",
+          "doc-008",
+          "doc-006",
+          "doc-026"
+        ]
+      },
+      "resolved_model_revision": "e9b6763023c676ca8431644204f50c2b100d9aab",
+      "status": "completed"
+    },
+    {
+      "configuration": {
+        "batch_size": 8,
+        "document_prefix": "",
+        "model_id": "all-minilm-l6-v2",
+        "model_reference": "sentence-transformers/all-MiniLM-L6-v2",
+        "normalize_embeddings": true,
+        "query_prefix": "",
+        "trust_remote_code": false
+      },
+      "dimensions": 384,
+      "model_id": "all-minilm-l6-v2",
+      "model_parameter_bytes": 90852864,
+      "model_reference": "sentence-transformers/all-MiniLM-L6-v2",
+      "performance": {
+        "document_embedding_seconds": 0.08720750000065891,
+        "document_embeddings_per_second": 389.87472407468516,
+        "initialization_seconds": 2.6141261000002487,
+        "query_embedding_latency_ms": {
+          "maximum": 5.981900000733731,
+          "mean": 5.143489999954909,
+          "median": 5.152749999979278,
+          "minimum": 4.179199999271077,
+          "p95": 5.981900000733731
+        },
+        "vector_search_latency_ms": {
+          "maximum": 1.5223000000332831,
+          "mean": 1.2689549998867733,
+          "median": 1.419449999502831,
+          "minimum": 0.9531000005154056,
+          "p95": 1.5223000000332831
+        }
+      },
+      "process_rss_bytes": {
+        "after_model_load": 3576926208,
+        "before_model_load": 3566637056,
+        "increase_after_model_load": 10289152
+      },
+      "quality": {
+        "mean_reciprocal_rank": 0.9125,
+        "ndcg_at_k": {
+          "1": 0.85,
+          "10": 0.9210048143044556,
+          "5": 0.9210048143044556
+        },
+        "recall_at_k": {
+          "1": 0.8,
+          "10": 1.0,
+          "5": 1.0
+        }
+      },
+      "rankings": {
+        "query-001": [
+          "doc-001",
+          "doc-016",
+          "doc-015",
+          "doc-030",
+          "doc-026",
+          "doc-002",
+          "doc-005",
+          "doc-003",
+          "doc-017",
+          "doc-006"
+        ],
+        "query-002": [
+          "doc-026",
+          "doc-003",
+          "doc-017",
+          "doc-002",
+          "doc-007",
+          "doc-006",
+          "doc-028",
+          "doc-015",
+          "doc-016",
+          "doc-014"
+        ],
+        "query-003": [
+          "doc-026",
+          "doc-007",
+          "doc-015",
+          "doc-003",
+          "doc-002",
+          "doc-006",
+          "doc-017",
+          "doc-005",
+          "doc-001",
+          "doc-030"
+        ],
+        "query-004": [
+          "doc-006",
+          "doc-008",
+          "doc-002",
+          "doc-004",
+          "doc-016",
+          "doc-015",
+          "doc-028",
+          "doc-017",
+          "doc-012",
+          "doc-003"
+        ],
+        "query-005": [
+          "doc-011",
+          "doc-019",
+          "doc-009",
+          "doc-010",
+          "doc-013",
+          "doc-020",
+          "doc-034",
+          "doc-012",
+          "doc-018",
+          "doc-022"
+        ],
+        "query-006": [
+          "doc-022",
+          "doc-013",
+          "doc-034",
+          "doc-029",
+          "doc-012",
+          "doc-019",
+          "doc-014",
+          "doc-010",
+          "doc-024",
+          "doc-018"
+        ],
+        "query-007": [
+          "doc-019",
+          "doc-025",
+          "doc-010",
+          "doc-013",
+          "doc-012",
+          "doc-016",
+          "doc-024",
+          "doc-004",
+          "doc-014",
+          "doc-018"
+        ],
+        "query-008": [
+          "doc-014",
+          "doc-018",
+          "doc-028",
+          "doc-010",
+          "doc-022",
+          "doc-009",
+          "doc-015",
+          "doc-011",
+          "doc-007",
+          "doc-012"
+        ],
+        "query-009": [
+          "doc-015",
+          "doc-016",
+          "doc-017",
+          "doc-008",
+          "doc-002",
+          "doc-006",
+          "doc-026",
+          "doc-024",
+          "doc-018",
+          "doc-033"
+        ],
+        "query-010": [
+          "doc-017",
+          "doc-031",
+          "doc-003",
+          "doc-002",
+          "doc-026",
+          "doc-015",
+          "doc-006",
+          "doc-028",
+          "doc-001",
+          "doc-027"
+        ],
+        "query-011": [
+          "doc-018",
+          "doc-025",
+          "doc-033",
+          "doc-019",
+          "doc-008",
+          "doc-016",
+          "doc-002",
+          "doc-023",
+          "doc-027",
+          "doc-029"
+        ],
+        "query-012": [
+          "doc-019",
+          "doc-020",
+          "doc-009",
+          "doc-011",
+          "doc-010",
+          "doc-018",
+          "doc-007",
+          "doc-025",
+          "doc-013",
+          "doc-004"
+        ],
+        "query-013": [
+          "doc-027",
+          "doc-026",
+          "doc-003",
+          "doc-017",
+          "doc-016",
+          "doc-031",
+          "doc-028",
+          "doc-030",
+          "doc-033",
+          "doc-004"
+        ],
+        "query-014": [
+          "doc-028",
+          "doc-026",
+          "doc-020",
+          "doc-003",
+          "doc-017",
+          "doc-006",
+          "doc-001",
+          "doc-010",
+          "doc-015",
+          "doc-016"
+        ],
+        "query-015": [
+          "doc-029",
+          "doc-008",
+          "doc-016",
+          "doc-005",
+          "doc-018",
+          "doc-033",
+          "doc-030",
+          "doc-024",
+          "doc-019",
+          "doc-003"
+        ],
+        "query-016": [
+          "doc-030",
+          "doc-026",
+          "doc-001",
+          "doc-017",
+          "doc-015",
+          "doc-003",
+          "doc-016",
+          "doc-020",
+          "doc-008",
+          "doc-007"
+        ],
+        "query-017": [
+          "doc-011",
+          "doc-009",
+          "doc-013",
+          "doc-020",
+          "doc-015",
+          "doc-019",
+          "doc-025",
+          "doc-012",
+          "doc-008",
+          "doc-010"
+        ],
+        "query-018": [
+          "doc-022",
+          "doc-013",
+          "doc-019",
+          "doc-012",
+          "doc-034",
+          "doc-018",
+          "doc-010",
+          "doc-014",
+          "doc-016",
+          "doc-006"
+        ],
+        "query-019": [
+          "doc-020",
+          "doc-009",
+          "doc-010",
+          "doc-019",
+          "doc-011",
+          "doc-004",
+          "doc-021",
+          "doc-026",
+          "doc-033",
+          "doc-016"
+        ],
+        "query-020": [
+          "doc-030",
+          "doc-001",
+          "doc-003",
+          "doc-006",
+          "doc-026",
+          "doc-002",
+          "doc-007",
+          "doc-016",
+          "doc-008",
+          "doc-015"
+        ]
+      },
+      "resolved_model_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "status": "completed"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "selection": {
+    "evaluated_model_ids": [
+      "bge-m3",
+      "qwen3-embedding-0.6b",
+      "nomic-embed-text",
+      "all-minilm-l6-v2"
+    ],
+    "failed_model_ids": [],
+    "hardware_excluded_model_ids": [
+      "qwen3-embedding-8b"
+    ],
+    "model_id": "all-minilm-l6-v2",
+    "not_evaluated_model_ids": [],
+    "policy": "Successively shortlist models within 0.01 of the best NDCG@10, MRR, and Recall@10; then prefer lower parameter footprint and mean query latency.",
+    "quality_shortlist_model_ids": [
+      "all-minilm-l6-v2"
+    ],
+    "reason": "all-minilm-l6-v2 remained in the quality-equivalent shortlist and had the best recorded local efficiency trade-off under the selection policy.",
+    "status": "selected_with_hardware_exclusions"
+  }
+}

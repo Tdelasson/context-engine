@@ -27,6 +27,11 @@ The current end-to-end demonstration uses a calculator tool with a local Ollama 
 
 M4 is now focused on the semantic retrieval foundation: provider-independent embeddings, local embedding inference, Qdrant-backed vector storage, metadata filtering, retrieval, and a small model-independent retrieval benchmark.
 
+The M4 benchmark selected `sentence-transformers/all-MiniLM-L6-v2` as the initial default embedding
+model for the recorded local CPU environment. See the generated
+[model comparison](docs/experiments/m4-embedding-model-comparison.md) for measured results and the
+documented Qwen3-Embedding-8B hardware exclusion.
+
 The current M3/M4 integration exposes semantic retrieval as a read-only
 `search_documents` tool. A model may propose a search, but the Tool Runtime still
 owns schema validation, policy evaluation, Retriever execution, structured results,
@@ -231,6 +236,35 @@ pytest tests/integration/test_search_documents_agent_integration.py
 The test also honors the optional embedding, Qdrant, and Ollama environment variables
 documented in the preceding sections. It remains opt-in because it requires local model
 inference and a running Qdrant service.
+
+## M4 Embedding Model Benchmark (Optional)
+
+The M4 benchmark evaluates the candidate local embedding models against the same version-controlled
+documents, queries, relevance judgments, cosine search configuration, and K values (1, 5, and 10).
+It is intentionally opt-in because model downloads and local inference can be resource intensive.
+
+```bash
+python -m pip install -e ".[benchmark]"
+python -m benchmarks.benchmark_embedding_models \
+  --models bge-m3 qwen3-embedding-0.6b nomic-embed-text all-minilm-l6-v2 \
+  --hardware-excluded-models qwen3-embedding-8b
+```
+
+Model selection is mandatory so the runner never loads Qwen3-Embedding-8B accidentally. On hardware
+that can run every candidate, include `qwen3-embedding-8b` in `--models` and omit the hardware
+exclusion.
+
+To run a smaller development check:
+
+```bash
+python -m benchmarks.benchmark_embedding_models \
+  --models all-minilm-l6-v2 qwen3-embedding-0.6b
+```
+
+The runner writes machine-readable results under `benchmarks/results/` and a human-readable model
+comparison under `docs/experiments/`. See the
+[M4 retrieval benchmark methodology](docs/experiments/m4-retrieval-benchmark.md) for configuration,
+measurements, failure handling, and the quality-first default-selection policy.
 
 ## License
 
