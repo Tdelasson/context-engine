@@ -1,0 +1,3 @@
+The Context Engine workbench demonstrates one live local flow. The model can propose either the
+search_documents tool or the calculator. Structured tool results are returned to the model before
+the final answer is generated. Uploaded text and Markdown files are treated as one document each.
