@@ -35,6 +35,7 @@ def _build_local_provider() -> LocalEmbeddingProvider:
     model_reference = os.getenv("CONTEXT_ENGINE_EMBEDDING_MODEL")
     if not model_reference:
         pytest.skip("Set CONTEXT_ENGINE_EMBEDDING_MODEL to a locally available model.")
+    assert model_reference is not None
 
     try:
         return LocalEmbeddingProvider(

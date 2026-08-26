@@ -253,6 +253,14 @@ def test_retriever_failure_becomes_structured_runtime_error_and_trace() -> None:
     [
         _result("bad-metadata", "content", 0.8, metadata={"unsupported": {"set"}}),
         _result("bad-score", "content", float("nan")),
+        SearchResult(
+            document=Document(document_id=123, content="content"),  # type: ignore[arg-type]
+            score=0.8,
+        ),
+        SearchResult(
+            document=Document(document_id="bad-content", content=b"content"),  # type: ignore[arg-type]
+            score=0.8,
+        ),
     ],
 )
 def test_non_json_safe_search_result_becomes_structured_runtime_error(

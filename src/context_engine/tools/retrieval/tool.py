@@ -82,20 +82,31 @@ class SearchDocumentsTool:
         }
 
     def _serialize_result(self, result: SearchResult) -> dict[str, object]:
-        score = float(result.score)
-        if not isfinite(score):
+        document_id = result.document.document_id
+        if not isinstance(document_id, str) or not document_id:
             raise SearchDocumentsToolOutputError(
-                f"Search result '{result.document.document_id}' has a non-finite score."
+                "Search result document_id must be a non-empty string."
             )
 
         content = result.document.content
+        if not isinstance(content, str):
+            raise SearchDocumentsToolOutputError(
+                f"Search result '{document_id}' content must be a string."
+            )
+
+        score = float(result.score)
+        if not isfinite(score):
+            raise SearchDocumentsToolOutputError(
+                f"Search result '{document_id}' has a non-finite score."
+            )
+
         bounded_content = content[: self._config.max_content_chars]
         metadata = _normalize_json_mapping(
             result.document.metadata_as_mapping(),
-            path=f"document[{result.document.document_id}].metadata",
+            path=f"document[{document_id}].metadata",
         )
         return {
-            "document_id": result.document.document_id,
+            "document_id": document_id,
             "score": score,
             "content": bounded_content,
             "content_truncated": len(content) > len(bounded_content),
