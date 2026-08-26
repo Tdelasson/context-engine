@@ -239,6 +239,39 @@ Retriever
 └── Reranking
 ```
 
+### Tool-mediated retrieval
+
+Applications can expose the `Retriever` through the read-only `search_documents` tool:
+
+```text
+Agent Runtime
+    │
+    ▼
+Tool Runtime
+    │
+    ▼
+search_documents
+    │
+    ▼
+Retriever
+    │
+    ▼
+SearchResult[]
+    │
+    ▼
+bounded structured ToolResult
+```
+
+The tool depends only on the provider-independent `Retriever` contract. It does not
+access an embedding provider, vector store, or Qdrant directly. The application owns
+the `top_k` and model-visible content limits, so the model cannot request an unbounded
+number or size of results.
+
+Tool-mediated retrieval is model-selected: the model proposes when to call
+`search_documents`, and the Tool Runtime validates, authorizes, executes, and traces
+that proposal. It is not automatic context retrieval, context assembly, query
+transformation, or advanced RAG; those remain later M5/M6 concerns.
+
 ## 8. Simple Ingestion
 
 M4 provides a small synchronous ingestion path:
