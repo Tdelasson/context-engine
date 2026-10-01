@@ -172,8 +172,8 @@ def test_search_run_exposes_full_lifecycle_evidence_and_trace() -> None:
 
     view = application.run_prompt("When did the bridge open?")
 
-    assert view.status is WorkbenchRunStatus.FAILED
-    assert view.error_phase == "tool_execution"
+    assert view.status is WorkbenchRunStatus.SUCCESS
+    assert view.error_phase is None
     assert view.final_response == "The uploaded evidence says the bridge opened in 2000."
     assert [step.name for step in view.lifecycle] == [
         "User prompt",
