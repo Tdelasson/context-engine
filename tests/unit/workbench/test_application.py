@@ -241,7 +241,8 @@ def test_structured_retrieval_error_is_not_presented_as_successful_tool_executio
     )
     view = _application(gateway=gateway, search_tool=_FailingSearchTool()).run_prompt("bridge?")
 
-    assert view.status is WorkbenchRunStatus.SUCCESS
+    assert view.status is WorkbenchRunStatus.FAILED
+    assert view.error_phase == "tool_execution"
     assert view.tool_results[0].status.value == "error"
     assert view.tool_results[0].error is not None
     assert view.tool_results[0].error.error_type == "RuntimeError"
