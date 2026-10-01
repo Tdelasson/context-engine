@@ -130,25 +130,14 @@ def _run_status(
     result: AgentRuntimeExecutionResult,
     traces: tuple[ToolExecutionTrace, ...],
 ) -> WorkbenchRunStatus:
-    search_trace = next(
-        (trace for trace in traces if trace.invocation.tool_name == "search_documents"),
-        None,
-    )
     if result.outcome is AgentRuntimeExecutionOutcome.LIMIT_REACHED:
         return WorkbenchRunStatus.LIMIT_REACHED
     if result.outcome is AgentRuntimeExecutionOutcome.FAILED:
         return WorkbenchRunStatus.FAILED
     if result.outcome is AgentRuntimeExecutionOutcome.RESPONDED:
-        if search_trace is not None:
-            if search_trace.status is ToolResultStatus.SUCCESS:
-                return WorkbenchRunStatus.FAILED
-            if search_trace.status is ToolResultStatus.ERROR:
-                return WorkbenchRunStatus.SUCCESS
         if any(trace.status is ToolResultStatus.ERROR for trace in traces):
             return WorkbenchRunStatus.FAILED
         return WorkbenchRunStatus.SUCCESS
-    if any(trace.status is ToolResultStatus.ERROR for trace in traces):
-        return WorkbenchRunStatus.FAILED
     return WorkbenchRunStatus.FAILED
 
 
