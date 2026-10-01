@@ -88,7 +88,9 @@ def build_run_view(
         error_phase=(
             None
             if status is WorkbenchRunStatus.SUCCESS
-            else "tool_execution" if first_trace_error is not None else "agent_runtime"
+            else "tool_execution"
+            if first_trace_error is not None
+            else "agent_runtime"
         ),
         error_message=(
             f"{first_trace_error.error_type}: {first_trace_error.message}"
