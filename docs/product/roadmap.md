@@ -3,7 +3,7 @@
 **Version:** 0.1
 **Status:** Active
 **Project:** Context Engine
-**Last Updated:** 2026-08-19
+**Last Updated:** 2026-10-01
 
 ---
 
@@ -66,9 +66,9 @@ v1.0
 | M9 | Evaluation & MLOps | Week 14 |
 | M10 | Hardening & v1.0 | Weeks 15–16 |
 
-**Current milestone:** M4 — Embeddings & Vector Search
+**Next milestone:** M5 — Modern RAG
 
-**Completed milestones:** M1, M2, M3
+**Completed milestones:** M1, M2, M3, M4
 
 ---
 
@@ -368,7 +368,25 @@ Retrieved
 
 and retrieval quality/performance can be measured reproducibly across the candidate embedding models.
 
-**Status:** Next.
+**Status:** Complete. Core deliverables are merged; the integrated agent workbench (#53) remains an open demonstration task.
+
+## Completed Implementation
+
+* [#39](https://github.com/Tdelasson/context-engine/issues/39) — Embedding domain models and provider abstraction (PR #45).
+* [#40](https://github.com/Tdelasson/context-engine/issues/40) — LocalEmbeddingProvider (PR #46).
+* [#41](https://github.com/Tdelasson/context-engine/issues/41) — VectorStore abstraction, Qdrant backend, and filtering (PR #47).
+* [#42](https://github.com/Tdelasson/context-engine/issues/42) — Retriever abstraction (PR #48).
+* [#43](https://github.com/Tdelasson/context-engine/issues/43) — Simple document ingestion (PR #49).
+* [#50](https://github.com/Tdelasson/context-engine/issues/50) — Hand-curated benchmark dataset (PR #51).
+* [#44](https://github.com/Tdelasson/context-engine/issues/44) — Model-independent benchmark and default model selection (PR #52).
+* [#54](https://github.com/Tdelasson/context-engine/issues/54) — Retriever-backed search_documents tool through the existing validation, policy, execution, and tracing boundary (PR #55).
+
+The recorded benchmark compares four models on 34 documents and 20 queries. It selected
+`sentence-transformers/all-MiniLM-L6-v2` as the initial local CPU default, with Recall@10 of
+1.0000, MRR of 0.9125, and NDCG@10 of 0.9210. Qwen3-Embedding-8B was explicitly excluded
+for local hardware constraints. These results establish a focused M4 baseline rather than a
+production-scale evaluation. See the [model comparison](../experiments/m4-embedding-model-comparison.md)
+and [benchmark methodology](../experiments/m4-retrieval-benchmark.md).
 
 ---
 
@@ -396,6 +414,8 @@ Build a production-oriented retrieval pipeline rather than a basic vector search
 ## Exit Criteria
 
 The project has measurable retrieval benchmarks and can demonstrate why one retrieval strategy performs better than another.
+
+**Status:** Planned — next milestone. Chunking, sparse/hybrid retrieval, reranking, and context selection remain unimplemented in the merged M4 foundation.
 
 ---
 
@@ -630,6 +650,8 @@ Evaluation
 Demonstrable Result
 ```
 
+M4 satisfies this rule through merged embedding, vector-store, ingestion, and retrieval implementations, deterministic tests and opt-in local integration coverage, architecture documentation, and the recorded model-independent benchmark. The integrated workbench remains separate open demonstration work under #53.
+
 M3 satisfies this rule through its deterministic tool runtime implementation, automated unit/runtime coverage, architecture documentation, and local Ollama end-to-end calculator demonstration. Quantitative retrieval or model-quality evaluation begins in M4 through the focused embedding/retrieval benchmark and will be expanded into the broader evaluation framework in M9.
 
 ---
@@ -648,15 +670,15 @@ Context Engine v1.0 should demonstrate:
 * [x] Deterministic tool execution
 * [x] Schema validation
 * [x] Policy-controlled actions
-* [ ] Embedding generation
-* [ ] Vector search
+* [x] Embedding generation
+* [x] Vector search
 * [ ] Modern RAG
 * [ ] Hybrid retrieval
 * [ ] Reranking
 * [ ] Local LLM inference
 * [ ] Inference benchmarking
 * [ ] Agent evaluation
-* [ ] Retrieval evaluation
+* [x] Retrieval evaluation (focused M4 baseline; broader framework remains M9)
 * [ ] Observability
 * [x] Human-in-the-loop actions
 * [ ] Context-Aware DJ reference application
@@ -669,15 +691,16 @@ Context Engine v1.0 should demonstrate:
 
 # 19. Current Status
 
-**Current milestone:** M4 — Embeddings & Vector Search
+**Next milestone:** M5 — Modern RAG
 
-**Project phase:** Embeddings and semantic retrieval foundation
+**Project phase:** Semantic retrieval foundation complete; integrated demonstration work remains open before broader Modern RAG development.
 
 **Completed milestones:**
 
 * [x] M1 — Foundation
 * [x] M2 — Agent Runtime
 * [x] M3 — Deterministic Tool Use
+* [x] M4 — Embeddings & Vector Search
 
 **M3 implementation sequence:**
 
@@ -699,10 +722,21 @@ Context Engine v1.0 should demonstrate:
 * [x] Simple ingestion pipeline.
 * [x] Small hand-curated, model-independent retrieval benchmark.
 
-**Next:**
+**Completed M4 deliverables:**
 
 * [x] Implement the M4 embedding contracts and local provider.
 * [x] Implement Qdrant-backed vector storage and filtering.
 * [x] Add the Retriever and simple ingestion pipeline.
 * [x] Build and run the embedding/retrieval benchmark.
 * [x] Select `sentence-transformers/all-MiniLM-L6-v2` as the initial default based on benchmark results.
+* [x] Expose Retriever-backed document search through the deterministic Tool Runtime (#54, PR #55).
+
+**Open demonstration work:**
+
+* [ ] [#53 — Integrated Context Engine agent workbench](https://github.com/Tdelasson/context-engine/issues/53): complete review, required validation, live local walkthrough, and merge. The workbench is an application demo of M3/M4, not completion of M5/M6 or the Context-Aware DJ.
+
+**Next milestone:**
+
+* [ ] Plan and implement M5 document processing and chunking using the existing retrieval contracts.
+* [ ] Add and benchmark sparse/hybrid retrieval, reranking, and context selection against the M4 dense baseline.
+* [ ] Keep automatic context assembly and lifecycle integration in M6 and the broader evaluation/MLOps framework in M9.
