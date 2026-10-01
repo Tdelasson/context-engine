@@ -368,7 +368,7 @@ Retrieved
 
 and retrieval quality/performance can be measured reproducibly across the candidate embedding models.
 
-**Status:** Complete. Core deliverables are merged; the integrated agent workbench (#53) remains an open demonstration task.
+**Status:** Complete. Core deliverables and the integrated agent workbench (#53, PR #57) are merged.
 
 ## Completed Implementation
 
@@ -693,7 +693,7 @@ Context Engine v1.0 should demonstrate:
 
 **Next milestone:** M5 — Modern RAG
 
-**Project phase:** Semantic retrieval foundation complete; integrated demonstration work remains open before broader Modern RAG development.
+**Project phase:** Semantic retrieval foundation and integrated Agent Workbench merged; next is Modern RAG development.
 
 **Completed milestones:**
 
@@ -731,9 +731,9 @@ Context Engine v1.0 should demonstrate:
 * [x] Select `sentence-transformers/all-MiniLM-L6-v2` as the initial default based on benchmark results.
 * [x] Expose Retriever-backed document search through the deterministic Tool Runtime (#54, PR #55).
 
-**Open demonstration work:**
+**Integrated demonstration:**
 
-* [ ] [#53 — Integrated Context Engine agent workbench](https://github.com/Tdelasson/context-engine/issues/53): complete review, required validation, live local walkthrough, and merge. The workbench is an application demo of M3/M4, not completion of M5/M6 or the Context-Aware DJ.
+* [x] [#53 — Integrated Context Engine agent workbench](https://github.com/Tdelasson/context-engine/issues/53), merged in PR #57. The workbench demonstrates M3/M4; M5/M6 and Context-Aware DJ remain future work. Use the demo guide to rehearse and verify live dependencies on the presentation laptop.
 
 **Next milestone:**
 

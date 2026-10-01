@@ -8,9 +8,9 @@ Context Engine is a local-first AI platform for building context-aware and agent
 
 ## Current Status
 
-**Milestone:** M4 — Embeddings & Vector Search
+**Next milestone:** M5 — Modern RAG
 
-**Completed:** M1 Foundation, M2 Agent Runtime, M3 Deterministic Tool Use
+**Completed:** M1 Foundation, M2 Agent Runtime, M3 Deterministic Tool Use, M4 Embeddings & Vector Search
 
 M3 established the deterministic tool execution boundary, including:
 
@@ -23,9 +23,13 @@ M3 established the deterministic tool execution boundary, including:
 - provider-independent model/tool integration
 - local Ollama end-to-end tool calling verification
 
-The current end-to-end demonstration uses a calculator tool with a local Ollama model. The model can propose the calculator call, but the runtime remains responsible for validation, policy, approval, execution, and returning the result to the model.
+The Agent Workbench demonstrates document search and calculation with a local Ollama model.
+The model proposes tool calls; the runtime validates, applies policy, executes, traces, and returns
+structured results to the model. Approval support is available in the runtime abstraction.
 
-M4 is now focused on the semantic retrieval foundation: provider-independent embeddings, local embedding inference, Qdrant-backed vector storage, metadata filtering, retrieval, and a small model-independent retrieval benchmark.
+M4 delivered the semantic retrieval foundation: provider-independent embeddings, local embedding
+inference, Qdrant-backed vector storage, metadata filtering, retrieval, and a small model-independent
+retrieval benchmark. Chunking, hybrid retrieval, reranking, and context selection are next in M5.
 
 The M4 benchmark selected `sentence-transformers/all-MiniLM-L6-v2` as the initial default embedding
 model for the recorded local CPU environment. See the generated
@@ -161,8 +165,8 @@ The integration test verifies that the model receives the registered calculator 
 
 ## Agent Workbench
 
-Issue #53 adds a local Streamlit workbench for the integrated live flow: prompt → local model tool
-proposal → registry/schema validation → policy → deterministic retrieval or calculator execution →
+Issue #53 (merged in PR #57) provides a local Streamlit workbench for the integrated live flow:
+prompt → local model tool proposal → registry/schema validation → policy → deterministic retrieval or calculator execution →
 structured result → final response and trace.
 
 ```powershell

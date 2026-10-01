@@ -1,7 +1,7 @@
 # Context Engine Agent Workbench
 
 **Issue:** #53  
-**Status:** Implementation design  
+**Status:** Implemented in PR #57; follow-up validation and demo guidance
 **Scope:** Meeting-ready M3/M4 demonstration
 
 ## Design brief
@@ -27,7 +27,7 @@ automatic context assembly, chunking, reranking, hybrid search, or other M5/M6 b
 | Demo documents     Ready  | Prompt preset [ Project architecture           v ] |
 |  - architecture.md        | [ editable free-form prompt                    ]   |
 |  - roadmap.md             |                                      [ Run agent ] |
-|  - demo-guide.md          |                                                    |
+|  - demo-guide.txt         |                                                    |
 |                           | FINAL RESPONSE                                     |
 | Upload .txt/.md           | [ response grounded in the structured tool result ]|
 | [ choose files ]          |                                                    |

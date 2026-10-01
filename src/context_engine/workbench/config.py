@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from math import isfinite
 
 
 class WorkbenchConfigurationError(ValueError):
@@ -49,10 +50,12 @@ class WorkbenchSettings:
             "max_output_tokens": self.max_output_tokens,
             "max_model_iterations": self.max_model_iterations,
         }
-        invalid = tuple(name for name, value in positive_numbers.items() if value <= 0)
+        invalid = tuple(
+            name for name, value in positive_numbers.items() if not isfinite(value) or value <= 0
+        )
         if invalid:
             raise WorkbenchConfigurationError(
-                f"Workbench settings must be greater than zero: {', '.join(invalid)}."
+                f"Workbench settings must be finite and greater than zero: {', '.join(invalid)}."
             )
 
     @classmethod

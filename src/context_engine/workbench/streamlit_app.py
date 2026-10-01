@@ -11,6 +11,7 @@ from context_engine.workbench.application import (
     WorkbenchDependencyError,
     build_live_workbench,
 )
+from context_engine.workbench.config import WorkbenchConfigurationError
 from context_engine.workbench.documents import UploadCandidate, WorkbenchDocumentError
 from context_engine.workbench.presentation import WorkbenchRunStatus, WorkbenchRunView
 
@@ -44,6 +45,10 @@ def _get_application(st: Any) -> WorkbenchApplication | None:
     try:
         application = build_live_workbench()
         application.prepare()
+    except WorkbenchConfigurationError as exc:
+        st.error(f"Workbench configuration failure: {exc}")
+        st.caption("Correct the workbench environment variables and reload the page.")
+        return None
     except WorkbenchDependencyError as exc:
         st.error(f"Live dependency failure [{exc.phase}]: {exc.message}")
         st.caption("Fix the labeled local dependency and reload the page.")
@@ -72,7 +77,7 @@ def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
                 f"{application.settings.max_upload_bytes} bytes each."
             ),
         )
-        if st.button("Ingest selected files", use_container_width=True):
+        if st.button("Ingest selected files", width="stretch"):
             candidates = tuple(
                 UploadCandidate(name=uploaded.name, content=uploaded.getvalue())
                 for uploaded in uploaded_files
@@ -92,7 +97,7 @@ def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
         for document in application.documents.uploaded_documents:
             source_name = document.metadata_as_mapping().get("source_name", document.document_id)
             st.caption(f"Uploaded · {source_name}")
-        if st.button("Clear uploaded documents", use_container_width=True):
+        if st.button("Clear uploaded documents", width="stretch"):
             try:
                 cleared_ids = application.clear_uploads()
             except Exception as exc:
@@ -116,7 +121,7 @@ def _render_prompt(st: Any, application: WorkbenchApplication) -> None:
     if st.button("Load preset"):
         st.session_state["workbench_prompt"] = PROMPT_PRESETS[preset_name]
     prompt = st.text_area("Editable prompt", key="workbench_prompt", height=110)
-    if st.button("Run live agent", type="primary", use_container_width=True):
+    if st.button("Run live agent", type="primary", width="stretch"):
         with st.spinner("Running the local model and deterministic runtime..."):
             st.session_state["workbench_run_view"] = application.run_prompt(prompt)
 
@@ -184,7 +189,7 @@ def _render_run(st: Any, run_view: WorkbenchRunView) -> None:
                 }
                 for trace in run_view.traces
             ],
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 

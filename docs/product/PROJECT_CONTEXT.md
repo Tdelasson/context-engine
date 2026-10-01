@@ -8,7 +8,7 @@ The first reference application will be Context-Aware DJ.
 
 ## Current milestone
 
-M4 — Embeddings & Vector Search
+M1–M4 complete. Next: M5 — Modern RAG.
 
 ## Development workflow
 
@@ -95,9 +95,15 @@ Implementation sequence:
 
 ## Current work
 
-M4 — Embeddings & Vector Search.
+M4 delivered embedding contracts, direct local inference, Qdrant-backed storage and filtering,
+simple ingestion, retrieval, the model-independent benchmark, and the `search_documents` tool.
 
-Architecture is documented before implementation. The immediate implementation focus is the embedding contracts and local provider, followed by Qdrant-backed storage, simple ingestion, retrieval, and the model-independent benchmark.
+The integrated Agent Workbench (#53, PR #57) is merged. It demonstrates live local model proposals,
+deterministic document search/calculation, uploads, evidence, and execution traces through Streamlit.
+See `docs/demo/agent-workbench.md` for setup, rehearsal, failure guidance, and live verification.
+
+Next is M5 document processing and chunking, followed by measured retrieval improvements.
+Automatic context assembly remains M6 work.
 
 ## M4 Candidate Models
 
