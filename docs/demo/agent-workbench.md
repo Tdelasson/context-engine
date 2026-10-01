@@ -5,10 +5,9 @@
 1. Install the workbench dependencies with `python -m pip install -e ".[workbench,dev]"`.
 2. Start local Qdrant on `http://localhost:6333`.
 3. Install/start Ollama and pull a small 1–3B instruct model, for example `llama3.2:1b`.
-4. Ensure the embedding model is already available locally when the laptop will be offline.
-5. Set any non-default environment variables listed below.
-6. Launch the workbench once and wait for demo-document ingestion to finish.
-7. Run one retrieval prompt and one calculator prompt to warm the model before presenting.
+4. Set any non-default environment variables listed below.
+5. Launch the workbench once and wait for demo-document ingestion to finish.
+6. Run one retrieval prompt and one calculator prompt to warm the model before presenting.
 
 ## Run locally
 
@@ -38,18 +37,3 @@ Optional environment variables:
 - `CONTEXT_ENGINE_WORKBENCH_MAX_UPLOADS`
 - `CONTEXT_ENGINE_WORKBENCH_MAX_UPLOAD_BYTES`
 
-## Two-minute script
-
-1. Point out the preloaded documents and the explicit statement that this is tool-mediated M4
-   retrieval, not automatic M5/M6 context assembly.
-2. Select **Project architecture**, run the prompt, and follow the lifecycle from model proposal
-   through validation, policy, `search_documents`, structured result, and final response.
-3. Show the retrieved document ID, score, metadata, bounded content, and `preloaded` source label.
-4. Select **Calculator**, run it, and show that the same deterministic boundary executes a
-   different tool.
-5. Upload a small `.txt` or `.md` fact sheet, ask the editable prompt about its unique fact, and
-   show the `uploaded` source label in the evidence.
-6. Clear uploads and point out that the preloaded demo documents remain ready.
-
-If a live dependency fails, use the labeled error to explain the boundary that failed. Do not
-present a recorded trace as a live success.
