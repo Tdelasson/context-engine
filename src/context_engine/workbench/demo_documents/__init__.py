@@ -1,1 +1,1 @@
-"""Version-controlled documents used by the meeting-ready workbench."""
+"""Version-controlled project documents used by the local workbench."""

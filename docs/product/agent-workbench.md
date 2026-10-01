@@ -1,22 +1,19 @@
-# Agent Workbench Demo
+# Agent Workbench
 
-## Preparation checklist
+## Setup
 
 1. Activate the project's Python environment and install dependencies with
    `python -m pip install -e ".[workbench,dev]"`.
 2. Start Docker Desktop, then local Qdrant on `http://localhost:6333`:
    `docker run --rm --name context-engine-qdrant -p 6333:6333 qdrant/qdrant`.
 3. Install/start Ollama and pull a small tool-capable model, for example
-   `ollama pull llama3.2:3b`. Use a 4-bit variant on the presentation laptop where available;
+   `ollama pull llama3.2:3b`. Use a quantization suitable for the local hardware;
    inspect the installed model with `ollama show llama3.2:3b`.
 4. Set any non-default environment variables listed below.
-5. Launch the workbench once and wait for demo-document ingestion to finish.
-6. Run one retrieval prompt and one calculator prompt to warm the model before presenting.
-7. Prepare `meeting-fact.md` containing `The meeting access code is COBALT-742.` for the
-   optional uploaded-document walkthrough.
+5. Launch the workbench and wait for preloaded-document ingestion to finish.
 
-Initial embedding-model setup can require a download. Prepare the model before the meeting;
-subsequent inference runs locally. Each document is embedded whole, without M5 chunking.
+Initial embedding-model setup can require a download; subsequent inference runs locally.
+Each document is embedded whole, without M5 chunking.
 
 ## Run locally
 
@@ -25,7 +22,7 @@ $env:CONTEXT_ENGINE_WORKBENCH_MODEL = "llama3.2:1b"
 streamlit run src/context_engine/workbench/streamlit_app.py
 ```
 
-Open `http://localhost:8501`. To use the prepared 3B model instead of the 1B default,
+Open `http://localhost:8501`. To use the 3B model instead of the 1B default,
 set `CONTEXT_ENGINE_WORKBENCH_MODEL` to `llama3.2:3b` before launching.
 
 The default configuration uses:
@@ -51,22 +48,21 @@ Optional environment variables:
 
 Timeouts must be finite and positive. Each prompt starts a fresh run, with at most four
 model iterations and 256 output tokens per model invocation. The workbench allows its two
-registered tools through the existing policy boundary; it does not demonstrate interactive approval.
+registered tools through the existing policy boundary. Interactive approval is not implemented in
+the workbench.
 
-## Two-minute walkthrough
+## Behavior
 
-Perform setup, warm-up, and file preparation before starting the walkthrough.
+Preset and free-form prompts use the same Agent Runtime execution path. The model may respond
+directly or propose `search_documents` or `calculator`; validation, policy, execution, and results
+remain owned by the Tool Runtime. Model decisions and latency can vary.
 
-| Time | Action | What to show |
-| --- | --- | --- |
-| 0:00–0:35 | Load **Project architecture**, then **Run live agent**. | Live answer, `search_documents` proposal, validation, policy, evidence, and trace. |
-| 0:35–1:00 | Load **Calculator**, then run. | The same runtime executes `(144 / 12) + 7` and returns 19. |
-| 1:00–1:40 | Upload `meeting-fact.md`, click **Ingest selected files**, and ask `Search the uploaded documents: what is the meeting access code?` | Successful ingestion, answer `COBALT-742`, and evidence labeled `uploaded`. |
-| 1:40–2:00 | Click **Clear uploaded documents**. | Uploads disappear; the three demo documents remain. Explain that automatic context assembly and advanced RAG are future work. |
+The UI displays the final response, execution lifecycle, retrieved evidence, structured tool results,
+and traces. Evidence identifies its document, source, metadata, score, and any content truncation.
+Uploads are validated before ingestion and labeled separately from preloaded project documents.
+Clearing uploads removes only documents tracked as uploaded by the current session.
 
-Model decisions and latency remain variable. Time a warmed rehearsal on the presentation laptop.
-If a run fails or does not select a tool, show its actual response/trace and retry with an explicit
-search or calculator request. Do not describe a direct answer as a demonstrated retrieval run.
+Automatic context assembly, chunking, hybrid retrieval, and reranking remain M5/M6 work.
 
 ## Verification
 
@@ -100,9 +96,7 @@ The existing search-tool integration test and its environment variables are docu
 The live workbench test passed with both `llama3.2:1b` (Q8_0) and `llama3.2:3b` (Q4_K_M),
 cached MiniLM embeddings, and local Docker Qdrant. It verified preloaded retrieval, an uploaded
 `COBALT-742` fact in the final answer, calculator output 19, and retrieval after upload removal.
-The 1B test took 27.80 seconds; the combined 3B workbench and existing search-tool tests took
-31.44 seconds. These are automated test durations, not a timed browser walkthrough.
-The deterministic Streamlit widget tests also passed; rehearse the two-minute script before presenting.
+The existing search-tool integration and deterministic Streamlit widget tests also passed.
 
 ## Failure guidance
 

@@ -63,7 +63,7 @@ def _get_application(st: Any) -> WorkbenchApplication | None:
 def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
     with st.sidebar:
         st.header("Documents")
-        st.success(f"{len(application.documents.preloaded_documents)} demo documents ready")
+        st.success(f"{len(application.documents.preloaded_documents)} project documents ready")
         for document in application.documents.preloaded_documents:
             source_name = document.metadata_as_mapping().get("source_name", document.document_id)
             st.caption(f"Preloaded · {source_name}")
@@ -103,7 +103,7 @@ def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
             except Exception as exc:
                 st.error(f"Uploaded-document cleanup failed: {type(exc).__name__}: {exc}")
             else:
-                st.success(f"Cleared {len(cleared_ids)} upload(s); demo documents remain.")
+                st.success(f"Cleared {len(cleared_ids)} upload(s); project documents remain.")
 
         st.divider()
         st.header("Live dependencies")

@@ -23,7 +23,7 @@ M3 established the deterministic tool execution boundary, including:
 - provider-independent model/tool integration
 - local Ollama end-to-end tool calling verification
 
-The Agent Workbench demonstrates document search and calculation with a local Ollama model.
+The Agent Workbench supports document search and calculation with a local Ollama model.
 The model proposes tool calls; the runtime validates, applies policy, executes, traces, and returns
 structured results to the model. Approval support is available in the runtime abstraction.
 
@@ -175,9 +175,9 @@ streamlit run src/context_engine/workbench/streamlit_app.py
 ```
 
 The workbench uses local Ollama, local embedding inference, and local Qdrant. See the
-[preparation checklist, two-minute script, configuration, and failure guidance](docs/demo/agent-workbench.md).
+[setup, configuration, behavior, testing, and failure guidance](docs/product/agent-workbench.md).
 The [version-controlled design brief and integrated-flow wireframe](docs/product/agent-workbench-design.md)
-define the presentation hierarchy. This remains tool-mediated M4 retrieval; automatic context
+define the interface structure. This remains tool-mediated M4 retrieval; automatic context
 assembly and advanced RAG are explicitly out of scope.
 
 ## Local Embedding Provider Verification (Optional)

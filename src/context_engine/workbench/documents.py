@@ -1,4 +1,4 @@
-"""Deterministic demo-document and upload adapters for the workbench."""
+"""Deterministic preloaded-document and upload adapters for the workbench."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ class WorkbenchDocumentError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class UploadLimits:
-    """Explicit resource limits for meeting-time uploads."""
+    """Explicit resource limits for workbench uploads."""
 
     max_files: int = 5
     max_bytes_per_file: int = 256 * 1024
@@ -47,7 +47,7 @@ class IngestionReport:
 
 
 def load_preloaded_documents() -> tuple[Document, ...]:
-    """Load the version-controlled demo corpus as deterministic M4 documents."""
+    """Load the version-controlled project corpus as deterministic M4 documents."""
     package_root = resources.files(_DEMO_PACKAGE)
     documents: list[Document] = []
     for entry in sorted(package_root.iterdir(), key=lambda item: item.name):
@@ -62,7 +62,7 @@ def load_preloaded_documents() -> tuple[Document, ...]:
             )
         )
     if not documents:
-        raise WorkbenchDocumentError("No preloaded workbench demo documents were found.")
+        raise WorkbenchDocumentError("No preloaded workbench project documents were found.")
     return tuple(documents)
 
 
@@ -145,7 +145,7 @@ class DocumentCatalog:
         return _report_for(tuple(distinct_documents.values()))
 
     def clear_uploads(self) -> tuple[str, ...]:
-        """Delete uploaded records while preserving every preloaded demo record."""
+        """Delete uploaded records while preserving every preloaded project record."""
         uploaded_ids = tuple(sorted(self._uploaded_documents))
         self._vector_store.delete(uploaded_ids)
         self._uploaded_documents.clear()

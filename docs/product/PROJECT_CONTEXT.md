@@ -98,9 +98,9 @@ Implementation sequence:
 M4 delivered embedding contracts, direct local inference, Qdrant-backed storage and filtering,
 simple ingestion, retrieval, the model-independent benchmark, and the `search_documents` tool.
 
-The integrated Agent Workbench (#53, PR #57) is merged. It demonstrates live local model proposals,
+The integrated Agent Workbench (#53, PR #57) is merged. It supports live local model proposals,
 deterministic document search/calculation, uploads, evidence, and execution traces through Streamlit.
-See `docs/demo/agent-workbench.md` for setup, rehearsal, failure guidance, and live verification.
+See `docs/product/agent-workbench.md` for setup, behavior, failure guidance, and live verification.
 
 Next is M5 document processing and chunking, followed by measured retrieval improvements.
 Automatic context assembly remains M6 work.
