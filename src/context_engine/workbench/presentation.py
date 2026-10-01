@@ -81,10 +81,6 @@ def build_run_view(
     status = _run_status(result, traces)
     lifecycle = _build_lifecycle(result=result, traces=traces)
     first_trace_error = next((trace.error for trace in traces if trace.error is not None), None)
-    retrieval_trace = next(
-        (trace for trace in traces if trace.invocation.tool_name == "search_documents"),
-        None,
-    )
     return WorkbenchRunView(
         prompt=prompt,
         status=status,
@@ -93,7 +89,7 @@ def build_run_view(
             None
             if status is WorkbenchRunStatus.SUCCESS
             else "tool_execution"
-            if first_trace_error is not None or retrieval_trace is not None
+            if first_trace_error is not None
             else "agent_runtime"
         ),
         error_message=(
