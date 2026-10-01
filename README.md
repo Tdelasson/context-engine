@@ -159,6 +159,23 @@ Optional environment variables:
 
 The integration test verifies that the model receives the registered calculator tool, requests it, the runtime executes it, the result is returned to the model, and a final response is produced. The test is opt-in and does not run as part of the normal test suite unless explicitly enabled.
 
+## Agent Workbench
+
+Issue #53 adds a local Streamlit workbench for the integrated live flow: prompt → local model tool
+proposal → registry/schema validation → policy → deterministic retrieval or calculator execution →
+structured result → final response and trace.
+
+```powershell
+python -m pip install -e ".[workbench,dev]"
+streamlit run src/context_engine/workbench/streamlit_app.py
+```
+
+The workbench uses local Ollama, local embedding inference, and local Qdrant. See the
+[preparation checklist, two-minute script, configuration, and failure guidance](docs/demo/agent-workbench.md).
+The [version-controlled design brief and integrated-flow wireframe](docs/product/agent-workbench-design.md)
+define the presentation hierarchy. This remains tool-mediated M4 retrieval; automatic context
+assembly and advanced RAG are explicitly out of scope.
+
 ## Local Embedding Provider Verification (Optional)
 
 You can verify local embedding inference with a real embedding model available on your machine.
