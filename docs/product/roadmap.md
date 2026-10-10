@@ -744,6 +744,6 @@ Context Engine v1.0 should demonstrate:
 **Next milestone:**
 
 * [x] M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62).
-* [ ] Establish the M5 chunked dense benchmark (#64).
+* [x] Establish the M5 chunked dense benchmark (#64, PR #71), with evidence-span evaluation and recorded dense comparisons.
 * [ ] Add and benchmark sparse/hybrid retrieval, reranking, and context selection against the M4 dense baseline.
 * [ ] Keep automatic context assembly and lifecycle integration in M6 and the broader evaluation/MLOps framework in M9.

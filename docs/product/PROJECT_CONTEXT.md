@@ -103,7 +103,10 @@ deterministic document search/calculation, uploads, evidence, and execution trac
 See `docs/product/agent-workbench.md` for setup, behavior, failure guidance, and live verification.
 
 M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62) are implemented.
-Next is the chunked dense benchmark (#64), followed by measured retrieval improvements.
+The chunked dense benchmark (#64, PR #71) is implemented, with pinned source evidence spans,
+development/held-out queries, recorded MiniLM chunk/model comparisons, and deployed Qdrant
+verification. See [the dense benchmark report](../experiments/m5-chunked-dense-benchmark.md)
+for results, failure analysis, and measurement limits. Retrieval defaults are unchanged.
 Automatic context assembly remains M6 work.
 
 ## M4 Candidate Models
