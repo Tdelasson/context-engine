@@ -3,12 +3,56 @@
 import json
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
 from benchmarks.benchmark_chunked_retrieval import load_evidence_dataset, run_dense_configuration
 from context_engine.knowledge.chunking import ChunkingConfig
 from tests.source_index_fixtures import CharacterCounter, FixtureEmbeddingProvider
+
+
+def test_cli_records_malformed_settings_and_continues(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from benchmarks import benchmark_chunked_retrieval as benchmark
+
+    output_path = tmp_path / "results.json"
+    provider = SimpleNamespace(
+        model_parameter_bytes=0,
+        dimensions=2,
+        indexing_identity="fixture-v1",
+        build_token_counter=CharacterCounter,
+    )
+    monkeypatch.setattr(benchmark, "LocalEmbeddingProvider", lambda _: provider)
+    monkeypatch.setattr("importlib.metadata.version", lambda _: "fixture")
+    settings: list[tuple[int, int]] = []
+
+    def run_fixture(dataset: object, **kwargs: Any) -> dict[str, object]:
+        config = kwargs["chunk_config"]
+        settings.append((config.max_input_tokens, config.overlap_tokens))
+        return {"fixture": True}
+
+    monkeypatch.setattr(benchmark, "run_dense_configuration", run_fixture)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "benchmark_chunked_retrieval",
+            "--chunk-settings",
+            "96:0,malformed,96:bad,160:8",
+            "--output",
+            str(output_path),
+        ],
+    )
+    with pytest.raises(SystemExit) as failure:
+        benchmark.main()
+    assert failure.value.code == 1
+    assert settings == [(96, 0), (160, 8)]
+    report = json.loads(output_path.read_text())
+    assert len(report["runs"]) == 2
+    assert [item["chunk_setting"] for item in report["failures"]] == ["malformed", "96:bad"]
+    assert all(item["error_type"] == "ValueError" for item in report["failures"])
 
 
 def test_corpus_has_separate_splits_multispan_pdf_and_no_support() -> None:
