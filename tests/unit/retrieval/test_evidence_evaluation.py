@@ -1,6 +1,7 @@
 """Evidence-level semantics independent of inference, store, and chunk settings."""
 
 from dataclasses import replace
+from typing import Any
 
 import pytest
 
@@ -111,7 +112,7 @@ def test_empty_results_and_no_support_have_distinct_denominators() -> None:
         {"representation": "bytes"},
     ],
 )
-def test_invalid_span(changes: dict[str, object]) -> None:
+def test_invalid_span(changes: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
         replace(span(0, 10), **changes)
 
