@@ -182,3 +182,31 @@ def test_partial_write_or_delete_recovery_survives_restart(
     )
     expected = "old" if phase == "upsert" else "new"
     assert results and all(expected in result.document.content for result in results)
+
+
+def test_lexical_vector_update_preserves_dense_and_payload(
+    setup_store: StoreFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store, coordinator, _, _, config, _ = setup_store
+    index = QdrantLexicalIndex(chunk_store=store)
+    original_upsert = store.upsert
+    verified = []
+
+    def upsert_and_verify(records: Any) -> None:
+        original_upsert(records)
+        before, _ = store._client.scroll(
+            collection_name=config.collection_name, with_vectors=True, with_payload=True, limit=100
+        )
+        index.upsert(tuple(record.document for record in records))
+        after, _ = store._client.scroll(
+            collection_name=config.collection_name, with_vectors=True, with_payload=True, limit=100
+        )
+        assert {str(point.id): (point.vector, point.payload) for point in before} == {
+            str(point.id): (point.vector, point.payload) for point in after
+        }
+        verified.append(True)
+
+    monkeypatch.setattr(store, "upsert", upsert_and_verify)
+    assert coordinator.ingest(source("COBALT-742 preserved vectors")).status == "created"
+    assert verified
