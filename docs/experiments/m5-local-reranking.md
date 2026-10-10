@@ -3,8 +3,7 @@
 Optional reranking works locally and preserves source evidence. This small controlled
 comparison does **not** justify enabling it by default: all supported queries already
 have full Recall@5 with dense retrieval. A development query improves at rank one,
-but held-out Recall@1 and Recall@5 do not improve. Issue #68 remains open for #67's
-integrated hybrid candidates; these results cover dense candidate replay only.
+but held-out Recall@1 and Recall@5 do not improve. Both dense replay and native Qdrant hybrid candidate integration are recorded below.
 
 ## Method
 
@@ -93,10 +92,9 @@ bounds remain 20 candidates/batch 8 until a broader evaluated application decisi
 
 The initial small English model is a workable optional CPU adapter, but English MS-MARCO
 fit cannot establish quality for multilingual sources or the application's full domain.
-This corpus is small and partially synthetic. No broader model comparison, Qdrant-backed
-reranking benchmark, hybrid candidate integration, answer generation, factual verification,
-window scoring or context selection is claimed. #67 remains required for the issue's
-hybrid acceptance criterion. The draft PR must not close #68 prematurely.
+This corpus is small and partially synthetic. No broader model comparison, answer generation, factual verification, window scoring or
+context selection is claimed. Native hybrid integration verifies composition and bounded
+ranking; the small benchmark does not justify default adoption.
 
 ## Reproduce
 
@@ -115,3 +113,63 @@ See [ADR-012](../architecture/decisions/ADR-012-local-cross-encoder-reranking.md
 [model card](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2),
 [score semantics](https://sbert.net/docs/cross_encoder/usage/usage.html) and
 [tokenizer truncation controls](https://huggingface.co/docs/transformers/main/pad_truncation).
+
+## Native hybrid integration
+
+The additional [hybrid artifact](../../benchmarks/results/m5-reranking-hybrid.json)
+uses the same frozen corpus, model snapshots, 128:16 chunks and CPU configuration.
+Native Qdrant 1.16.3 stores both dense and BM25 representations through one lifecycle
+owner. #67's equal-weight RRF retrieves 20 candidates per branch with smoothing 60.
+An output ceiling of 40 saves the complete observed union (24–30 unique chunks/query),
+including source provenance, native branch scores, ranks, RRF contributions and fused
+ranking diagnostics. The evaluator records full-union evidence coverage separately from
+coverage at each reranking budget. All supported unions and 10/20-candidate budgets have
+full evidence recall. The 40-union ceiling is benchmark setup; workbench defaults remain 20.
+
+Save hybrid candidates once per query, then replay identical lists with and without the
+reranker. No upstream retrieval occurs during measured inference. All 36 query/configuration
+rows succeed. Both explicit 604-token probes reject before inference. Unsupported queries
+remain in timing/token reports and do not acquire an abstention claim.
+
+| Candidates | Batch | Dev added seconds/query | Held-out added seconds/query |
+| --- | --- | --- | --- |
+| 10 | 4 | 0.311 | 0.330 |
+| 20 | 4 | 0.639 | 0.620 |
+| 10 | 8 | 0.311 | 0.326 |
+| 20 | 8 | 0.638 | 0.665 |
+
+Development Recall@1 changes from 0.667 to 1.0; held-out Recall@1 stays 0.5.
+Recall@5 stays 1.0 on both splits, without coverage regressions. `dev-transition`
+first support moves 2→1 and `test-safety` moves 3→2 in all four configurations.
+Top-five passage token means change from 504 to 498 (10 candidates) or 491.75
+(20 candidates) on development; held-out changes from 516.2 to 523.6 or 494.6.
+Initialization takes 0.163/0.169 seconds for batches 4/8 with warm imports; parameter
+memory stays 90,854,404 bytes. Peak process/activation memory remains unavailable.
+Single warm passes with concurrent local work have no confidence intervals.
+
+Development would again select 10 candidates/batch 4 for comparable observed quality
+at lower cost. Its held-out coverage remains unchanged with about 0.330 added seconds/query.
+Hybrid integration therefore does not change the optional-only decision. The prepared
+environment used Qdrant client 1.19.1 against server 1.16.3; its compatibility warning was
+retained rather than disabled. This verification does not establish general support for
+that version mismatch; use a supported client/server combination for deployment.
+
+An opt-in native hybrid → real local cross-encoder → `SearchDocumentsTool` → `ToolRuntime`
+test uses controlled fixture embeddings and verifies policy denial, canonical citations,
+source revision hashes and preserved hybrid/upstream/reranking diagnostics. Deterministic
+unit coverage verifies the same composition, filters and native score separation. Workbench
+configuration rejects an enabled reranking candidate budget above the hybrid output ceiling
+before loading models or executing inference.
+
+```bash
+OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 TOKENIZERS_PARALLELISM=false \
+python benchmarks/benchmark_hybrid_reranking.py \
+  --embedding-reference /absolute/path/to/embedding/snapshot \
+  --reranking-reference /absolute/path/to/reranker/snapshot \
+  --qdrant-url http://localhost:6333 \
+  --output benchmarks/results/m5-reranking-hybrid.json
+```
+
+Opt in to the combined runtime test with `CONTEXT_ENGINE_RUN_QDRANT_LEXICAL_INTEGRATION=1`,
+`CONTEXT_ENGINE_QDRANT_URL` and `CONTEXT_ENGINE_RERANKING_INTEGRATION_MODEL` pointing to a
+prepared local snapshot. Neither unit tests nor default application setup download models.

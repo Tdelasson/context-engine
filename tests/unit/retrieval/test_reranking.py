@@ -376,3 +376,66 @@ def test_malformed_candidate_identity_is_typed(identity: Any) -> None:
 def test_malformed_candidate_container_is_typed() -> None:
     with pytest.raises(RerankerConfigurationError):
         RerankingRequest("query", cast(Any, None))
+
+
+def test_hybrid_composition_preserves_fusion_and_native_scores() -> None:
+    from context_engine.retrieval.hybrid import HybridRetriever, HybridRetrieverConfig
+
+    originals = tuple(
+        replace(
+            result,
+            document=Document.from_mapping(
+                document_id=result.document.document_id,
+                content=result.document.content,
+                metadata={
+                    "source_id": "source",
+                    "content_sha256": "a" * 64,
+                    "index_configuration_id": "b" * 64,
+                },
+            ),
+        )
+        for result in results()
+    )
+    dense = Upstream(originals)
+    lexical = Upstream(tuple(replace(result, score=10.0) for result in reversed(originals)))
+    hybrid = HybridRetriever(
+        dense_retriever=dense,
+        lexical_retriever=lexical,
+        config=HybridRetrieverConfig(3, 3, 3, 60),
+    )
+    scorer = Scorer([RerankingScore("a", 1), RerankingScore("b", 2), RerankingScore("c", 3)])
+    reranking = RerankingRetriever(hybrid, scorer, config=RerankingRetrieverConfig(3, 2))
+    filters = MetadataFilter.from_mapping({"source_id": "source"})
+    ranked = reranking.retrieve(RetrievalRequest(" unchanged query ", 2, filters))
+    assert [result.document.document_id for result in ranked] == ["c", "b"]
+    assert dense.request == lexical.request == RetrievalRequest(" unchanged query ", 3, filters)
+    for result in ranked:
+        assert result.document == next(
+            original.document
+            for original in originals
+            if original.document.document_id == result.document.document_id
+        )
+        stages = {stage.strategy: stage for stage in result.diagnostics}
+        assert stages["hybrid"].score_kind == "rrf"
+        assert stages["upstream"].score == stages["hybrid"].score
+        assert stages["hybrid_lexical"].score == 10.0
+        assert stages["reranking"].score == result.score
+        assert stages["reranking"].candidate_count == 3
+
+
+def test_workbench_rejects_incompatible_hybrid_reranking_budgets() -> None:
+    from context_engine.workbench.config import WorkbenchConfigurationError, WorkbenchSettings
+
+    with pytest.raises(WorkbenchConfigurationError, match="hybrid final result ceiling"):
+        WorkbenchSettings(
+            retrieval_strategy="hybrid", reranking_enabled=True, hybrid_final_results=10
+        )
+    assert (
+        WorkbenchSettings(
+            retrieval_strategy="hybrid", reranking_enabled=False, hybrid_final_results=10
+        ).hybrid_final_results
+        == 10
+    )
+    assert WorkbenchSettings(
+        retrieval_strategy="hybrid", reranking_enabled=True, hybrid_final_results=20
+    ).reranking_enabled

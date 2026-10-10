@@ -4,6 +4,8 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+import pytest
+
 from benchmarks.benchmark_chunked_retrieval import load_evidence_dataset
 from benchmarks.benchmark_reranking import SavedCandidates
 from context_engine.retrieval.embeddings import Document
@@ -11,12 +13,16 @@ from context_engine.retrieval.evidence_evaluation import evaluate_evidence_query
 from context_engine.retrieval.retriever import RetrievalRequest
 from context_engine.retrieval.vector_store import SearchResult
 
-REPORT = Path(__file__).parents[3] / "benchmarks/results/m5-reranking-local.json"
+REPORTS = (
+    Path(__file__).parents[3] / "benchmarks/results/m5-reranking-local.json",
+    Path(__file__).parents[3] / "benchmarks/results/m5-reranking-hybrid.json",
+)
 
 
-def test_recorded_rankings_use_identical_saved_evidence() -> None:
+@pytest.mark.parametrize("report_path", REPORTS, ids=("dense", "hybrid"))
+def test_recorded_rankings_use_identical_saved_evidence(report_path: Path) -> None:
     dataset = load_evidence_dataset()
-    report = json.loads(REPORT.read_text())
+    report = json.loads(report_path.read_text())
     assert report["dataset_sha256"] == dataset.sha256
     documents = {
         identity: Document.from_mapping(
@@ -25,6 +31,19 @@ def test_recorded_rankings_use_identical_saved_evidence() -> None:
         for identity, value in report["saved_documents"].items()
     }
     queries = {query.query_id: query for query in dataset.queries}
+    if "upstream_candidate_union_metrics" in report:
+        for query_id, saved in report["candidate_snapshot"].items():
+            candidates = tuple(SearchResult(documents[r["document_id"]], r["score"]) for r in saved)
+            union = asdict(
+                evaluate_evidence_query(
+                    candidates, queries[query_id].evidence, k_values=(len(candidates),)
+                )
+            )
+            assert (
+                json.loads(json.dumps(union))
+                == report["upstream_candidate_union_metrics"][query_id]
+            )
+            assert all(any(d["strategy"] == "hybrid" for d in r["diagnostics"]) for r in saved)
     for configuration in report["configurations"]:
         for row in configuration["rows"]:
             query = queries[row["query_id"]]

@@ -13,8 +13,12 @@ from statistics import mean
 from time import perf_counter
 from typing import Any
 
-from benchmarks.benchmark_chunked_retrieval import MemoryEvidenceStore, load_evidence_dataset
-from context_engine.knowledge.chunking import ChunkingConfig, StructureAwareChunker
+from benchmarks.benchmark_chunked_retrieval import (
+    EvidenceDataset,
+    MemoryEvidenceStore,
+    load_evidence_dataset,
+)
+from context_engine.knowledge.chunking import ChunkingConfig, StructureAwareChunker, TokenCounter
 from context_engine.knowledge.ingestion import (
     INDEX_VERSION,
     IngestionStatus,
@@ -89,6 +93,19 @@ def run_comparison(embedding_reference: str, reranking_reference: str) -> dict[s
     saved = {
         q.query_id: tuple(dense.retrieve(RetrievalRequest(q.text, 20))) for q in dataset.queries
     }
+    return compare_saved_candidates(dataset, counter, chunker, saved, reranking_reference)
+
+
+def compare_saved_candidates(
+    dataset: EvidenceDataset,
+    counter: TokenCounter,
+    chunker: StructureAwareChunker,
+    saved: dict[str, tuple[SearchResult, ...]],
+    reranking_reference: str,
+    *,
+    backend: str = "controlled dense candidates from in-memory cosine; no Qdrant/hybrid",
+) -> dict[str, Any]:
+    """Measure ranking alone on immutable candidate snapshots from any upstream strategy."""
     configurations = []
     compatibility_probes = []
     for batch in (4, 8):
@@ -228,7 +245,7 @@ def run_comparison(embedding_reference: str, reranking_reference: str) -> dict[s
     return {
         "dataset_id": dataset.dataset_id,
         "dataset_sha256": dataset.sha256,
-        "backend": "controlled dense candidates from in-memory cosine; no Qdrant/hybrid",
+        "backend": backend,
         "chunking": asdict(chunker.config)
         if hasattr(chunker, "config")
         else {"tokens": 128, "overlap": 16},
@@ -250,7 +267,14 @@ def run_comparison(embedding_reference: str, reranking_reference: str) -> dict[s
             "contains embedding and reranker."
         ),
         "candidate_snapshot": {
-            qid: [{"document_id": r.document.document_id, "score": r.score} for r in values]
+            qid: [
+                {
+                    "document_id": r.document.document_id,
+                    "score": r.score,
+                    "diagnostics": [asdict(stage) for stage in r.diagnostics],
+                }
+                for r in values
+            ]
             for qid, values in saved.items()
         },
         "saved_documents": {
