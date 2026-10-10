@@ -445,3 +445,14 @@ queries have separate aggregate denominators; unsupported queries record results
 without undefined recall or inferred abstention. See [ADR-010](decisions/ADR-010-evidence-span-retrieval-evaluation.md)
 and the [recorded dense experiment](../experiments/m5-chunked-dense-benchmark.md).
 M4 document-level results remain historical artifacts.
+
+### Optional hybrid ranking
+
+`HybridRetriever` composes dense and lexical Retriever dependencies with bounded,
+equal-weight Python reciprocal rank fusion. Canonical chunk provenance is retained;
+branch scores and fused rank scores remain separate diagnostics. Workbench hybrid
+uses the shared BM25 chunk store and an application-bound lifecycle visibility
+reader around both sequential searches. Changed or pending manifests fail the
+whole operation; the observations do not constitute an atomic snapshot.
+See [ADR-013](decisions/ADR-013-hybrid-reciprocal-rank-fusion.md) and the
+[recorded comparison](../experiments/m5-hybrid-retrieval.md).

@@ -17,6 +17,10 @@ class WorkbenchSettings:
 
     retrieval_strategy: str = "dense"
     lexical_collection_name: str = "context-engine-workbench-m5-bm25-v1"
+    hybrid_dense_candidates: int = 20
+    hybrid_lexical_candidates: int = 20
+    hybrid_final_results: int = 20
+    hybrid_smoothing: int = 60
     model_id: str = "llama3.2:1b"
     ollama_base_url: str = "http://localhost:11434"
     ollama_timeout_seconds: float = 30.0
@@ -36,8 +40,21 @@ class WorkbenchSettings:
     max_pdf_text_characters: int = 1024 * 1024
 
     def __post_init__(self) -> None:
-        if self.retrieval_strategy not in {"dense", "lexical"}:
-            raise WorkbenchConfigurationError("retrieval_strategy must be dense or lexical.")
+        if self.retrieval_strategy not in {"dense", "lexical", "hybrid"}:
+            raise WorkbenchConfigurationError(
+                "retrieval_strategy must be dense, lexical, or hybrid."
+            )
+        from context_engine.retrieval.hybrid import HybridConfigurationError, HybridRetrieverConfig
+
+        try:
+            HybridRetrieverConfig(
+                self.hybrid_dense_candidates,
+                self.hybrid_lexical_candidates,
+                self.hybrid_final_results,
+                self.hybrid_smoothing,
+            )
+        except HybridConfigurationError as exc:
+            raise WorkbenchConfigurationError(str(exc)) from exc
         string_fields = {
             "lexical_collection_name": self.lexical_collection_name,
             "model_id": self.model_id,
@@ -90,6 +107,18 @@ class WorkbenchSettings:
             ),
             lexical_collection_name=os.getenv(
                 "CONTEXT_ENGINE_LEXICAL_COLLECTION", defaults.lexical_collection_name
+            ),
+            hybrid_dense_candidates=_read_int(
+                "CONTEXT_ENGINE_HYBRID_DENSE_CANDIDATES", defaults.hybrid_dense_candidates
+            ),
+            hybrid_lexical_candidates=_read_int(
+                "CONTEXT_ENGINE_HYBRID_LEXICAL_CANDIDATES", defaults.hybrid_lexical_candidates
+            ),
+            hybrid_final_results=_read_int(
+                "CONTEXT_ENGINE_HYBRID_FINAL_RESULTS", defaults.hybrid_final_results
+            ),
+            hybrid_smoothing=_read_int(
+                "CONTEXT_ENGINE_HYBRID_SMOOTHING", defaults.hybrid_smoothing
             ),
             model_id=os.getenv("CONTEXT_ENGINE_WORKBENCH_MODEL", defaults.model_id),
             ollama_base_url=os.getenv("CONTEXT_ENGINE_OLLAMA_BASE_URL", defaults.ollama_base_url),

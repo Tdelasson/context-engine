@@ -160,13 +160,13 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
         from context_engine.retrieval.qdrant_lexical_index import QdrantBM25ChunkStore
 
         store_class: type[QdrantVectorStore] | type[QdrantBM25ChunkStore] = QdrantVectorStore
-        if active_settings.retrieval_strategy == "lexical":
+        if active_settings.retrieval_strategy in {"lexical", "hybrid"}:
             store_class = QdrantBM25ChunkStore
         vector_store = store_class(
             VectorStoreCollectionConfig(
                 collection_name=(
                     active_settings.lexical_collection_name
-                    if active_settings.retrieval_strategy == "lexical"
+                    if active_settings.retrieval_strategy in {"lexical", "hybrid"}
                     else active_settings.collection_name
                 ),
                 embedding_model_id=embedding_provider.model_id,
@@ -188,13 +188,31 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
         vector_store=vector_store,
         embedding_identity=embedding_identity,
     )
-    retriever: Retriever = (
-        _build_lexical_retriever(vector_store)
-        if active_settings.retrieval_strategy == "lexical"
-        else EmbeddingVectorStoreRetriever(
-            embedding_provider=embedding_provider, vector_store=vector_store
-        )
+    dense_retriever = EmbeddingVectorStoreRetriever(
+        embedding_provider=embedding_provider, vector_store=vector_store
     )
+    retriever: Retriever = dense_retriever
+    if active_settings.retrieval_strategy in {"lexical", "hybrid"}:
+        lexical_retriever = _build_lexical_retriever(vector_store)
+        retriever = lexical_retriever
+        if active_settings.retrieval_strategy == "hybrid":
+            from context_engine.retrieval.hybrid import (
+                HybridRetriever,
+                HybridRetrieverConfig,
+                lifecycle_visibility_reader,
+            )
+
+            retriever = HybridRetriever(
+                dense_retriever=dense_retriever,
+                lexical_retriever=lexical_retriever,
+                config=HybridRetrieverConfig(
+                    active_settings.hybrid_dense_candidates,
+                    active_settings.hybrid_lexical_candidates,
+                    active_settings.hybrid_final_results,
+                    active_settings.hybrid_smoothing,
+                ),
+                visibility_reader=lifecycle_visibility_reader(vector_store),
+            )
     registry = ToolRegistry()
     registry.register(Calculator())
     registry.register(SearchDocumentsTool(retriever))
