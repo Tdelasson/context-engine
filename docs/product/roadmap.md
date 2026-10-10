@@ -415,7 +415,10 @@ Build a production-oriented retrieval pipeline rather than a basic vector search
 
 The project has measurable retrieval benchmarks and can demonstrate why one retrieval strategy performs better than another.
 
-**Status:** Planned — next milestone. Chunking, sparse/hybrid retrieval, reranking, and context selection remain unimplemented in the merged M4 foundation.
+**Status:** In progress. Core text/Markdown processing (#59) is implemented. PDF text-layer
+processing (#60) and deterministic structure-aware chunking (#61) extend that foundation.
+Chunk indexing lifecycle, sparse/hybrid retrieval, reranking, context selection, and M5
+retrieval-quality comparisons remain future work.
 
 ---
 

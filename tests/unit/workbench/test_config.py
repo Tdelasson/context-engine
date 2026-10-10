@@ -38,3 +38,26 @@ def test_invalid_environment_is_rejected(
 
     with pytest.raises(WorkbenchConfigurationError):
         WorkbenchSettings.from_environment()
+
+
+def test_pdf_limits_are_explicit_environment_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CONTEXT_ENGINE_WORKBENCH_MAX_PDF_BYTES", "5000")
+    monkeypatch.setenv("CONTEXT_ENGINE_WORKBENCH_MAX_PDF_PAGES", "7")
+    monkeypatch.setenv("CONTEXT_ENGINE_WORKBENCH_MAX_PDF_TEXT_CHARACTERS", "3000")
+    settings = WorkbenchSettings.from_environment()
+    assert settings.max_pdf_upload_bytes == 5000
+    assert settings.max_pdf_pages == 7
+    assert settings.max_pdf_text_characters == 3000
+
+
+@pytest.mark.parametrize(
+    "field", ["max_pdf_upload_bytes", "max_pdf_pages", "max_pdf_text_characters"]
+)
+def test_invalid_pdf_limits_rejected(field: str) -> None:
+    with pytest.raises(WorkbenchConfigurationError, match=field):
+        if field == "max_pdf_upload_bytes":
+            WorkbenchSettings(max_pdf_upload_bytes=0)
+        elif field == "max_pdf_pages":
+            WorkbenchSettings(max_pdf_pages=0)
+        else:
+            WorkbenchSettings(max_pdf_text_characters=0)

@@ -16,6 +16,10 @@ dev = [
     "ruff>=0.16",
     "mypy>=2.0",
     "pre-commit>=4.0",
+    "pypdf>=6.0,<7",
+]
+pdf = [
+    "pypdf>=6.0,<7",
 ]
 benchmark = [
     "einops>=0.8",

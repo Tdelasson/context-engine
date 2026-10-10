@@ -3,7 +3,7 @@
 ## Setup
 
 1. Activate the project's Python environment and install dependencies with
-   `python -m pip install -e ".[workbench,dev]"`.
+   `python -m pip install -e ".[workbench,pdf,dev]"`.
 2. Start Docker Desktop, then local Qdrant on `http://localhost:6333`:
    `docker run --rm --name context-engine-qdrant -p 6333:6333 qdrant/qdrant`.
 3. Install/start Ollama and pull a small tool-capable model, for example
@@ -13,7 +13,8 @@
 5. Launch the workbench and wait for preloaded-document ingestion to finish.
 
 Initial embedding-model setup can require a download; subsequent inference runs locally.
-Each document is embedded whole, without M5 chunking.
+The current workbench catalog embeds whole documents. Reusable M5 chunking is available
+through explicit application composition; automatic chunk indexing is a later lifecycle task.
 
 ## Run locally
 
@@ -31,7 +32,9 @@ The default configuration uses:
 - Qdrant: `http://localhost:6333`
 - collection: `context-engine-workbench`
 - embedding model: `sentence-transformers/all-MiniLM-L6-v2`
-- five uploads maximum, 256 KiB per file, `.txt` and `.md` only
+- five uploads maximum across `.txt`, `.md`, and `.pdf`
+- text/Markdown: 256 KiB per file
+- PDF: 10 MiB per file, 100 pages, 1048576 extracted characters
 
 Optional environment variables:
 
@@ -45,6 +48,9 @@ Optional environment variables:
 - `CONTEXT_ENGINE_WORKBENCH_COLLECTION`
 - `CONTEXT_ENGINE_WORKBENCH_MAX_UPLOADS`
 - `CONTEXT_ENGINE_WORKBENCH_MAX_UPLOAD_BYTES`
+- `CONTEXT_ENGINE_WORKBENCH_MAX_PDF_BYTES`
+- `CONTEXT_ENGINE_WORKBENCH_MAX_PDF_PAGES`
+- `CONTEXT_ENGINE_WORKBENCH_MAX_PDF_TEXT_CHARACTERS`
 
 Timeouts must be finite and positive. Each prompt starts a fresh run, with at most four
 model iterations and 256 output tokens per model invocation. The workbench allows its two
@@ -62,7 +68,7 @@ and traces. Evidence identifies its document, source, metadata, score, and any c
 Uploads are validated before ingestion and labeled separately from preloaded project documents.
 Clearing uploads removes only documents tracked as uploaded by the current session.
 
-Automatic context assembly, chunking, hybrid retrieval, and reranking remain M5/M6 work.
+Automatic chunk indexing, context assembly, hybrid retrieval, and reranking remain M5/M6 work.
 
 ## Verification
 
@@ -118,11 +124,12 @@ the browser session; Qdrant records persist independently. Clear uploads before 
 
 ## Reusable source processing
 
-Uploads and preloaded text/Markdown now use `context_engine.knowledge.processing`.
+Uploads and preloaded documents use `context_engine.knowledge.processing`.
 The workbench acquires bytes, checks upload filenames and counts, and translates typed
 processing failures into UI errors. The core validates byte and extracted-character
-limits, UTF-8, and nonempty content. Uploads use the configured per-file byte limit as
-both the byte and character cap. Markdown syntax and whitespace remain intact; a leading
+limits, UTF-8 or PDF format, and nonempty extracted content. Text/Markdown uploads use the configured
+per-file byte limit as both the byte and character cap. PDF uploads have separate byte,
+page, and extracted-character limits. Markdown syntax and whitespace remain intact; a leading
 UTF-8 BOM is removed. Each source still becomes one complete retrieval document.
 
 Within the upload catalog, a filename identifies a logical source. Uploading revised
@@ -132,5 +139,24 @@ remain distinct sources. Preloaded IDs stay unchanged. Older persisted content-d
 upload IDs are not migrated; clear uploads in old sessions before upgrading.
 
 See [ADR-006](../architecture/decisions/ADR-006-knowledge-document-processing.md) for block
-location semantics and the knowledge/retrieval boundary. Chunking and indexing lifecycle
-are separate M5 tasks.
+location semantics and the knowledge/retrieval boundary. Source replacement/deletion,
+index migration, and automatic chunk indexing are separate M5 tasks.
+
+## PDF extraction and diagnostics
+
+PDF support requires the optional `pdf` extra (also installed by `dev`). If it is missing,
+ingestion reports installation guidance. The extractor reads an existing text layer;
+it performs no OCR and cannot guarantee layout, table structure, or visual reading order.
+Encrypted and malformed PDFs are rejected. PDFs with no usable extracted text fail clearly.
+
+Extraction-empty pages have explicit page diagnostics; mixed documents show a partial
+extraction warning after ingestion. These warnings remain outside source text and are
+updated with same-name revisions or cleared with uploads. Retrieved PDF evidence shows
+source page numbers and page-to-text spans in metadata. PDF input byte/page/text caps
+limit accepted data, but they do not guarantee parser CPU or peak memory limits.
+
+See the [PDF API](../api/pdf-processing.md) and
+[chunking API](../api/document-chunking.md). The combined deterministic pipeline tests verify
+text/PDF processing, chunk coverage and token limits, embedding composition, page provenance
+in search evidence, and tool policy enforcement. They use controlled model/tokenizer fixtures;
+live inference and retrieval-quality benchmarking remain separate checks.

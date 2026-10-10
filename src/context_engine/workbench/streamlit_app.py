@@ -69,12 +69,15 @@ def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
             st.caption(f"Preloaded · {source_name}")
 
         uploaded_files = st.file_uploader(
-            "Upload UTF-8 text or Markdown",
-            type=("txt", "md"),
+            "Upload UTF-8 text, Markdown, or text-based PDF",
+            type=("txt", "md", "pdf"),
             accept_multiple_files=True,
             help=(
                 f"Up to {application.settings.max_uploads} files, "
-                f"{application.settings.max_upload_bytes} bytes each."
+                f"text/Markdown: {application.settings.max_upload_bytes} bytes each; "
+                f"PDF: {application.settings.max_pdf_upload_bytes} bytes, "
+                f"{application.settings.max_pdf_pages} pages, "
+                f"{application.settings.max_pdf_text_characters} extracted characters."
             ),
         )
         if st.button("Ingest selected files", width="stretch"):
@@ -83,7 +86,7 @@ def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
                 for uploaded in uploaded_files
             )
             if not candidates:
-                st.warning("Choose at least one .txt or .md file.")
+                st.warning("Choose at least one .txt, .md, or .pdf file.")
             else:
                 try:
                     document_ids = application.ingest_uploads(candidates)
@@ -97,6 +100,8 @@ def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
         for document in application.documents.uploaded_documents:
             source_name = document.metadata_as_mapping().get("source_name", document.document_id)
             st.caption(f"Uploaded · {source_name}")
+        for source_name, diagnostic in application.documents.upload_diagnostics:
+            st.warning(f"{source_name}: {diagnostic.message}")
         if st.button("Clear uploaded documents", width="stretch"):
             try:
                 cleared_ids = application.clear_uploads()
@@ -149,7 +154,14 @@ def _render_run(st: Any, run_view: WorkbenchRunView) -> None:
             f"{item.document_id} · {item.score:.4f} · {item.source_kind} · {item.source_name}",
             expanded=True,
         ):
-            st.json(dict(item.metadata))
+            metadata = dict(item.metadata)
+            if metadata.get("source_format") == "pdf":
+                pages = metadata.get("page_numbers")
+                if pages:
+                    st.caption(f"Source pages · {pages}")
+                elif metadata.get("source_page_count"):
+                    st.caption(f"Source pages · 1–{metadata['source_page_count']}")
+            st.json(metadata)
             st.text(item.content)
             if item.content_truncated:
                 st.caption("Content was bounded by the search_documents tool configuration.")

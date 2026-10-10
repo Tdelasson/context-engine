@@ -13,6 +13,10 @@ class ProcessingErrorCode(StrEnum):
     BYTE_LIMIT = "byte_limit"
     TEXT_LIMIT = "text_limit"
     INVALID_CONFIGURATION = "invalid_configuration"
+    MISSING_DEPENDENCY = "missing_dependency"
+    MALFORMED_PDF = "malformed_pdf"
+    ENCRYPTED_PDF = "encrypted_pdf"
+    PAGE_LIMIT = "page_limit"
 
 
 class ProcessingError(ValueError):
@@ -26,6 +30,7 @@ class ProcessingError(ValueError):
 class SourceFormat(StrEnum):
     TEXT = "text"
     MARKDOWN = "markdown"
+    PDF = "pdf"
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,7 +55,7 @@ class SourceInput:
         if not isinstance(self.format, SourceFormat):
             raise ProcessingError(
                 ProcessingErrorCode.UNSUPPORTED_FORMAT,
-                "Only text and Markdown formats are supported.",
+                "Only text, Markdown, and PDF formats are supported.",
             )
 
 
@@ -58,11 +63,12 @@ class SourceInput:
 class ProcessingLimits:
     max_bytes: int = 256 * 1024
     max_text_characters: int = 256 * 1024
+    max_pages: int = 100
 
     def __post_init__(self) -> None:
         if any(
             type(value) is not int or value <= 0
-            for value in (self.max_bytes, self.max_text_characters)
+            for value in (self.max_bytes, self.max_text_characters, self.max_pages)
         ):
             raise ProcessingError(
                 ProcessingErrorCode.INVALID_CONFIGURATION,
@@ -78,7 +84,7 @@ class SourceProvenance:
     format: SourceFormat
     content_sha256: str
     byte_length: int
-    encoding: Literal["utf-8"] = "utf-8"
+    encoding: Literal["utf-8"] | None = "utf-8"
 
 
 class BlockKind(StrEnum):
@@ -97,6 +103,7 @@ class BlockLocation:
     start_line: int
     end_line: int
     representation: Literal["extracted_text"] = "extracted_text"
+    page_number: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +117,8 @@ class ExtractedBlock:
 class DiagnosticCode(StrEnum):
     BOM_REMOVED = "bom_removed"
     UNCLOSED_CODE_FENCE = "unclosed_code_fence"
+    EMPTY_PAGE = "empty_page"
+    PARTIAL_EXTRACTION = "partial_extraction"
 
 
 @dataclass(frozen=True, slots=True)

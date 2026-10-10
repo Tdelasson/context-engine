@@ -1338,11 +1338,20 @@ Implementation details may change as development progresses.
 
 Significant architectural changes should be documented separately as Architecture Decision Records (ADRs).
 
-## Implemented M5 source-processing boundary
+## Implemented M5 processing and chunking boundary
 
-The reusable `knowledge/processing` package accepts supplied bytes and produces validated
-text, located structural blocks, provenance, and diagnostics. Applications acquire sources
-and assign stable identities. Retrieval continues to embed, upsert, and search `Document`
-values through the existing interfaces. The explicit `to_document` adapter preserves whole
-source text until chunking is implemented. Processing has no filesystem, model, or storage
-capabilities. See [ADR-006](decisions/ADR-006-knowledge-document-processing.md).
+`knowledge/processing` accepts supplied text, Markdown, or PDF bytes and produces
+validated extracted text, located structural blocks/pages, source revision, and diagnostics.
+Applications own acquisition and logical source identity. `knowledge/chunking.py` builds
+deterministic passages with source spans, page references, heading context, explicit
+overlap, and exact model-compatible embedding token accounting.
+
+Applications can map whole processed sources or individual chunks to the existing
+retrieval `Document` contract. `Ingestor` embeds and upserts those values; `Retriever`
+coordinates search through the existing tool policy boundary. The workbench retains
+whole-document indexing until chunk ingestion lifecycle is integrated. Chunk processing
+is synchronous and local; asynchronous orchestration and index migrations remain future work.
+
+See [embedding/retrieval architecture](embedding-and-retrieval.md),
+[ADR-007](decisions/ADR-007-pdf-text-extraction.md), and
+[ADR-008](decisions/ADR-008-structure-aware-document-chunking.md).

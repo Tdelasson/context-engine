@@ -31,6 +31,10 @@ def process_source(source: SourceInput, limits: ProcessingLimits | None = None) 
             ProcessingErrorCode.BYTE_LIMIT,
             f"Source '{source.source_name}' exceeds {limits.max_bytes} bytes.",
         )
+    if source.format == SourceFormat.PDF:
+        from context_engine.knowledge.processing.pdf import process_pdf
+
+        return process_pdf(source, limits)
     try:
         text = source.content.decode("utf-8-sig")
     except UnicodeDecodeError as exc:

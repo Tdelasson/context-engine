@@ -27,6 +27,9 @@ class WorkbenchSettings:
     max_upload_bytes: int = 256 * 1024
     max_output_tokens: int = 256
     max_model_iterations: int = 4
+    max_pdf_upload_bytes: int = 10 * 1024 * 1024
+    max_pdf_pages: int = 100
+    max_pdf_text_characters: int = 1024 * 1024
 
     def __post_init__(self) -> None:
         string_fields = {
@@ -47,6 +50,9 @@ class WorkbenchSettings:
             "qdrant_timeout_seconds": self.qdrant_timeout_seconds,
             "max_uploads": self.max_uploads,
             "max_upload_bytes": self.max_upload_bytes,
+            "max_pdf_upload_bytes": self.max_pdf_upload_bytes,
+            "max_pdf_pages": self.max_pdf_pages,
+            "max_pdf_text_characters": self.max_pdf_text_characters,
             "max_output_tokens": self.max_output_tokens,
             "max_model_iterations": self.max_model_iterations,
         }
@@ -83,6 +89,15 @@ class WorkbenchSettings:
                 "CONTEXT_ENGINE_WORKBENCH_COLLECTION", defaults.collection_name
             ),
             max_uploads=_read_int("CONTEXT_ENGINE_WORKBENCH_MAX_UPLOADS", defaults.max_uploads),
+            max_pdf_upload_bytes=_read_int(
+                "CONTEXT_ENGINE_WORKBENCH_MAX_PDF_BYTES", defaults.max_pdf_upload_bytes
+            ),
+            max_pdf_pages=_read_int(
+                "CONTEXT_ENGINE_WORKBENCH_MAX_PDF_PAGES", defaults.max_pdf_pages
+            ),
+            max_pdf_text_characters=_read_int(
+                "CONTEXT_ENGINE_WORKBENCH_MAX_PDF_TEXT_CHARACTERS", defaults.max_pdf_text_characters
+            ),
             max_upload_bytes=_read_int(
                 "CONTEXT_ENGINE_WORKBENCH_MAX_UPLOAD_BYTES", defaults.max_upload_bytes
             ),

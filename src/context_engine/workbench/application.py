@@ -156,6 +156,9 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
         upload_limits=UploadLimits(
             max_files=active_settings.max_uploads,
             max_bytes_per_file=active_settings.max_upload_bytes,
+            max_pdf_bytes_per_file=active_settings.max_pdf_upload_bytes,
+            max_pdf_pages=active_settings.max_pdf_pages,
+            max_pdf_text_characters=active_settings.max_pdf_text_characters,
         ),
     )
     model_gateway = OllamaModelGateway(

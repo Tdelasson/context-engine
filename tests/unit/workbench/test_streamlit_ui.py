@@ -120,3 +120,59 @@ def test_model_failure_is_visible_in_the_ui(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert not app.exception
     assert "agent_runtime" in app.error[0].value
+
+
+def test_pdf_partial_extraction_diagnostics_render(monkeypatch: pytest.MonkeyPatch) -> None:
+    from context_engine.workbench.documents import UploadCandidate
+    from tests.pdf_fixtures import make_pdf
+
+    application = _application(gateway=_Gateway((_final_response("Ready"),)))
+    application.ingest_uploads((UploadCandidate("mixed.pdf", make_pdf(("Fact", None))),))
+    monkeypatch.setattr(streamlit_app, "build_live_workbench", lambda: application)
+    app = _app()
+    assert not app.exception
+    assert any("Page 2" in warning.value for warning in app.warning)
+    assert any("Partial extraction" in warning.value for warning in app.warning)
+
+
+def test_pdf_evidence_page_references_render(monkeypatch: pytest.MonkeyPatch) -> None:
+    from collections.abc import Mapping
+
+    from context_engine.tools import ToolInvocation
+
+    class PdfSearchTool(_SearchFixtureTool):
+        def execute(self, invocation: ToolInvocation) -> Mapping[str, object]:
+            return {
+                "query": invocation.arguments_as_mapping()["query"],
+                "result_count": 1,
+                "results": [
+                    {
+                        "document_id": "pdf-fact",
+                        "score": 0.9,
+                        "content": "COBALT-742",
+                        "content_truncated": False,
+                        "metadata": {
+                            "source_kind": "uploaded",
+                            "source_name": "facts.pdf",
+                            "source_format": "pdf",
+                            "page_numbers": [2],
+                        },
+                    }
+                ],
+            }
+
+    application = _application(
+        gateway=_Gateway(
+            (
+                _tool_call_response("search_documents", {"query": "code"}),
+                _final_response("COBALT-742"),
+            )
+        ),
+        search_tool=PdfSearchTool(),
+    )
+    monkeypatch.setattr(streamlit_app, "build_live_workbench", lambda: application)
+    app = _app()
+    _click(app, "Run live agent")
+    assert not app.exception
+    assert any("Source pages · [2]" in caption.value for caption in app.caption)
+    assert "facts.pdf" in app.expander[0].label
