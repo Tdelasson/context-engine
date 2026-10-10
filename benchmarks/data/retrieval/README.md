@@ -53,3 +53,22 @@ reviewed, and versioned to preserve benchmark reproducibility.
 - Small size by design (inspectability over volume).
 - Domain coverage is representative, not exhaustive.
 - Relevance remains binary judgments for M4 and does not encode graded preference.
+
+## M5 source evidence corpus
+
+`m5/dataset.json` pins four source files (long UTF-8 text/Markdown and a controlled
+text-based two-page PDF), source-byte revisions, canonical processed-text hashes,
+`processing-v1` limits, and nine independent query labels. Four queries are for
+development; five are held out. Each split includes one unsupported query.
+
+Labels use half-open Unicode offsets into actual `ProcessedSource.text`. The PDF
+labels retain canonical text offsets across pages; they are not PDF-byte or visual
+coordinates. PDF supporting facts are separated by hundreds of tokens, and a
+compound held-out query requires evidence from different sources. Queries and
+labels are never indexed. Both exact identifiers and paraphrases have nearby
+routine/distractor text. The PDF was generated locally with the existing controlled
+`tests.pdf_fixtures.make_pdf` helper; no document download or OCR is involved.
+
+The typed loader rejects changed source revisions, extraction text, unsupported
+processing versions, stale labels, out-of-bounds offsets, and duplicate identities.
+See [methodology and results](../../../docs/experiments/m5-chunked-dense-benchmark.md).

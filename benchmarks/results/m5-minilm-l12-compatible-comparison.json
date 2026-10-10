@@ -1,0 +1,5086 @@
+{
+  "environment": {
+    "cpu_count": 16,
+    "mkl_threads": "2",
+    "omp_threads": "2",
+    "packages": {
+      "pypdf": "6.20.0",
+      "sentence-transformers": "6.1.0",
+      "torch": "2.14.1+cpu",
+      "transformers": "5.19.0"
+    },
+    "platform": "Linux-7.2.9-200.fc44.x86_64-x86_64-with-glibc2.43",
+    "processor": "",
+    "python": "3.14.8"
+  },
+  "failures": [],
+  "model": {
+    "document_prefix": "",
+    "initialization_seconds": 4.533376043000317,
+    "model_id": "all-minilm-l12-v2",
+    "model_reference": "/tmp/context-engine-orchestration/hf/models--sentence-transformers--all-MiniLM-L12-v2/snapshots/a50ef00143b4d5391434df20ae11632588ac25be",
+    "normalize_embeddings": true,
+    "parameter_bytes": 133440000,
+    "query_prefix": "",
+    "runtime_max_input_tokens": 128
+  },
+  "runs": [
+    {
+      "aggregate": {
+        "development": {
+          "all_required_rate_at_k": {
+            "1": 0.6666666666666666,
+            "5": 1,
+            "10": 1
+          },
+          "macro_character_coverage_at_k": {
+            "1": 0.6666666666666666,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "macro_evidence_recall_at_k": {
+            "1": 0.6666666666666666,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "supported_query_count": 3,
+          "unsupported_query_count": 1
+        },
+        "held_out": {
+          "all_required_rate_at_k": {
+            "1": 0.5,
+            "5": 1,
+            "10": 1
+          },
+          "macro_character_coverage_at_k": {
+            "1": 0.7381578947368421,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "macro_evidence_recall_at_k": {
+            "1": 0.625,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "supported_query_count": 4,
+          "unsupported_query_count": 1
+        }
+      },
+      "backend": "in-memory-cosine",
+      "chunk_configuration": {
+        "document_prefix": "",
+        "include_heading_context": true,
+        "max_input_tokens": 96,
+        "model_id": "all-minilm-l12-v2",
+        "overlap_tokens": 0,
+        "strategy_version": "structure-aware-v1"
+      },
+      "chunk_count": 35,
+      "cleanup_errors": [],
+      "configuration_id": "de572425a46e975e06656e15b7fc816e841c12017937b498c2dbd409ec8b54f3",
+      "dataset_id": "m5-evidence-v1",
+      "dataset_sha256": "aee2874a927a676d9709438a1de57225e760546747f2d326894c8c37d75c6f14",
+      "dense_vector_float32_bytes_estimate": 53760,
+      "document_embedding_seconds": 1.3255170859993086,
+      "embedding_identity": "80d1ee149de2afda77d67cc10f52258b894110a4fb4ce57e1784c8d295227c5c",
+      "ingestion_seconds": 1.4132505350007705,
+      "persisted_index_bytes": null,
+      "queries": [
+        {
+          "metrics": {
+            "all_required_at_k": {
+              "1": true,
+              "5": true,
+              "10": true
+            },
+            "coverage_at_k": {
+              "1": {
+                "approval": 1.0
+              },
+              "5": {
+                "approval": 1.0
+              },
+              "10": {
+                "approval": 1.0
+              }
+            },
+            "first_support_rank": 1,
+            "recall_at_k": {
+              "1": 1.0,
+              "5": 1.0,
+              "10": 1.0
+            },
+            "returned_count": 10,
+            "supported": true
+          },
+          "query_embedding_seconds": 0.02573035000023083,
+          "query_id": "dev-approval",
+          "results": [
+            {
+              "chunk_id": "ff181a1d085033a401766c1c816e93df2be0bdd286e1af572fe8184fb6fe6407",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.8065502385214274,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1956,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1944
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1957,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1956
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1957
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2075,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2075
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2234,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2234
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2393,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2392
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "526465eff3636bdcad22544333ab719aedf9b7aa34cacda3a775dba65fc95d0e",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.6254047920173761,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 1654,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 1281
+                  }
+                },
+                {
+                  "block_index": 1,
+                  "location": {
+                    "end_line": 2,
+                    "end_offset": 1656,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 1654
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "772e0444bed9f8758d59116dca7102d239e1e245b3e4c8610edb8c2939e79811",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.6117657595481713,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 2539,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 2068
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "7b9873ca73a7b06f57b4fccf2b5203c0d62f024ec6fb5727aa23a9f03613b4ae",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.6117657595481713,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 810,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 339
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "ae2a17bff28ab299b590154dc375bfe6425db80c0d78c020ef681cdc1496603b",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.6117657595481713,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 1281,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 810
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "dfc0403dfe87a658ad501da14b5b625d422dd3e9f3d368dfbf2249f98a15e0c8",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.6117657595481713,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 3010,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 2539
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "367020f205fbd200d81cedbba7e97043a92024c95f76942a0d508ecb819fd157",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.6056140077537308,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 36,
+                  "location": {
+                    "end_line": 37,
+                    "end_offset": 2551,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2393
+                  }
+                },
+                {
+                  "block_index": 37,
+                  "location": {
+                    "end_line": 38,
+                    "end_offset": 2552,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 38,
+                    "start_offset": 2551
+                  }
+                },
+                {
+                  "block_index": 38,
+                  "location": {
+                    "end_line": 39,
+                    "end_offset": 2710,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 39,
+                    "start_offset": 2552
+                  }
+                },
+                {
+                  "block_index": 39,
+                  "location": {
+                    "end_line": 40,
+                    "end_offset": 2711,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 40,
+                    "start_offset": 2710
+                  }
+                },
+                {
+                  "block_index": 40,
+                  "location": {
+                    "end_line": 41,
+                    "end_offset": 2869,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 41,
+                    "start_offset": 2711
+                  }
+                },
+                {
+                  "block_index": 41,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 2870,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 42,
+                    "start_offset": 2869
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "311bf006f1550a88e1ec4594ac4631cca3d2447ddb44bf6660af7966f2113e64",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.604280856364622,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 3330,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 3010
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "04dfc8fa9720f20226bf29c78abd36f71651cc3167c31bf41a85cd2acbf38c3e",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.5699294277101441,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 3328,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2851
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "24fe1800a08ff7f25cafdcee2e4b98243d42bd7a15fea38c973fadc3eed60174",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.5699294277101441,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3805,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 3328
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 85,
+            "5": 424,
+            "10": 849
+          },
+          "split": "development",
+          "vector_search_seconds": 0.00161963999926229
+        },
+        {
+          "metrics": {
+            "all_required_at_k": {
+              "1": true,
+              "5": true,
+              "10": true
+            },
+            "coverage_at_k": {
+              "1": {
+                "identifier": 1.0
+              },
+              "5": {
+                "identifier": 1.0
+              },
+              "10": {
+                "identifier": 1.0
+              }
+            },
+            "first_support_rank": 1,
+            "recall_at_k": {
+              "1": 1.0,
+              "5": 1.0,
+              "10": 1.0
+            },
+            "returned_count": 10,
+            "supported": true
+          },
+          "query_embedding_seconds": 0.025480872998741688,
+          "query_id": "dev-identifier",
+          "results": [
+            {
+              "chunk_id": "69761b9692fb9c16be450afec73892153a6f7a0d0591eb26a6fdf049bb89b3e8",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.4850783658031696,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 24,
+                    "end_offset": 1895,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 19,
+                    "start_offset": 1431
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "e4dcf4181863a4b6d05e2fe3b1a8343289b05545c943543f791301a2034b4927",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.23278196742590623,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 22,
+                  "location": {
+                    "end_line": 23,
+                    "end_offset": 1630,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 23,
+                    "start_offset": 1609
+                  }
+                },
+                {
+                  "block_index": 23,
+                  "location": {
+                    "end_line": 24,
+                    "end_offset": 1631,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 24,
+                    "start_offset": 1630
+                  }
+                },
+                {
+                  "block_index": 24,
+                  "location": {
+                    "end_line": 25,
+                    "end_offset": 1695,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 25,
+                    "start_offset": 1631
+                  }
+                },
+                {
+                  "block_index": 25,
+                  "location": {
+                    "end_line": 26,
+                    "end_offset": 1696,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 26,
+                    "start_offset": 1695
+                  }
+                },
+                {
+                  "block_index": 26,
+                  "location": {
+                    "end_line": 27,
+                    "end_offset": 1755,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 27,
+                    "start_offset": 1696
+                  }
+                },
+                {
+                  "block_index": 27,
+                  "location": {
+                    "end_line": 28,
+                    "end_offset": 1756,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 28,
+                    "start_offset": 1755
+                  }
+                },
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1914,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1756
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1915,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1914
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2073,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1915
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2073
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "795b54d7b580f887df1ca7c7e6a2cb6b066e381ae8c963e68423a0cadcf1e67a",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.1581438676743512,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 48,
+                  "location": {
+                    "end_line": 49,
+                    "end_offset": 3367,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 49,
+                    "start_offset": 3346
+                  }
+                },
+                {
+                  "block_index": 49,
+                  "location": {
+                    "end_line": 50,
+                    "end_offset": 3368,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 50,
+                    "start_offset": 3367
+                  }
+                },
+                {
+                  "block_index": 50,
+                  "location": {
+                    "end_line": 51,
+                    "end_offset": 3471,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 51,
+                    "start_offset": 3368
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "7c2dd988f0d024fea291a81b5fe2c86e19949ce9255c4c1e44ff3509aab8eef2",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.12687357786635897,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 19,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                },
+                {
+                  "block_index": 1,
+                  "location": {
+                    "end_line": 2,
+                    "end_offset": 20,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 2,
+                    "start_offset": 19
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "0e88333731586d42d9ed13dd75ed29ed89b57e4e9a9f671a517ee718bc0de79a",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.12402682715843226,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 44,
+                  "location": {
+                    "end_line": 45,
+                    "end_offset": 3186,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 45,
+                    "start_offset": 3028
+                  }
+                },
+                {
+                  "block_index": 45,
+                  "location": {
+                    "end_line": 46,
+                    "end_offset": 3187,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 46,
+                    "start_offset": 3186
+                  }
+                },
+                {
+                  "block_index": 46,
+                  "location": {
+                    "end_line": 47,
+                    "end_offset": 3345,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 47,
+                    "start_offset": 3187
+                  }
+                },
+                {
+                  "block_index": 47,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3346,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 48,
+                    "start_offset": 3345
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "3c990a2d0e2366c0826686d7fd302bc31655b452b13d3d71a16dd550b7727227",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.11552709759905061,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2232,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2232
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2391,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2391
+                  }
+                },
+                {
+                  "block_index": 36,
+                  "location": {
+                    "end_line": 37,
+                    "end_offset": 2550,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2392
+                  }
+                },
+                {
+                  "block_index": 37,
+                  "location": {
+                    "end_line": 38,
+                    "end_offset": 2551,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 38,
+                    "start_offset": 2550
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5c9a46d950a40a41867cd7641e25e2a0fca6bbeca6b9fdebdad18619b3a2888e",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.11552709759905061,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 38,
+                  "location": {
+                    "end_line": 39,
+                    "end_offset": 2709,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 39,
+                    "start_offset": 2551
+                  }
+                },
+                {
+                  "block_index": 39,
+                  "location": {
+                    "end_line": 40,
+                    "end_offset": 2710,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 40,
+                    "start_offset": 2709
+                  }
+                },
+                {
+                  "block_index": 40,
+                  "location": {
+                    "end_line": 41,
+                    "end_offset": 2868,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 41,
+                    "start_offset": 2710
+                  }
+                },
+                {
+                  "block_index": 41,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 2869,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 42,
+                    "start_offset": 2868
+                  }
+                },
+                {
+                  "block_index": 42,
+                  "location": {
+                    "end_line": 43,
+                    "end_offset": 3027,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 2869
+                  }
+                },
+                {
+                  "block_index": 43,
+                  "location": {
+                    "end_line": 44,
+                    "end_offset": 3028,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 44,
+                    "start_offset": 3027
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "0bcce55538879eb666112695f47c513095365e29942ccec4425cebb0342da5a1",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.11211194776771781,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2851,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 2372
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "65349258f7301d4efa3e63f6a52d7dd23c6ae52a9c4c762a680781d035d722fa",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.10376287894016835,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 20,
+                  "location": {
+                    "end_line": 21,
+                    "end_offset": 1608,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 21,
+                    "start_offset": 1450
+                  }
+                },
+                {
+                  "block_index": 21,
+                  "location": {
+                    "end_line": 22,
+                    "end_offset": 1609,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 22,
+                    "start_offset": 1608
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "ff181a1d085033a401766c1c816e93df2be0bdd286e1af572fe8184fb6fe6407",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.08982582465275693,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1956,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1944
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1957,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1956
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1957
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2075,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2075
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2234,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2234
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2393,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2392
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 95,
+            "5": 286,
+            "10": 683
+          },
+          "split": "development",
+          "vector_search_seconds": 0.0016635709998809034
+        },
+        {
+          "metrics": {
+            "all_required_at_k": {
+              "1": false,
+              "5": true,
+              "10": true
+            },
+            "coverage_at_k": {
+              "1": {
+                "transition": 0.0
+              },
+              "5": {
+                "transition": 1.0
+              },
+              "10": {
+                "transition": 1.0
+              }
+            },
+            "first_support_rank": 2,
+            "recall_at_k": {
+              "1": 0.0,
+              "5": 1.0,
+              "10": 1.0
+            },
+            "returned_count": 10,
+            "supported": true
+          },
+          "query_embedding_seconds": 0.0293604670005152,
+          "query_id": "dev-transition",
+          "results": [
+            {
+              "chunk_id": "795b54d7b580f887df1ca7c7e6a2cb6b066e381ae8c963e68423a0cadcf1e67a",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.5432944226320873,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 48,
+                  "location": {
+                    "end_line": 49,
+                    "end_offset": 3367,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 49,
+                    "start_offset": 3346
+                  }
+                },
+                {
+                  "block_index": 49,
+                  "location": {
+                    "end_line": 50,
+                    "end_offset": 3368,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 50,
+                    "start_offset": 3367
+                  }
+                },
+                {
+                  "block_index": 50,
+                  "location": {
+                    "end_line": 51,
+                    "end_offset": 3471,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 51,
+                    "start_offset": 3368
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "e4dcf4181863a4b6d05e2fe3b1a8343289b05545c943543f791301a2034b4927",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.5314269248816889,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 22,
+                  "location": {
+                    "end_line": 23,
+                    "end_offset": 1630,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 23,
+                    "start_offset": 1609
+                  }
+                },
+                {
+                  "block_index": 23,
+                  "location": {
+                    "end_line": 24,
+                    "end_offset": 1631,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 24,
+                    "start_offset": 1630
+                  }
+                },
+                {
+                  "block_index": 24,
+                  "location": {
+                    "end_line": 25,
+                    "end_offset": 1695,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 25,
+                    "start_offset": 1631
+                  }
+                },
+                {
+                  "block_index": 25,
+                  "location": {
+                    "end_line": 26,
+                    "end_offset": 1696,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 26,
+                    "start_offset": 1695
+                  }
+                },
+                {
+                  "block_index": 26,
+                  "location": {
+                    "end_line": 27,
+                    "end_offset": 1755,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 27,
+                    "start_offset": 1696
+                  }
+                },
+                {
+                  "block_index": 27,
+                  "location": {
+                    "end_line": 28,
+                    "end_offset": 1756,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 28,
+                    "start_offset": 1755
+                  }
+                },
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1914,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1756
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1915,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1914
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2073,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1915
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2073
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "0e88333731586d42d9ed13dd75ed29ed89b57e4e9a9f671a517ee718bc0de79a",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.4300353351295025,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 44,
+                  "location": {
+                    "end_line": 45,
+                    "end_offset": 3186,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 45,
+                    "start_offset": 3028
+                  }
+                },
+                {
+                  "block_index": 45,
+                  "location": {
+                    "end_line": 46,
+                    "end_offset": 3187,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 46,
+                    "start_offset": 3186
+                  }
+                },
+                {
+                  "block_index": 46,
+                  "location": {
+                    "end_line": 47,
+                    "end_offset": 3345,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 47,
+                    "start_offset": 3187
+                  }
+                },
+                {
+                  "block_index": 47,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3346,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 48,
+                    "start_offset": 3345
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "3c990a2d0e2366c0826686d7fd302bc31655b452b13d3d71a16dd550b7727227",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.4088321338930273,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2232,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2232
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2391,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2391
+                  }
+                },
+                {
+                  "block_index": 36,
+                  "location": {
+                    "end_line": 37,
+                    "end_offset": 2550,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2392
+                  }
+                },
+                {
+                  "block_index": 37,
+                  "location": {
+                    "end_line": 38,
+                    "end_offset": 2551,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 38,
+                    "start_offset": 2550
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5c9a46d950a40a41867cd7641e25e2a0fca6bbeca6b9fdebdad18619b3a2888e",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.4088321338930273,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 38,
+                  "location": {
+                    "end_line": 39,
+                    "end_offset": 2709,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 39,
+                    "start_offset": 2551
+                  }
+                },
+                {
+                  "block_index": 39,
+                  "location": {
+                    "end_line": 40,
+                    "end_offset": 2710,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 40,
+                    "start_offset": 2709
+                  }
+                },
+                {
+                  "block_index": 40,
+                  "location": {
+                    "end_line": 41,
+                    "end_offset": 2868,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 41,
+                    "start_offset": 2710
+                  }
+                },
+                {
+                  "block_index": 41,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 2869,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 42,
+                    "start_offset": 2868
+                  }
+                },
+                {
+                  "block_index": 42,
+                  "location": {
+                    "end_line": 43,
+                    "end_offset": 3027,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 2869
+                  }
+                },
+                {
+                  "block_index": 43,
+                  "location": {
+                    "end_line": 44,
+                    "end_offset": 3028,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 44,
+                    "start_offset": 3027
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "52b5731be68cc4b381acb664c503909ce5ee8c39bd4b35889347a5841cba2ae2",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.3015755564335713,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 339,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "3ddd8ad46378b53a0776871d985128e64eb1f64725969000bcaf09d7e627902b",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.2920556193678165,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 14,
+                  "location": {
+                    "end_line": 15,
+                    "end_offset": 1131,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 15,
+                    "start_offset": 973
+                  }
+                },
+                {
+                  "block_index": 15,
+                  "location": {
+                    "end_line": 16,
+                    "end_offset": 1132,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 16,
+                    "start_offset": 1131
+                  }
+                },
+                {
+                  "block_index": 16,
+                  "location": {
+                    "end_line": 17,
+                    "end_offset": 1290,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 17,
+                    "start_offset": 1132
+                  }
+                },
+                {
+                  "block_index": 17,
+                  "location": {
+                    "end_line": 18,
+                    "end_offset": 1291,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 18,
+                    "start_offset": 1290
+                  }
+                },
+                {
+                  "block_index": 18,
+                  "location": {
+                    "end_line": 19,
+                    "end_offset": 1449,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 19,
+                    "start_offset": 1291
+                  }
+                },
+                {
+                  "block_index": 19,
+                  "location": {
+                    "end_line": 20,
+                    "end_offset": 1450,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 20,
+                    "start_offset": 1449
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "d14e993e0b1f7d1be7d49e17c36c83ef61e0cb3314b14e83fdb701d6c84b4db9",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.2920556193678165,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 8,
+                  "location": {
+                    "end_line": 9,
+                    "end_offset": 654,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 9,
+                    "start_offset": 496
+                  }
+                },
+                {
+                  "block_index": 9,
+                  "location": {
+                    "end_line": 10,
+                    "end_offset": 655,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 10,
+                    "start_offset": 654
+                  }
+                },
+                {
+                  "block_index": 10,
+                  "location": {
+                    "end_line": 11,
+                    "end_offset": 813,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 11,
+                    "start_offset": 655
+                  }
+                },
+                {
+                  "block_index": 11,
+                  "location": {
+                    "end_line": 12,
+                    "end_offset": 814,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 12,
+                    "start_offset": 813
+                  }
+                },
+                {
+                  "block_index": 12,
+                  "location": {
+                    "end_line": 13,
+                    "end_offset": 972,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 13,
+                    "start_offset": 814
+                  }
+                },
+                {
+                  "block_index": 13,
+                  "location": {
+                    "end_line": 14,
+                    "end_offset": 973,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 14,
+                    "start_offset": 972
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "d61c6545cfa6783ac08654a64aa2b15efb64406059fb303e205c6ec74e4b4b75",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.2920556193678165,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 18,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                },
+                {
+                  "block_index": 1,
+                  "location": {
+                    "end_line": 2,
+                    "end_offset": 19,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 2,
+                    "start_offset": 18
+                  }
+                },
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 177,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 19
+                  }
+                },
+                {
+                  "block_index": 3,
+                  "location": {
+                    "end_line": 4,
+                    "end_offset": 178,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 4,
+                    "start_offset": 177
+                  }
+                },
+                {
+                  "block_index": 4,
+                  "location": {
+                    "end_line": 5,
+                    "end_offset": 336,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 5,
+                    "start_offset": 178
+                  }
+                },
+                {
+                  "block_index": 5,
+                  "location": {
+                    "end_line": 6,
+                    "end_offset": 337,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 6,
+                    "start_offset": 336
+                  }
+                },
+                {
+                  "block_index": 6,
+                  "location": {
+                    "end_line": 7,
+                    "end_offset": 495,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 7,
+                    "start_offset": 337
+                  }
+                },
+                {
+                  "block_index": 7,
+                  "location": {
+                    "end_line": 8,
+                    "end_offset": 496,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 8,
+                    "start_offset": 495
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "65349258f7301d4efa3e63f6a52d7dd23c6ae52a9c4c762a680781d035d722fa",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.2715332538803868,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 20,
+                  "location": {
+                    "end_line": 21,
+                    "end_offset": 1608,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 21,
+                    "start_offset": 1450
+                  }
+                },
+                {
+                  "block_index": 21,
+                  "location": {
+                    "end_line": 22,
+                    "end_offset": 1609,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 22,
+                    "start_offset": 1608
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 28,
+            "5": 378,
+            "10": 757
+          },
+          "split": "development",
+          "vector_search_seconds": 0.0016723709995858371
+        },
+        {
+          "metrics": {
+            "all_required_at_k": null,
+            "coverage_at_k": {},
+            "first_support_rank": null,
+            "recall_at_k": null,
+            "returned_count": 10,
+            "supported": false
+          },
+          "query_embedding_seconds": 0.025015166000230238,
+          "query_id": "dev-none",
+          "results": [
+            {
+              "chunk_id": "52b5731be68cc4b381acb664c503909ce5ee8c39bd4b35889347a5841cba2ae2",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.05831924035442764,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 339,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "7c2dd988f0d024fea291a81b5fe2c86e19949ce9255c4c1e44ff3509aab8eef2",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.042833225237197715,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 19,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                },
+                {
+                  "block_index": 1,
+                  "location": {
+                    "end_line": 2,
+                    "end_offset": 20,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 2,
+                    "start_offset": 19
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "69761b9692fb9c16be450afec73892153a6f7a0d0591eb26a6fdf049bb89b3e8",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.04263095407946867,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 24,
+                    "end_offset": 1895,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 19,
+                    "start_offset": 1431
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "65349258f7301d4efa3e63f6a52d7dd23c6ae52a9c4c762a680781d035d722fa",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.032517058794022856,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 20,
+                  "location": {
+                    "end_line": 21,
+                    "end_offset": 1608,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 21,
+                    "start_offset": 1450
+                  }
+                },
+                {
+                  "block_index": 21,
+                  "location": {
+                    "end_line": 22,
+                    "end_offset": 1609,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 22,
+                    "start_offset": 1608
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "311bf006f1550a88e1ec4594ac4631cca3d2447ddb44bf6660af7966f2113e64",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.028075658069090185,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 3330,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 3010
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "ff181a1d085033a401766c1c816e93df2be0bdd286e1af572fe8184fb6fe6407",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.026809404617847112,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1956,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1944
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1957,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1956
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1957
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2075,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2075
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2234,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2234
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2393,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2392
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5e77dcd5568b7202c3fcc434d7f4e49328a454fc3a9ca215af6de4f7d4ea3e8a",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": -0.0012367286159709575,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 42,
+                  "location": {
+                    "end_line": 43,
+                    "end_offset": 2893,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 2870
+                  }
+                },
+                {
+                  "block_index": 43,
+                  "location": {
+                    "end_line": 44,
+                    "end_offset": 2894,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 44,
+                    "start_offset": 2893
+                  }
+                },
+                {
+                  "block_index": 44,
+                  "location": {
+                    "end_line": 45,
+                    "end_offset": 2984,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 45,
+                    "start_offset": 2894
+                  }
+                },
+                {
+                  "block_index": 45,
+                  "location": {
+                    "end_line": 46,
+                    "end_offset": 2985,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 46,
+                    "start_offset": 2984
+                  }
+                },
+                {
+                  "block_index": 46,
+                  "location": {
+                    "end_line": 47,
+                    "end_offset": 3143,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 47,
+                    "start_offset": 2985
+                  }
+                },
+                {
+                  "block_index": 47,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3144,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 48,
+                    "start_offset": 3143
+                  }
+                },
+                {
+                  "block_index": 48,
+                  "location": {
+                    "end_line": 49,
+                    "end_offset": 3302,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 49,
+                    "start_offset": 3144
+                  }
+                },
+                {
+                  "block_index": 49,
+                  "location": {
+                    "end_line": 50,
+                    "end_offset": 3303,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 50,
+                    "start_offset": 3302
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "0bcce55538879eb666112695f47c513095365e29942ccec4425cebb0342da5a1",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": -0.010380445517328933,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2851,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 2372
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "795b54d7b580f887df1ca7c7e6a2cb6b066e381ae8c963e68423a0cadcf1e67a",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": -0.01588480952537827,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 48,
+                  "location": {
+                    "end_line": 49,
+                    "end_offset": 3367,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 49,
+                    "start_offset": 3346
+                  }
+                },
+                {
+                  "block_index": 49,
+                  "location": {
+                    "end_line": 50,
+                    "end_offset": 3368,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 50,
+                    "start_offset": 3367
+                  }
+                },
+                {
+                  "block_index": 50,
+                  "location": {
+                    "end_line": 51,
+                    "end_offset": 3471,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 51,
+                    "start_offset": 3368
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "c874e182b298e2e8ae2cd0f7ed000e4fda88c7c8d7321e0171dd63abbf5d93d6",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": -0.020018788468164343,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 2068,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 1656
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 69,
+            "5": 266,
+            "10": 624
+          },
+          "split": "development",
+          "vector_search_seconds": 0.0015843000001041219
+        },
+        {
+          "metrics": {
+            "all_required_at_k": {
+              "1": true,
+              "5": true,
+              "10": true
+            },
+            "coverage_at_k": {
+              "1": {
+                "sensor": 1.0
+              },
+              "5": {
+                "sensor": 1.0
+              },
+              "10": {
+                "sensor": 1.0
+              }
+            },
+            "first_support_rank": 1,
+            "recall_at_k": {
+              "1": 1.0,
+              "5": 1.0,
+              "10": 1.0
+            },
+            "returned_count": 10,
+            "supported": true
+          },
+          "query_embedding_seconds": 0.027670634999594768,
+          "query_id": "test-offline",
+          "results": [
+            {
+              "chunk_id": "5e77dcd5568b7202c3fcc434d7f4e49328a454fc3a9ca215af6de4f7d4ea3e8a",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.46996397066792694,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 42,
+                  "location": {
+                    "end_line": 43,
+                    "end_offset": 2893,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 2870
+                  }
+                },
+                {
+                  "block_index": 43,
+                  "location": {
+                    "end_line": 44,
+                    "end_offset": 2894,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 44,
+                    "start_offset": 2893
+                  }
+                },
+                {
+                  "block_index": 44,
+                  "location": {
+                    "end_line": 45,
+                    "end_offset": 2984,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 45,
+                    "start_offset": 2894
+                  }
+                },
+                {
+                  "block_index": 45,
+                  "location": {
+                    "end_line": 46,
+                    "end_offset": 2985,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 46,
+                    "start_offset": 2984
+                  }
+                },
+                {
+                  "block_index": 46,
+                  "location": {
+                    "end_line": 47,
+                    "end_offset": 3143,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 47,
+                    "start_offset": 2985
+                  }
+                },
+                {
+                  "block_index": 47,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3144,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 48,
+                    "start_offset": 3143
+                  }
+                },
+                {
+                  "block_index": 48,
+                  "location": {
+                    "end_line": 49,
+                    "end_offset": 3302,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 49,
+                    "start_offset": 3144
+                  }
+                },
+                {
+                  "block_index": 49,
+                  "location": {
+                    "end_line": 50,
+                    "end_offset": 3303,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 50,
+                    "start_offset": 3302
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "52b5731be68cc4b381acb664c503909ce5ee8c39bd4b35889347a5841cba2ae2",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.3252994057219037,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 339,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "0bcce55538879eb666112695f47c513095365e29942ccec4425cebb0342da5a1",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.25183454175380615,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2851,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 2372
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "311bf006f1550a88e1ec4594ac4631cca3d2447ddb44bf6660af7966f2113e64",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.23343183377653567,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 3330,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 3010
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "0e88333731586d42d9ed13dd75ed29ed89b57e4e9a9f671a517ee718bc0de79a",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.22625056810160932,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 44,
+                  "location": {
+                    "end_line": 45,
+                    "end_offset": 3186,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 45,
+                    "start_offset": 3028
+                  }
+                },
+                {
+                  "block_index": 45,
+                  "location": {
+                    "end_line": 46,
+                    "end_offset": 3187,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 46,
+                    "start_offset": 3186
+                  }
+                },
+                {
+                  "block_index": 46,
+                  "location": {
+                    "end_line": 47,
+                    "end_offset": 3345,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 47,
+                    "start_offset": 3187
+                  }
+                },
+                {
+                  "block_index": 47,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3346,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 48,
+                    "start_offset": 3345
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "3c990a2d0e2366c0826686d7fd302bc31655b452b13d3d71a16dd550b7727227",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.21842456589904202,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2232,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2232
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2391,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2391
+                  }
+                },
+                {
+                  "block_index": 36,
+                  "location": {
+                    "end_line": 37,
+                    "end_offset": 2550,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2392
+                  }
+                },
+                {
+                  "block_index": 37,
+                  "location": {
+                    "end_line": 38,
+                    "end_offset": 2551,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 38,
+                    "start_offset": 2550
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5c9a46d950a40a41867cd7641e25e2a0fca6bbeca6b9fdebdad18619b3a2888e",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.21842456589904202,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 38,
+                  "location": {
+                    "end_line": 39,
+                    "end_offset": 2709,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 39,
+                    "start_offset": 2551
+                  }
+                },
+                {
+                  "block_index": 39,
+                  "location": {
+                    "end_line": 40,
+                    "end_offset": 2710,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 40,
+                    "start_offset": 2709
+                  }
+                },
+                {
+                  "block_index": 40,
+                  "location": {
+                    "end_line": 41,
+                    "end_offset": 2868,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 41,
+                    "start_offset": 2710
+                  }
+                },
+                {
+                  "block_index": 41,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 2869,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 42,
+                    "start_offset": 2868
+                  }
+                },
+                {
+                  "block_index": 42,
+                  "location": {
+                    "end_line": 43,
+                    "end_offset": 3027,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 2869
+                  }
+                },
+                {
+                  "block_index": 43,
+                  "location": {
+                    "end_line": 44,
+                    "end_offset": 3028,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 44,
+                    "start_offset": 3027
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "27d2c60ca6dd4c121ff3da67973ebee355715a9b83ede44efe07d8ec903c1293",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.21582895987271847,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 56,
+                  "location": {
+                    "end_line": 57,
+                    "end_offset": 3938,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 57,
+                    "start_offset": 3780
+                  }
+                },
+                {
+                  "block_index": 57,
+                  "location": {
+                    "end_line": 58,
+                    "end_offset": 3939,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 58,
+                    "start_offset": 3938
+                  }
+                },
+                {
+                  "block_index": 58,
+                  "location": {
+                    "end_line": 59,
+                    "end_offset": 4097,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 59,
+                    "start_offset": 3939
+                  }
+                },
+                {
+                  "block_index": 59,
+                  "location": {
+                    "end_line": 60,
+                    "end_offset": 4098,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 60,
+                    "start_offset": 4097
+                  }
+                },
+                {
+                  "block_index": 60,
+                  "location": {
+                    "end_line": 61,
+                    "end_offset": 4256,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 61,
+                    "start_offset": 4098
+                  }
+                },
+                {
+                  "block_index": 61,
+                  "location": {
+                    "end_line": 62,
+                    "end_offset": 4257,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 62,
+                    "start_offset": 4256
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "35f932b808f2e9965279de08de614c456c32c0be014a7c4fb39f187cc099b24d",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.21582895987271847,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 50,
+                  "location": {
+                    "end_line": 51,
+                    "end_offset": 3461,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 51,
+                    "start_offset": 3303
+                  }
+                },
+                {
+                  "block_index": 51,
+                  "location": {
+                    "end_line": 52,
+                    "end_offset": 3462,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 52,
+                    "start_offset": 3461
+                  }
+                },
+                {
+                  "block_index": 52,
+                  "location": {
+                    "end_line": 53,
+                    "end_offset": 3620,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 53,
+                    "start_offset": 3462
+                  }
+                },
+                {
+                  "block_index": 53,
+                  "location": {
+                    "end_line": 54,
+                    "end_offset": 3621,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 54,
+                    "start_offset": 3620
+                  }
+                },
+                {
+                  "block_index": 54,
+                  "location": {
+                    "end_line": 55,
+                    "end_offset": 3779,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 55,
+                    "start_offset": 3621
+                  }
+                },
+                {
+                  "block_index": 55,
+                  "location": {
+                    "end_line": 56,
+                    "end_offset": 3780,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 56,
+                    "start_offset": 3779
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "02613e9f0db6e61b4fe7ebd3eb6c25f8c3410ab00a3590ce7d166cd15597fdc9",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.19923111730101992,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 10,
+                  "location": {
+                    "end_line": 11,
+                    "end_offset": 671,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 11,
+                    "start_offset": 513
+                  }
+                },
+                {
+                  "block_index": 11,
+                  "location": {
+                    "end_line": 12,
+                    "end_offset": 672,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 12,
+                    "start_offset": 671
+                  }
+                },
+                {
+                  "block_index": 12,
+                  "location": {
+                    "end_line": 13,
+                    "end_offset": 830,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 13,
+                    "start_offset": 672
+                  }
+                },
+                {
+                  "block_index": 13,
+                  "location": {
+                    "end_line": 14,
+                    "end_offset": 831,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 14,
+                    "start_offset": 830
+                  }
+                },
+                {
+                  "block_index": 14,
+                  "location": {
+                    "end_line": 15,
+                    "end_offset": 989,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 15,
+                    "start_offset": 831
+                  }
+                },
+                {
+                  "block_index": 15,
+                  "location": {
+                    "end_line": 16,
+                    "end_offset": 990,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 16,
+                    "start_offset": 989
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 82,
+            "5": 367,
+            "10": 846
+          },
+          "split": "held_out",
+          "vector_search_seconds": 0.0014933649999875342
+        },
+        {
+          "metrics": {
+            "all_required_at_k": {
+              "1": true,
+              "5": true,
+              "10": true
+            },
+            "coverage_at_k": {
+              "1": {
+                "ready": 1.0,
+                "staging": 1.0
+              },
+              "5": {
+                "ready": 1.0,
+                "staging": 1.0
+              },
+              "10": {
+                "ready": 1.0,
+                "staging": 1.0
+              }
+            },
+            "first_support_rank": 1,
+            "recall_at_k": {
+              "1": 1.0,
+              "5": 1.0,
+              "10": 1.0
+            },
+            "returned_count": 10,
+            "supported": true
+          },
+          "query_embedding_seconds": 0.02847284299969033,
+          "query_id": "test-recovery",
+          "results": [
+            {
+              "chunk_id": "0bcce55538879eb666112695f47c513095365e29942ccec4425cebb0342da5a1",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.48281250576742973,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2851,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 2372
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "27d2c60ca6dd4c121ff3da67973ebee355715a9b83ede44efe07d8ec903c1293",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.1182464880967726,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 56,
+                  "location": {
+                    "end_line": 57,
+                    "end_offset": 3938,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 57,
+                    "start_offset": 3780
+                  }
+                },
+                {
+                  "block_index": 57,
+                  "location": {
+                    "end_line": 58,
+                    "end_offset": 3939,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 58,
+                    "start_offset": 3938
+                  }
+                },
+                {
+                  "block_index": 58,
+                  "location": {
+                    "end_line": 59,
+                    "end_offset": 4097,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 59,
+                    "start_offset": 3939
+                  }
+                },
+                {
+                  "block_index": 59,
+                  "location": {
+                    "end_line": 60,
+                    "end_offset": 4098,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 60,
+                    "start_offset": 4097
+                  }
+                },
+                {
+                  "block_index": 60,
+                  "location": {
+                    "end_line": 61,
+                    "end_offset": 4256,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 61,
+                    "start_offset": 4098
+                  }
+                },
+                {
+                  "block_index": 61,
+                  "location": {
+                    "end_line": 62,
+                    "end_offset": 4257,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 62,
+                    "start_offset": 4256
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "35f932b808f2e9965279de08de614c456c32c0be014a7c4fb39f187cc099b24d",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.1182464880967726,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 50,
+                  "location": {
+                    "end_line": 51,
+                    "end_offset": 3461,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 51,
+                    "start_offset": 3303
+                  }
+                },
+                {
+                  "block_index": 51,
+                  "location": {
+                    "end_line": 52,
+                    "end_offset": 3462,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 52,
+                    "start_offset": 3461
+                  }
+                },
+                {
+                  "block_index": 52,
+                  "location": {
+                    "end_line": 53,
+                    "end_offset": 3620,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 53,
+                    "start_offset": 3462
+                  }
+                },
+                {
+                  "block_index": 53,
+                  "location": {
+                    "end_line": 54,
+                    "end_offset": 3621,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 54,
+                    "start_offset": 3620
+                  }
+                },
+                {
+                  "block_index": 54,
+                  "location": {
+                    "end_line": 55,
+                    "end_offset": 3779,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 55,
+                    "start_offset": 3621
+                  }
+                },
+                {
+                  "block_index": 55,
+                  "location": {
+                    "end_line": 56,
+                    "end_offset": 3780,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 56,
+                    "start_offset": 3779
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "e4dcf4181863a4b6d05e2fe3b1a8343289b05545c943543f791301a2034b4927",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.1167619079629316,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 22,
+                  "location": {
+                    "end_line": 23,
+                    "end_offset": 1630,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 23,
+                    "start_offset": 1609
+                  }
+                },
+                {
+                  "block_index": 23,
+                  "location": {
+                    "end_line": 24,
+                    "end_offset": 1631,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 24,
+                    "start_offset": 1630
+                  }
+                },
+                {
+                  "block_index": 24,
+                  "location": {
+                    "end_line": 25,
+                    "end_offset": 1695,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 25,
+                    "start_offset": 1631
+                  }
+                },
+                {
+                  "block_index": 25,
+                  "location": {
+                    "end_line": 26,
+                    "end_offset": 1696,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 26,
+                    "start_offset": 1695
+                  }
+                },
+                {
+                  "block_index": 26,
+                  "location": {
+                    "end_line": 27,
+                    "end_offset": 1755,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 27,
+                    "start_offset": 1696
+                  }
+                },
+                {
+                  "block_index": 27,
+                  "location": {
+                    "end_line": 28,
+                    "end_offset": 1756,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 28,
+                    "start_offset": 1755
+                  }
+                },
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1914,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1756
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1915,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1914
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2073,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1915
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2073
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5e77dcd5568b7202c3fcc434d7f4e49328a454fc3a9ca215af6de4f7d4ea3e8a",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.11363057496235558,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 42,
+                  "location": {
+                    "end_line": 43,
+                    "end_offset": 2893,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 2870
+                  }
+                },
+                {
+                  "block_index": 43,
+                  "location": {
+                    "end_line": 44,
+                    "end_offset": 2894,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 44,
+                    "start_offset": 2893
+                  }
+                },
+                {
+                  "block_index": 44,
+                  "location": {
+                    "end_line": 45,
+                    "end_offset": 2984,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 45,
+                    "start_offset": 2894
+                  }
+                },
+                {
+                  "block_index": 45,
+                  "location": {
+                    "end_line": 46,
+                    "end_offset": 2985,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 46,
+                    "start_offset": 2984
+                  }
+                },
+                {
+                  "block_index": 46,
+                  "location": {
+                    "end_line": 47,
+                    "end_offset": 3143,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 47,
+                    "start_offset": 2985
+                  }
+                },
+                {
+                  "block_index": 47,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3144,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 48,
+                    "start_offset": 3143
+                  }
+                },
+                {
+                  "block_index": 48,
+                  "location": {
+                    "end_line": 49,
+                    "end_offset": 3302,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 49,
+                    "start_offset": 3144
+                  }
+                },
+                {
+                  "block_index": 49,
+                  "location": {
+                    "end_line": 50,
+                    "end_offset": 3303,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 50,
+                    "start_offset": 3302
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "0e88333731586d42d9ed13dd75ed29ed89b57e4e9a9f671a517ee718bc0de79a",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.11244183342597293,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 44,
+                  "location": {
+                    "end_line": 45,
+                    "end_offset": 3186,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 45,
+                    "start_offset": 3028
+                  }
+                },
+                {
+                  "block_index": 45,
+                  "location": {
+                    "end_line": 46,
+                    "end_offset": 3187,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 46,
+                    "start_offset": 3186
+                  }
+                },
+                {
+                  "block_index": 46,
+                  "location": {
+                    "end_line": 47,
+                    "end_offset": 3345,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 47,
+                    "start_offset": 3187
+                  }
+                },
+                {
+                  "block_index": 47,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3346,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 48,
+                    "start_offset": 3345
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "3c990a2d0e2366c0826686d7fd302bc31655b452b13d3d71a16dd550b7727227",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.10529867784993674,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2232,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2232
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2391,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2391
+                  }
+                },
+                {
+                  "block_index": 36,
+                  "location": {
+                    "end_line": 37,
+                    "end_offset": 2550,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2392
+                  }
+                },
+                {
+                  "block_index": 37,
+                  "location": {
+                    "end_line": 38,
+                    "end_offset": 2551,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 38,
+                    "start_offset": 2550
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5c9a46d950a40a41867cd7641e25e2a0fca6bbeca6b9fdebdad18619b3a2888e",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.10529867784993674,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 38,
+                  "location": {
+                    "end_line": 39,
+                    "end_offset": 2709,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 39,
+                    "start_offset": 2551
+                  }
+                },
+                {
+                  "block_index": 39,
+                  "location": {
+                    "end_line": 40,
+                    "end_offset": 2710,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 40,
+                    "start_offset": 2709
+                  }
+                },
+                {
+                  "block_index": 40,
+                  "location": {
+                    "end_line": 41,
+                    "end_offset": 2868,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 41,
+                    "start_offset": 2710
+                  }
+                },
+                {
+                  "block_index": 41,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 2869,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 42,
+                    "start_offset": 2868
+                  }
+                },
+                {
+                  "block_index": 42,
+                  "location": {
+                    "end_line": 43,
+                    "end_offset": 3027,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 2869
+                  }
+                },
+                {
+                  "block_index": 43,
+                  "location": {
+                    "end_line": 44,
+                    "end_offset": 3028,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 44,
+                    "start_offset": 3027
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "69761b9692fb9c16be450afec73892153a6f7a0d0591eb26a6fdf049bb89b3e8",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.10143078833864412,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 24,
+                    "end_offset": 1895,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 19,
+                    "start_offset": 1431
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5d4478b7751c2a1a90fb4f3cf41985f2ce5c662c1f830392da1bf3079e6f6918",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.07260027251902726,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 35,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 20
+                  }
+                },
+                {
+                  "block_index": 3,
+                  "location": {
+                    "end_line": 4,
+                    "end_offset": 36,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 4,
+                    "start_offset": 35
+                  }
+                },
+                {
+                  "block_index": 4,
+                  "location": {
+                    "end_line": 5,
+                    "end_offset": 194,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 5,
+                    "start_offset": 36
+                  }
+                },
+                {
+                  "block_index": 5,
+                  "location": {
+                    "end_line": 6,
+                    "end_offset": 195,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 6,
+                    "start_offset": 194
+                  }
+                },
+                {
+                  "block_index": 6,
+                  "location": {
+                    "end_line": 7,
+                    "end_offset": 353,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 7,
+                    "start_offset": 195
+                  }
+                },
+                {
+                  "block_index": 7,
+                  "location": {
+                    "end_line": 8,
+                    "end_offset": 354,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 8,
+                    "start_offset": 353
+                  }
+                },
+                {
+                  "block_index": 8,
+                  "location": {
+                    "end_line": 9,
+                    "end_offset": 512,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 9,
+                    "start_offset": 354
+                  }
+                },
+                {
+                  "block_index": 9,
+                  "location": {
+                    "end_line": 10,
+                    "end_offset": 513,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 10,
+                    "start_offset": 512
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 86,
+            "5": 451,
+            "10": 897
+          },
+          "split": "held_out",
+          "vector_search_seconds": 0.001580180000019027
+        },
+        {
+          "metrics": {
+            "all_required_at_k": {
+              "1": false,
+              "5": true,
+              "10": true
+            },
+            "coverage_at_k": {
+              "1": {
+                "safety": 0.45263157894736844
+              },
+              "5": {
+                "safety": 1.0
+              },
+              "10": {
+                "safety": 1.0
+              }
+            },
+            "first_support_rank": 3,
+            "recall_at_k": {
+              "1": 0.0,
+              "5": 1.0,
+              "10": 1.0
+            },
+            "returned_count": 10,
+            "supported": true
+          },
+          "query_embedding_seconds": 0.02861071100051049,
+          "query_id": "test-safety",
+          "results": [
+            {
+              "chunk_id": "52b5731be68cc4b381acb664c503909ce5ee8c39bd4b35889347a5841cba2ae2",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.3337536779043012,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 339,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5e77dcd5568b7202c3fcc434d7f4e49328a454fc3a9ca215af6de4f7d4ea3e8a",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.25870223697353695,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 42,
+                  "location": {
+                    "end_line": 43,
+                    "end_offset": 2893,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 43,
+                    "start_offset": 2870
+                  }
+                },
+                {
+                  "block_index": 43,
+                  "location": {
+                    "end_line": 44,
+                    "end_offset": 2894,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 44,
+                    "start_offset": 2893
+                  }
+                },
+                {
+                  "block_index": 44,
+                  "location": {
+                    "end_line": 45,
+                    "end_offset": 2984,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 45,
+                    "start_offset": 2894
+                  }
+                },
+                {
+                  "block_index": 45,
+                  "location": {
+                    "end_line": 46,
+                    "end_offset": 2985,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 46,
+                    "start_offset": 2984
+                  }
+                },
+                {
+                  "block_index": 46,
+                  "location": {
+                    "end_line": 47,
+                    "end_offset": 3143,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 47,
+                    "start_offset": 2985
+                  }
+                },
+                {
+                  "block_index": 47,
+                  "location": {
+                    "end_line": 48,
+                    "end_offset": 3144,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 48,
+                    "start_offset": 3143
+                  }
+                },
+                {
+                  "block_index": 48,
+                  "location": {
+                    "end_line": 49,
+                    "end_offset": 3302,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 49,
+                    "start_offset": 3144
+                  }
+                },
+                {
+                  "block_index": 49,
+                  "location": {
+                    "end_line": 50,
+                    "end_offset": 3303,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 50,
+                    "start_offset": 3302
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "311bf006f1550a88e1ec4594ac4631cca3d2447ddb44bf6660af7966f2113e64",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.18544530802552808,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 3330,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 3010
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "27d2c60ca6dd4c121ff3da67973ebee355715a9b83ede44efe07d8ec903c1293",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.18099883888695303,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 56,
+                  "location": {
+                    "end_line": 57,
+                    "end_offset": 3938,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 57,
+                    "start_offset": 3780
+                  }
+                },
+                {
+                  "block_index": 57,
+                  "location": {
+                    "end_line": 58,
+                    "end_offset": 3939,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 58,
+                    "start_offset": 3938
+                  }
+                },
+                {
+                  "block_index": 58,
+                  "location": {
+                    "end_line": 59,
+                    "end_offset": 4097,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 59,
+                    "start_offset": 3939
+                  }
+                },
+                {
+                  "block_index": 59,
+                  "location": {
+                    "end_line": 60,
+                    "end_offset": 4098,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 60,
+                    "start_offset": 4097
+                  }
+                },
+                {
+                  "block_index": 60,
+                  "location": {
+                    "end_line": 61,
+                    "end_offset": 4256,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 61,
+                    "start_offset": 4098
+                  }
+                },
+                {
+                  "block_index": 61,
+                  "location": {
+                    "end_line": 62,
+                    "end_offset": 4257,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 62,
+                    "start_offset": 4256
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "35f932b808f2e9965279de08de614c456c32c0be014a7c4fb39f187cc099b24d",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.18099883888695303,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 50,
+                  "location": {
+                    "end_line": 51,
+                    "end_offset": 3461,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 51,
+                    "start_offset": 3303
+                  }
+                },
+                {
+                  "block_index": 51,
+                  "location": {
+                    "end_line": 52,
+                    "end_offset": 3462,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 52,
+                    "start_offset": 3461
+                  }
+                },
+                {
+                  "block_index": 52,
+                  "location": {
+                    "end_line": 53,
+                    "end_offset": 3620,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 53,
+                    "start_offset": 3462
+                  }
+                },
+                {
+                  "block_index": 53,
+                  "location": {
+                    "end_line": 54,
+                    "end_offset": 3621,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 54,
+                    "start_offset": 3620
+                  }
+                },
+                {
+                  "block_index": 54,
+                  "location": {
+                    "end_line": 55,
+                    "end_offset": 3779,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 55,
+                    "start_offset": 3621
+                  }
+                },
+                {
+                  "block_index": 55,
+                  "location": {
+                    "end_line": 56,
+                    "end_offset": 3780,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 56,
+                    "start_offset": 3779
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "5d4478b7751c2a1a90fb4f3cf41985f2ce5c662c1f830392da1bf3079e6f6918",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.17729615334782883,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 35,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 20
+                  }
+                },
+                {
+                  "block_index": 3,
+                  "location": {
+                    "end_line": 4,
+                    "end_offset": 36,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 4,
+                    "start_offset": 35
+                  }
+                },
+                {
+                  "block_index": 4,
+                  "location": {
+                    "end_line": 5,
+                    "end_offset": 194,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 5,
+                    "start_offset": 36
+                  }
+                },
+                {
+                  "block_index": 5,
+                  "location": {
+                    "end_line": 6,
+                    "end_offset": 195,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 6,
+                    "start_offset": 194
+                  }
+                },
+                {
+                  "block_index": 6,
+                  "location": {
+                    "end_line": 7,
+                    "end_offset": 353,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 7,
+                    "start_offset": 195
+                  }
+                },
+                {
+                  "block_index": 7,
+                  "location": {
+                    "end_line": 8,
+                    "end_offset": 354,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 8,
+                    "start_offset": 353
+                  }
+                },
+                {
+                  "block_index": 8,
+                  "location": {
+                    "end_line": 9,
+                    "end_offset": 512,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 9,
+                    "start_offset": 354
+                  }
+                },
+                {
+                  "block_index": 9,
+                  "location": {
+                    "end_line": 10,
+                    "end_offset": 513,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 10,
+                    "start_offset": 512
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "65349258f7301d4efa3e63f6a52d7dd23c6ae52a9c4c762a680781d035d722fa",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.17688158201033494,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 20,
+                  "location": {
+                    "end_line": 21,
+                    "end_offset": 1608,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 21,
+                    "start_offset": 1450
+                  }
+                },
+                {
+                  "block_index": 21,
+                  "location": {
+                    "end_line": 22,
+                    "end_offset": 1609,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 22,
+                    "start_offset": 1608
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "0bcce55538879eb666112695f47c513095365e29942ccec4425cebb0342da5a1",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.17084448319019677,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2851,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 2372
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "ff181a1d085033a401766c1c816e93df2be0bdd286e1af572fe8184fb6fe6407",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.16188848893346838,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1956,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1944
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1957,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1956
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1957
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2075,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2075
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2234,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2234
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2393,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2392
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "02613e9f0db6e61b4fe7ebd3eb6c25f8c3410ab00a3590ce7d166cd15597fdc9",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.1553454460887928,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 10,
+                  "location": {
+                    "end_line": 11,
+                    "end_offset": 671,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 11,
+                    "start_offset": 513
+                  }
+                },
+                {
+                  "block_index": 11,
+                  "location": {
+                    "end_line": 12,
+                    "end_offset": 672,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 12,
+                    "start_offset": 671
+                  }
+                },
+                {
+                  "block_index": 12,
+                  "location": {
+                    "end_line": 13,
+                    "end_offset": 830,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 13,
+                    "start_offset": 672
+                  }
+                },
+                {
+                  "block_index": 13,
+                  "location": {
+                    "end_line": 14,
+                    "end_offset": 831,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 14,
+                    "start_offset": 830
+                  }
+                },
+                {
+                  "block_index": 14,
+                  "location": {
+                    "end_line": 15,
+                    "end_offset": 989,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 15,
+                    "start_offset": 831
+                  }
+                },
+                {
+                  "block_index": 15,
+                  "location": {
+                    "end_line": 16,
+                    "end_offset": 990,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 16,
+                    "start_offset": 989
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 69,
+            "5": 406,
+            "10": 798
+          },
+          "split": "held_out",
+          "vector_search_seconds": 0.0016270430005533854
+        },
+        {
+          "metrics": {
+            "all_required_at_k": {
+              "1": false,
+              "5": true,
+              "10": true
+            },
+            "coverage_at_k": {
+              "1": {
+                "approval": 1.0,
+                "limiter": 0.0
+              },
+              "5": {
+                "approval": 1.0,
+                "limiter": 1.0
+              },
+              "10": {
+                "approval": 1.0,
+                "limiter": 1.0
+              }
+            },
+            "first_support_rank": 1,
+            "recall_at_k": {
+              "1": 0.5,
+              "5": 1.0,
+              "10": 1.0
+            },
+            "returned_count": 10,
+            "supported": true
+          },
+          "query_embedding_seconds": 0.030681182999614975,
+          "query_id": "test-compound",
+          "results": [
+            {
+              "chunk_id": "ff181a1d085033a401766c1c816e93df2be0bdd286e1af572fe8184fb6fe6407",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.7286875609626553,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1956,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1944
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1957,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1956
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1957
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2075,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2075
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2234,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2234
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2393,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2392
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "311bf006f1550a88e1ec4594ac4631cca3d2447ddb44bf6660af7966f2113e64",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.6335910540525057,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 3330,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 3010
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "526465eff3636bdcad22544333ab719aedf9b7aa34cacda3a775dba65fc95d0e",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.5907023199470183,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 1654,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 1281
+                  }
+                },
+                {
+                  "block_index": 1,
+                  "location": {
+                    "end_line": 2,
+                    "end_offset": 1656,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 1654
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "772e0444bed9f8758d59116dca7102d239e1e245b3e4c8610edb8c2939e79811",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.5761165335018971,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 2539,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 2068
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "7b9873ca73a7b06f57b4fccf2b5203c0d62f024ec6fb5727aa23a9f03613b4ae",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.5761165335018971,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 810,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 339
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "ae2a17bff28ab299b590154dc375bfe6425db80c0d78c020ef681cdc1496603b",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.5761165335018971,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 1281,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 810
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "dfc0403dfe87a658ad501da14b5b625d422dd3e9f3d368dfbf2249f98a15e0c8",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.5761165335018971,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 3010,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 2539
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "367020f205fbd200d81cedbba7e97043a92024c95f76942a0d508ecb819fd157",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.5696301086262773,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 36,
+                  "location": {
+                    "end_line": 37,
+                    "end_offset": 2551,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2393
+                  }
+                },
+                {
+                  "block_index": 37,
+                  "location": {
+                    "end_line": 38,
+                    "end_offset": 2552,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 38,
+                    "start_offset": 2551
+                  }
+                },
+                {
+                  "block_index": 38,
+                  "location": {
+                    "end_line": 39,
+                    "end_offset": 2710,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 39,
+                    "start_offset": 2552
+                  }
+                },
+                {
+                  "block_index": 39,
+                  "location": {
+                    "end_line": 40,
+                    "end_offset": 2711,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 40,
+                    "start_offset": 2710
+                  }
+                },
+                {
+                  "block_index": 40,
+                  "location": {
+                    "end_line": 41,
+                    "end_offset": 2869,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 41,
+                    "start_offset": 2711
+                  }
+                },
+                {
+                  "block_index": 41,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 2870,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 42,
+                    "start_offset": 2869
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "65349258f7301d4efa3e63f6a52d7dd23c6ae52a9c4c762a680781d035d722fa",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.5476232380426213,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 20,
+                  "location": {
+                    "end_line": 21,
+                    "end_offset": 1608,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 21,
+                    "start_offset": 1450
+                  }
+                },
+                {
+                  "block_index": 21,
+                  "location": {
+                    "end_line": 22,
+                    "end_offset": 1609,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 22,
+                    "start_offset": 1608
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "04dfc8fa9720f20226bf29c78abd36f71651cc3167c31bf41a85cd2acbf38c3e",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.5412435902696748,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 3328,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2851
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 85,
+            "5": 398,
+            "10": 794
+          },
+          "split": "held_out",
+          "vector_search_seconds": 0.001877497999885236
+        },
+        {
+          "metrics": {
+            "all_required_at_k": null,
+            "coverage_at_k": {},
+            "first_support_rank": null,
+            "recall_at_k": null,
+            "returned_count": 10,
+            "supported": false
+          },
+          "query_embedding_seconds": 0.027869266999914544,
+          "query_id": "test-none",
+          "results": [
+            {
+              "chunk_id": "52b5731be68cc4b381acb664c503909ce5ee8c39bd4b35889347a5841cba2ae2",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.3976742434515058,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 339,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "311bf006f1550a88e1ec4594ac4631cca3d2447ddb44bf6660af7966f2113e64",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.3295157472632026,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 3330,
+                    "page_number": 2,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 3010
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "ff181a1d085033a401766c1c816e93df2be0bdd286e1af572fe8184fb6fe6407",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.31273557194896606,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 28,
+                  "location": {
+                    "end_line": 29,
+                    "end_offset": 1956,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 29,
+                    "start_offset": 1944
+                  }
+                },
+                {
+                  "block_index": 29,
+                  "location": {
+                    "end_line": 30,
+                    "end_offset": 1957,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 30,
+                    "start_offset": 1956
+                  }
+                },
+                {
+                  "block_index": 30,
+                  "location": {
+                    "end_line": 31,
+                    "end_offset": 2074,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 31,
+                    "start_offset": 1957
+                  }
+                },
+                {
+                  "block_index": 31,
+                  "location": {
+                    "end_line": 32,
+                    "end_offset": 2075,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 32,
+                    "start_offset": 2074
+                  }
+                },
+                {
+                  "block_index": 32,
+                  "location": {
+                    "end_line": 33,
+                    "end_offset": 2233,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 33,
+                    "start_offset": 2075
+                  }
+                },
+                {
+                  "block_index": 33,
+                  "location": {
+                    "end_line": 34,
+                    "end_offset": 2234,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 34,
+                    "start_offset": 2233
+                  }
+                },
+                {
+                  "block_index": 34,
+                  "location": {
+                    "end_line": 35,
+                    "end_offset": 2392,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 35,
+                    "start_offset": 2234
+                  }
+                },
+                {
+                  "block_index": 35,
+                  "location": {
+                    "end_line": 36,
+                    "end_offset": 2393,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 36,
+                    "start_offset": 2392
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "65349258f7301d4efa3e63f6a52d7dd23c6ae52a9c4c762a680781d035d722fa",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.2896155871891018,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 20,
+                  "location": {
+                    "end_line": 21,
+                    "end_offset": 1608,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 21,
+                    "start_offset": 1450
+                  }
+                },
+                {
+                  "block_index": 21,
+                  "location": {
+                    "end_line": 22,
+                    "end_offset": 1609,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 22,
+                    "start_offset": 1608
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "69761b9692fb9c16be450afec73892153a6f7a0d0591eb26a6fdf049bb89b3e8",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "score": 0.28424312794455225,
+              "source_id": "m5:indexing.txt",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 24,
+                    "end_offset": 1895,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 19,
+                    "start_offset": 1431
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "367020f205fbd200d81cedbba7e97043a92024c95f76942a0d508ecb819fd157",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "score": 0.2765728832231235,
+              "source_id": "m5:operations.md",
+              "spans": [
+                {
+                  "block_index": 36,
+                  "location": {
+                    "end_line": 37,
+                    "end_offset": 2551,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 37,
+                    "start_offset": 2393
+                  }
+                },
+                {
+                  "block_index": 37,
+                  "location": {
+                    "end_line": 38,
+                    "end_offset": 2552,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 38,
+                    "start_offset": 2551
+                  }
+                },
+                {
+                  "block_index": 38,
+                  "location": {
+                    "end_line": 39,
+                    "end_offset": 2710,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 39,
+                    "start_offset": 2552
+                  }
+                },
+                {
+                  "block_index": 39,
+                  "location": {
+                    "end_line": 40,
+                    "end_offset": 2711,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 40,
+                    "start_offset": 2710
+                  }
+                },
+                {
+                  "block_index": 40,
+                  "location": {
+                    "end_line": 41,
+                    "end_offset": 2869,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 41,
+                    "start_offset": 2711
+                  }
+                },
+                {
+                  "block_index": 41,
+                  "location": {
+                    "end_line": 42,
+                    "end_offset": 2870,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 42,
+                    "start_offset": 2869
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "526465eff3636bdcad22544333ab719aedf9b7aa34cacda3a775dba65fc95d0e",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "score": 0.26015161645269075,
+              "source_id": "m5:safety.pdf",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 1654,
+                    "page_number": 1,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 1281
+                  }
+                },
+                {
+                  "block_index": 1,
+                  "location": {
+                    "end_line": 2,
+                    "end_offset": 1656,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 1654
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "3ddd8ad46378b53a0776871d985128e64eb1f64725969000bcaf09d7e627902b",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.24937605196316118,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 14,
+                  "location": {
+                    "end_line": 15,
+                    "end_offset": 1131,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 15,
+                    "start_offset": 973
+                  }
+                },
+                {
+                  "block_index": 15,
+                  "location": {
+                    "end_line": 16,
+                    "end_offset": 1132,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 16,
+                    "start_offset": 1131
+                  }
+                },
+                {
+                  "block_index": 16,
+                  "location": {
+                    "end_line": 17,
+                    "end_offset": 1290,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 17,
+                    "start_offset": 1132
+                  }
+                },
+                {
+                  "block_index": 17,
+                  "location": {
+                    "end_line": 18,
+                    "end_offset": 1291,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 18,
+                    "start_offset": 1290
+                  }
+                },
+                {
+                  "block_index": 18,
+                  "location": {
+                    "end_line": 19,
+                    "end_offset": 1449,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 19,
+                    "start_offset": 1291
+                  }
+                },
+                {
+                  "block_index": 19,
+                  "location": {
+                    "end_line": 20,
+                    "end_offset": 1450,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 20,
+                    "start_offset": 1449
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "d14e993e0b1f7d1be7d49e17c36c83ef61e0cb3314b14e83fdb701d6c84b4db9",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.24937605196316118,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 8,
+                  "location": {
+                    "end_line": 9,
+                    "end_offset": 654,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 9,
+                    "start_offset": 496
+                  }
+                },
+                {
+                  "block_index": 9,
+                  "location": {
+                    "end_line": 10,
+                    "end_offset": 655,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 10,
+                    "start_offset": 654
+                  }
+                },
+                {
+                  "block_index": 10,
+                  "location": {
+                    "end_line": 11,
+                    "end_offset": 813,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 11,
+                    "start_offset": 655
+                  }
+                },
+                {
+                  "block_index": 11,
+                  "location": {
+                    "end_line": 12,
+                    "end_offset": 814,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 12,
+                    "start_offset": 813
+                  }
+                },
+                {
+                  "block_index": 12,
+                  "location": {
+                    "end_line": 13,
+                    "end_offset": 972,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 13,
+                    "start_offset": 814
+                  }
+                },
+                {
+                  "block_index": 13,
+                  "location": {
+                    "end_line": 14,
+                    "end_offset": 973,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 14,
+                    "start_offset": 972
+                  }
+                }
+              ]
+            },
+            {
+              "chunk_id": "d61c6545cfa6783ac08654a64aa2b15efb64406059fb303e205c6ec74e4b4b75",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "score": 0.24937605196316118,
+              "source_id": "m5:timing.md",
+              "spans": [
+                {
+                  "block_index": 0,
+                  "location": {
+                    "end_line": 1,
+                    "end_offset": 18,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 1,
+                    "start_offset": 0
+                  }
+                },
+                {
+                  "block_index": 1,
+                  "location": {
+                    "end_line": 2,
+                    "end_offset": 19,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 2,
+                    "start_offset": 18
+                  }
+                },
+                {
+                  "block_index": 2,
+                  "location": {
+                    "end_line": 3,
+                    "end_offset": 177,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 3,
+                    "start_offset": 19
+                  }
+                },
+                {
+                  "block_index": 3,
+                  "location": {
+                    "end_line": 4,
+                    "end_offset": 178,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 4,
+                    "start_offset": 177
+                  }
+                },
+                {
+                  "block_index": 4,
+                  "location": {
+                    "end_line": 5,
+                    "end_offset": 336,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 5,
+                    "start_offset": 178
+                  }
+                },
+                {
+                  "block_index": 5,
+                  "location": {
+                    "end_line": 6,
+                    "end_offset": 337,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 6,
+                    "start_offset": 336
+                  }
+                },
+                {
+                  "block_index": 6,
+                  "location": {
+                    "end_line": 7,
+                    "end_offset": 495,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 7,
+                    "start_offset": 337
+                  }
+                },
+                {
+                  "block_index": 7,
+                  "location": {
+                    "end_line": 8,
+                    "end_offset": 496,
+                    "page_number": null,
+                    "representation": "extracted_text",
+                    "start_line": 8,
+                    "start_offset": 495
+                  }
+                }
+              ]
+            }
+          ],
+          "retrieved_tokens_at_k": {
+            "1": 69,
+            "5": 346,
+            "10": 789
+          },
+          "split": "held_out",
+          "vector_search_seconds": 0.0018073770006594714
+        }
+      ],
+      "query_prefix": "",
+      "retrieved_token_measurement": "sum of independently tokenized passage content including per-passage special tokens",
+      "tokenizer_id": "loaded-runtime-sha256:088111545061519f7d8d124b819268ee7b3175535d2c254c6f1d24013f6dd32f;strip=true;lowercase=false"
+    }
+  ],
+  "schema_version": "m5-evidence-results-v1"
+}
