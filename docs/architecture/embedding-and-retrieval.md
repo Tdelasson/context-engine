@@ -424,3 +424,14 @@ M4 whole-document `Ingestor` and benchmark artifacts remain available separately
 See [ADR-009](decisions/ADR-009-source-index-lifecycle.md) and the
 [source ingestion API](../api/source-ingestion.md) for recovery, single-writer limits,
 index version compatibility, and rebuild instructions.
+
+### Standalone lexical retrieval
+
+`LexicalIndex` owns typed text indexing/search/removal capability; `LexicalRetriever`
+implements the existing request/result boundary without embedding inference.
+`QdrantLexicalIndex` provides a lexical view over `QdrantBM25ChunkStore`, the sole
+owner of canonical chunk payload, named dense/sparse vectors, and source journal.
+Compose the shared store with `SourceIngestionCoordinator` for writes and either
+retriever for reads. Filters and committed source revision checks apply to both.
+BM25 strategy/configuration diagnostics are separate from immutable provenance.
+See ADR-011 for tokenizer behavior, version compatibility, and rebuild procedure.

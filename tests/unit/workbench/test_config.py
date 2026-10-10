@@ -76,3 +76,13 @@ def test_chunk_environment_settings_are_explicit(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("CONTEXT_ENGINE_WORKBENCH_CHUNK_OVERLAP_TOKENS", "0")
     settings = WorkbenchSettings.from_environment()
     assert settings.chunk_max_input_tokens == 96 and settings.chunk_overlap_tokens == 0
+
+
+def test_lexical_strategy_is_application_controlled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CONTEXT_ENGINE_RETRIEVAL_STRATEGY", "lexical")
+    monkeypatch.setenv("CONTEXT_ENGINE_LEXICAL_COLLECTION", "lexical-test")
+    settings = WorkbenchSettings.from_environment()
+    assert settings.retrieval_strategy == "lexical"
+    assert settings.lexical_collection_name == "lexical-test"
+    with pytest.raises(WorkbenchConfigurationError):
+        WorkbenchSettings(retrieval_strategy="hybrid")

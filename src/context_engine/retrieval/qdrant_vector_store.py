@@ -32,6 +32,8 @@ _COLLECTION_METADATA_KEY = "_context_engine_collection_config"
 class QdrantVectorStore(VectorStore):
     """Qdrant implementation of the provider-independent VectorStore contract."""
 
+    _supports_lexical_vectors = False
+
     def __init__(
         self,
         config: VectorStoreCollectionConfig,
@@ -110,7 +112,7 @@ class QdrantVectorStore(VectorStore):
                             f"context-engine:source-state:{self._config.collection_name}:{state.source_id}",
                         )
                     ),
-                    vector=[0.0] * self._config.dimensions,
+                    vector=self._point_vectors([0.0] * self._config.dimensions),
                     payload={"_ce_record_kind": "source_state", "state": asdict(state)},
                 )
             ],
@@ -147,7 +149,7 @@ class QdrantVectorStore(VectorStore):
                         collection_name=self._config.collection_name,
                         document_id=record.document.document_id,
                     ),
-                    vector=list(record.embedding.vector),
+                    vector=self._point_vectors(list(record.embedding.vector), record.document),
                     payload={
                         "_ce_record_kind": "chunk"
                         if self._config.index_version == "m5-chunks-v1"
@@ -188,6 +190,7 @@ class QdrantVectorStore(VectorStore):
             limit=top_k,
             with_payload=True,
             with_vectors=False,
+            **self._dense_query_options(),
         )
         if snapshot != self._search_snapshot():
             raise SourceIndexUnavailableError("Source index changed during search; retry.")
@@ -209,6 +212,12 @@ class QdrantVectorStore(VectorStore):
             wait=True,
         )
 
+    def _point_vectors(self, dense: list[float], document: Document | None = None) -> Any:
+        return dense
+
+    def _dense_query_options(self) -> dict[str, object]:
+        return {}
+
     def _ensure_collection(self) -> None:
         if self._client.collection_exists(self._config.collection_name):
             self._validate_collection_compatibility()
@@ -226,6 +235,14 @@ class QdrantVectorStore(VectorStore):
 
     def _validate_collection_compatibility(self) -> None:
         collection = self._client.get_collection(self._config.collection_name)
+        if (
+            not self._supports_lexical_vectors
+            and _extract_collection_metadata(collection).get("_context_engine_lexical_config")
+            is not None
+        ):
+            raise VectorStoreCompatibilityError(
+                "Lexical collection requires its combined writer; dense-only writes are unsafe."
+            )
         vectors_config = cast(Any, collection).config.params.vectors
         vector_params = self._extract_vector_params(vectors_config)
         if vector_params is None:
