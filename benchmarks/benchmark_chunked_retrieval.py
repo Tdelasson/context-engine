@@ -369,8 +369,8 @@ def main() -> None:
         counter = provider.build_token_counter()
         output["model"]["runtime_max_input_tokens"] = counter.max_input_tokens
         for setting in args.chunk_settings.split(","):
-            size, overlap = (int(value) for value in setting.split(":"))
             try:
+                size, overlap = (int(value) for value in setting.split(":"))
                 output["runs"].append(
                     run_dense_configuration(
                         dataset,
