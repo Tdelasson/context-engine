@@ -8,7 +8,7 @@ import sys
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import asdict
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from statistics import mean
 from time import perf_counter
@@ -35,6 +35,14 @@ from context_engine.retrieval.evidence_selection import (
     comparable_spans,
 )
 from context_engine.tools.retrieval import SearchDocumentsTool
+
+
+def package_version(name: str) -> str | None:
+    """An optional backend dependency being absent is a measurement, not a dense-run failure."""
+    try:
+        return version(name)
+    except PackageNotFoundError:
+        return None
 
 
 def redundancy(results: Sequence[SearchResult]) -> dict[str, int | float]:
@@ -289,7 +297,7 @@ def run_benchmark(
                 "omp_threads": os.getenv("OMP_NUM_THREADS"),
                 "mkl_threads": os.getenv("MKL_NUM_THREADS"),
                 "packages": {
-                    name: version(name)
+                    name: package_version(name)
                     for name in (
                         "tokenizers",
                         "sentence-transformers",

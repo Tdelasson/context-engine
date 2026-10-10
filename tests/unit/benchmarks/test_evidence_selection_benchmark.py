@@ -43,3 +43,19 @@ def test_result_serialization_is_stable_and_lossless() -> None:
     rendered = serialize_artifact(payload)
     assert json.loads(rendered) == payload
     assert serialize_artifact(dict(reversed(list(payload.items())))) == rendered
+
+
+def test_optional_backend_version_can_be_unavailable(monkeypatch: object) -> None:
+    from importlib.metadata import PackageNotFoundError
+
+    import pytest
+
+    from benchmarks import benchmark_evidence_selection as benchmark
+
+    assert isinstance(monkeypatch, pytest.MonkeyPatch)
+
+    def unavailable(name: str) -> str:
+        raise PackageNotFoundError(name)
+
+    monkeypatch.setattr(benchmark, "version", unavailable)
+    assert benchmark.package_version("qdrant-client") is None
