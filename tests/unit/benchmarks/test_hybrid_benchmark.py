@@ -24,7 +24,7 @@ def test_saved_hybrid_comparison_replays_all_evidence_metrics() -> None:
                 Document.from_mapping(
                     document_id=r["chunk_id"],
                     content=artifact["chunks"][r["chunk_id"]]["content"],
-                    metadata=r["metadata"],
+                    metadata=artifact["chunks"][r["chunk_id"]]["metadata"],
                 ),
                 r["score"],
             )
