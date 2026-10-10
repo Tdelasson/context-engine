@@ -701,6 +701,8 @@ def _current_process_rss_bytes() -> int | None:
 
 
 def _windows_process_rss_bytes() -> int | None:
+    if sys.platform != "win32":
+        return None
     try:
         import ctypes
         from ctypes import wintypes

@@ -365,3 +365,16 @@ M4 should remain focused on making the underlying semantic retrieval primitive c
 - `ADR-003-embedding-provider-abstraction.md`
 - `ADR-004-vector-store-and-retrieval-architecture.md`
 - `ADR-005-retrieval-evaluation-strategy.md`
+
+## M5 source processing
+
+`context_engine.knowledge.processing` now owns supplied-byte validation and UTF-8
+text/Markdown interpretation. Acquisition remains with the application. Source identity
+is caller-assigned and separate from the SHA-256 content revision. Structural blocks
+retain headings and code with character offsets in the BOM-free extracted text.
+
+Use `process_source(SourceInput(...), ProcessingLimits(...))`, then `to_document(result)`
+and `Ingestor.ingest_documents((document,))`. Conversion preserves full text and provenance
+metadata; processing does not embed, persist, search, or chunk. See
+[ADR-006](decisions/ADR-006-knowledge-document-processing.md) for representation semantics
+and the knowledge/retrieval boundary. Existing `Document` callers remain supported.

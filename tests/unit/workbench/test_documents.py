@@ -5,12 +5,15 @@ import pytest
 from context_engine.retrieval import (
     Document,
     Embedding,
+    EmbeddingVectorStoreRetriever,
     Ingestor,
     MetadataFilter,
     SearchResult,
     VectorStore,
     VectorStoreRecord,
 )
+from context_engine.tools import ToolInvocation, ToolRegistry, ToolResultStatus, ToolRuntime
+from context_engine.tools.retrieval import SearchDocumentsTool
 from context_engine.workbench.documents import (
     DocumentCatalog,
     UploadCandidate,
@@ -105,10 +108,11 @@ def test_uploaded_document_is_deterministic_and_labeled() -> None:
     assert first == second
     assert first.document_id.startswith("uploaded-")
     assert first.content == "A unique UTF-8 fact: øresund"
-    assert first.metadata_as_mapping() == {
-        "source_kind": "uploaded",
-        "source_name": "facts.md",
-    }
+    metadata = first.metadata_as_mapping()
+    assert metadata["source_kind"] == "uploaded"
+    assert metadata["source_name"] == "facts.md"
+    assert metadata["source_id"] == first.document_id
+    assert len(str(metadata["content_sha256"])) == 64
 
 
 @pytest.mark.parametrize(
@@ -167,3 +171,85 @@ def test_upload_limit_is_checked_before_ingestion() -> None:
         )
 
     assert store.upsert_batches == []
+
+
+def test_upload_revision_replaces_same_source_without_consuming_count_limit() -> None:
+    catalog, store = _catalog(max_files=1)
+    first = catalog.ingest_uploads((UploadCandidate("facts.md", b"# First"),))
+    revision = catalog.uploaded_documents[0].metadata_as_mapping()["content_sha256"]
+    second = catalog.ingest_uploads((UploadCandidate("facts.md", b"# Second"),))
+    assert first.document_ids == second.document_ids
+    assert len(catalog.uploaded_documents) == len(store.records) == 1
+    document = store.records[first.document_ids[0]].document
+    assert document.content == "# Second"
+    assert document.metadata_as_mapping()["content_sha256"] != revision
+    assert catalog.clear_uploads() == first.document_ids
+    assert store.records == {}
+
+
+def test_upload_bom_is_removed_by_core_processing() -> None:
+    document = construct_uploaded_document(
+        UploadCandidate("facts.TXT", b"\xef\xbb\xbfUnicode: \xc3\xb8"), UploadLimits()
+    )
+    assert document.content == "Unicode: ø"
+    assert document.metadata_as_mapping()["source_format"] == "text"
+
+
+def test_invalid_upload_batch_does_not_ingest_valid_prefix() -> None:
+    catalog, store = _catalog()
+    with pytest.raises(WorkbenchDocumentError) as exc:
+        catalog.ingest_uploads(
+            (UploadCandidate("valid.txt", b"valid"), UploadCandidate("bad.txt", b"\xff"))
+        )
+    assert isinstance(exc.value.__cause__, ValueError)
+    assert store.upsert_batches == []
+    assert catalog.uploaded_documents == ()
+
+
+def test_processed_uploads_remain_searchable_through_tool_runtime() -> None:
+    class SearchableStore(_RecordingVectorStore):
+        def search(
+            self,
+            query_embedding: Embedding,
+            *,
+            top_k: int = 5,
+            metadata_filter: MetadataFilter | None = None,
+        ) -> Sequence[SearchResult]:
+            return tuple(SearchResult(record.document, 1.0) for record in self.records.values())[
+                :top_k
+            ]
+
+    provider = _EmbeddingProvider()
+    store = SearchableStore()
+    catalog = DocumentCatalog(
+        ingestor=Ingestor(provider, store),
+        vector_store=store,
+    )
+    text = "# Meeting\n\nAccess code: COBALT-742.\n"
+    report = catalog.ingest_uploads((UploadCandidate("meeting.md", text.encode()),))
+    registry = ToolRegistry()
+    registry.register(
+        SearchDocumentsTool(
+            EmbeddingVectorStoreRetriever(
+                embedding_provider=provider,
+                vector_store=store,
+            )
+        )
+    )
+    runtime = ToolRuntime(registry)
+    result = runtime.execute(
+        ToolInvocation.from_mapping(
+            tool_name="search_documents",
+            arguments={"query": "meeting access code"},
+        )
+    )
+    assert result.status is ToolResultStatus.SUCCESS
+    output = result.output_as_mapping()
+    assert output["result_count"] == 1
+    matches = output["results"]
+    assert isinstance(matches, list)
+    match = matches[0]
+    assert isinstance(match, dict)
+    assert match["document_id"] == report.document_ids[0]
+    assert match["content"] == text
+    assert match["metadata"] == catalog.uploaded_documents[0].metadata_as_mapping()

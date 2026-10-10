@@ -1337,3 +1337,12 @@ The architecture described in this document represents the current architectural
 Implementation details may change as development progresses.
 
 Significant architectural changes should be documented separately as Architecture Decision Records (ADRs).
+
+## Implemented M5 source-processing boundary
+
+The reusable `knowledge/processing` package accepts supplied bytes and produces validated
+text, located structural blocks, provenance, and diagnostics. Applications acquire sources
+and assign stable identities. Retrieval continues to embed, upsert, and search `Document`
+values through the existing interfaces. The explicit `to_document` adapter preserves whole
+source text until chunking is implemented. Processing has no filesystem, model, or storage
+capabilities. See [ADR-006](decisions/ADR-006-knowledge-document-processing.md).
