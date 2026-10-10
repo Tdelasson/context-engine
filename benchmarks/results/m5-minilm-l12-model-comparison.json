@@ -1,0 +1,36 @@
+{
+  "environment": {
+    "cpu_count": 16,
+    "mkl_threads": "2",
+    "omp_threads": "2",
+    "packages": {
+      "pypdf": "6.20.0",
+      "sentence-transformers": "6.1.0",
+      "torch": "2.14.1+cpu",
+      "transformers": "5.19.0"
+    },
+    "platform": "Linux-7.2.9-200.fc44.x86_64-x86_64-with-glibc2.43",
+    "processor": "",
+    "python": "3.14.8"
+  },
+  "failures": [
+    {
+      "chunk_setting": "160:24",
+      "error_type": "ChunkingError",
+      "message": "Tokenizer identity and runtime limit must match the embedding configuration.",
+      "model_id": "all-minilm-l12-v2"
+    }
+  ],
+  "model": {
+    "document_prefix": "",
+    "initialization_seconds": 4.923368448000474,
+    "model_id": "all-minilm-l12-v2",
+    "model_reference": "/tmp/context-engine-orchestration/hf/models--sentence-transformers--all-MiniLM-L12-v2/snapshots/a50ef00143b4d5391434df20ae11632588ac25be",
+    "normalize_embeddings": true,
+    "parameter_bytes": 133440000,
+    "query_prefix": "",
+    "runtime_max_input_tokens": 128
+  },
+  "runs": [],
+  "schema_version": "m5-evidence-results-v1"
+}

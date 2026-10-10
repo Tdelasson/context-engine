@@ -1,0 +1,224 @@
+{
+  "dataset_id": "m5-evidence-v1",
+  "processing_version": "processing-v1",
+  "processing_limits": {
+    "max_bytes": 262144,
+    "max_text_characters": 262144,
+    "max_pages": 100
+  },
+  "sources": [
+    {
+      "source_id": "m5:operations.md",
+      "path": "operations.md",
+      "format": "markdown",
+      "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+      "processed_text_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61"
+    },
+    {
+      "source_id": "m5:indexing.txt",
+      "path": "indexing.txt",
+      "format": "text",
+      "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+      "processed_text_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14"
+    },
+    {
+      "source_id": "m5:timing.md",
+      "path": "timing.md",
+      "format": "markdown",
+      "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+      "processed_text_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41"
+    },
+    {
+      "source_id": "m5:safety.pdf",
+      "path": "safety.pdf",
+      "format": "pdf",
+      "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+      "processed_text_sha256": "8e6f254314bdff1bcecb26312db081f885f7b6bd81a002839681dbbbb4647742"
+    }
+  ],
+  "queries": [
+    {
+      "query_id": "dev-approval",
+      "split": "development",
+      "text": "Who must approve a playlist before publication?",
+      "evidence": [
+        {
+          "evidence_id": "approval",
+          "spans": [
+            {
+              "source_id": "m5:operations.md",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "start_offset": 1957,
+              "end_offset": 2028,
+              "representation": "extracted_text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "dev-identifier",
+      "split": "development",
+      "text": "What is the collection migration identifier?",
+      "evidence": [
+        {
+          "evidence_id": "identifier",
+          "spans": [
+            {
+              "source_id": "m5:indexing.txt",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "start_offset": 1590,
+              "end_offset": 1640,
+              "representation": "extracted_text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "dev-transition",
+      "split": "development",
+      "text": "When does the audio transition begin and how long is the crossfade?",
+      "evidence": [
+        {
+          "evidence_id": "transition",
+          "spans": [
+            {
+              "source_id": "m5:timing.md",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "start_offset": 1631,
+              "end_offset": 1694,
+              "representation": "extracted_text"
+            },
+            {
+              "source_id": "m5:timing.md",
+              "content_sha256": "558e9f1a48404a9715e9d999ac2cffc58882c7dbfe429c2f9988efd02f9d5b41",
+              "start_offset": 1696,
+              "end_offset": 1754,
+              "representation": "extracted_text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "dev-none",
+      "split": "development",
+      "text": "What is the WiFi password?",
+      "evidence": []
+    },
+    {
+      "query_id": "test-offline",
+      "split": "held_out",
+      "text": "What should happen if the room measurements stop arriving?",
+      "evidence": [
+        {
+          "evidence_id": "sensor",
+          "spans": [
+            {
+              "source_id": "m5:operations.md",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "start_offset": 2894,
+              "end_offset": 2983,
+              "representation": "extracted_text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "test-recovery",
+      "split": "held_out",
+      "text": "How does recovery differ before and after a replacement becomes ready?",
+      "evidence": [
+        {
+          "evidence_id": "staging",
+          "spans": [
+            {
+              "source_id": "m5:indexing.txt",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "start_offset": 2372,
+              "end_offset": 2451,
+              "representation": "extracted_text"
+            }
+          ]
+        },
+        {
+          "evidence_id": "ready",
+          "spans": [
+            {
+              "source_id": "m5:indexing.txt",
+              "content_sha256": "a28c8db75d7348e8a0ae21f061ec9e7e639ba00e28579b2fc546b0e0c50a5a14",
+              "start_offset": 2452,
+              "end_offset": 2531,
+              "representation": "extracted_text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "test-safety",
+      "split": "held_out",
+      "text": "What volume ceiling and protective device are required throughout a set?",
+      "evidence": [
+        {
+          "evidence_id": "safety",
+          "spans": [
+            {
+              "source_id": "m5:safety.pdf",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "start_offset": 0,
+              "end_offset": 43,
+              "representation": "extracted_text"
+            },
+            {
+              "source_id": "m5:safety.pdf",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "start_offset": 3227,
+              "end_offset": 3279,
+              "representation": "extracted_text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "test-compound",
+      "split": "held_out",
+      "text": "What approval is needed before publishing the playlist and what protection stays enabled throughout playback?",
+      "evidence": [
+        {
+          "evidence_id": "approval",
+          "spans": [
+            {
+              "source_id": "m5:operations.md",
+              "content_sha256": "6b8aebcb14c6b00303214a939f053e573d35b71f7635616075255209d3081c61",
+              "start_offset": 1957,
+              "end_offset": 2028,
+              "representation": "extracted_text"
+            }
+          ]
+        },
+        {
+          "evidence_id": "limiter",
+          "spans": [
+            {
+              "source_id": "m5:safety.pdf",
+              "content_sha256": "8646eaf61ba7dd4270d97958524f5963435a3086d2c365dae04644079250964d",
+              "start_offset": 3227,
+              "end_offset": 3279,
+              "representation": "extracted_text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "test-none",
+      "split": "held_out",
+      "text": "Which Spotify subscription tier does the venue use?",
+      "evidence": []
+    }
+  ]
+}
