@@ -197,3 +197,16 @@ The paired `benchmarks/benchmark_lexical_retrieval.py` runner uses the #64 evide
 corpus, identical committed chunks, the same metadata/source visibility, and
 both retrievers. It records evidence metrics, search latency, and combined indexing
 cost; fixture tests are not performance measurements.
+
+### Hybrid retrieval
+
+Set `CONTEXT_ENGINE_RETRIEVAL_STRATEGY=hybrid` to compose dense and lexical searches
+on `CONTEXT_ENGINE_LEXICAL_COLLECTION`, ingested by the same source lifecycle owner.
+The application controls `CONTEXT_ENGINE_HYBRID_DENSE_CANDIDATES` (20),
+`CONTEXT_ENGINE_HYBRID_LEXICAL_CANDIDATES` (20),
+`CONTEXT_ENGINE_HYBRID_FINAL_RESULTS` (20 maximum), and
+`CONTEXT_ENGINE_HYBRID_SMOOTHING` (60). The normal search tool still requests three
+results. Requests above the configured maximum fail explicitly. Dense and lexical
+standalone strategies remain available; dense remains the default. A failing
+branch or observed source update fails hybrid search, requiring retry/recovery.
+See ADR-013 for consistency limits and the experiment for measured trade-offs.

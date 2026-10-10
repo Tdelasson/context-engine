@@ -86,3 +86,19 @@ def test_lexical_strategy_is_application_controlled(monkeypatch: pytest.MonkeyPa
     assert settings.lexical_collection_name == "lexical-test"
     with pytest.raises(WorkbenchConfigurationError):
         WorkbenchSettings(retrieval_strategy="unsupported")
+
+
+def test_hybrid_budgets_are_environment_owned(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CONTEXT_ENGINE_RETRIEVAL_STRATEGY", "hybrid")
+    monkeypatch.setenv("CONTEXT_ENGINE_HYBRID_DENSE_CANDIDATES", "12")
+    monkeypatch.setenv("CONTEXT_ENGINE_HYBRID_LEXICAL_CANDIDATES", "18")
+    monkeypatch.setenv("CONTEXT_ENGINE_HYBRID_FINAL_RESULTS", "10")
+    settings = WorkbenchSettings.from_environment()
+    assert (
+        settings.hybrid_dense_candidates,
+        settings.hybrid_lexical_candidates,
+        settings.hybrid_final_results,
+    ) == (12, 18, 10)
+    monkeypatch.setenv("CONTEXT_ENGINE_HYBRID_SMOOTHING", "-1")
+    with pytest.raises(WorkbenchConfigurationError):
+        WorkbenchSettings.from_environment()
