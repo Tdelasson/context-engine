@@ -41,6 +41,7 @@ class RetrievedEvidence:
     metadata: tuple[tuple[str, object], ...]
     content: str
     content_truncated: bool
+    diagnostics: tuple[object, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -269,6 +270,7 @@ def _extract_evidence(tool_results: tuple[ToolResult, ...]) -> tuple[RetrievedEv
                     metadata=tuple(sorted(metadata.items())),
                     content=content,
                     content_truncated=bool(raw_result.get("content_truncated", False)),
+                    diagnostics=tuple(raw_result.get("diagnostics", [])),
                 )
             )
     return tuple(evidence)

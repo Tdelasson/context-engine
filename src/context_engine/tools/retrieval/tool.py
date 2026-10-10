@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from math import isfinite
 from typing import TypeAlias
 
@@ -105,13 +105,19 @@ class SearchDocumentsTool:
             result.document.metadata_as_mapping(),
             path=f"document[{document_id}].metadata",
         )
-        return {
+        serialized: dict[str, object] = {
             "document_id": document_id,
             "score": score,
             "content": bounded_content,
             "content_truncated": len(content) > len(bounded_content),
             "metadata": metadata,
         }
+        if result.diagnostics:
+            serialized["diagnostics"] = [
+                _normalize_json_mapping(asdict(stage), path="diagnostics")
+                for stage in result.diagnostics
+            ]
+        return serialized
 
 
 def _normalize_json_mapping(
