@@ -8,8 +8,8 @@ supplied bytes → processing → ProcessedSource → StructureAwareChunker
 ```
 
 Chunking performs no acquisition, inference, persistence, or UI operations. The
-workbench continues to ingest whole documents. Replacement, stale-chunk deletion,
-and collection migration require a separate ingestion lifecycle implementation.
+workbench now uses the [source ingestion lifecycle](source-ingestion.md) for replacement,
+stale-chunk deletion, restart recovery, and explicit collection rebuilds.
 
 ## Usage and tokenizer compatibility
 
@@ -36,8 +36,8 @@ config = ChunkingConfig(
 )
 chunks = StructureAwareChunker(config, counter).chunk(processed_source)
 documents = tuple(chunk.to_document() for chunk in chunks)
-# Explicit caller-controlled ingestion, when its lifecycle is available:
-# ingestor.ingest_documents(documents)
+# The source coordinator uses this same chunker for source lifecycle operations.
+# See source-ingestion.md for ingestion.ingest_processed(processed_source).
 ```
 
 `TokenCounter` is a protocol for exact counts, including special tokens by default.

@@ -1,16 +1,8 @@
-from collections.abc import Sequence
-
 import pytest
 
+from context_engine.knowledge.processing import SourceFormat, SourceInput
 from context_engine.retrieval import (
-    Document,
-    Embedding,
     EmbeddingVectorStoreRetriever,
-    Ingestor,
-    MetadataFilter,
-    SearchResult,
-    VectorStore,
-    VectorStoreRecord,
 )
 from context_engine.tools import ToolInvocation, ToolRegistry, ToolResultStatus, ToolRuntime
 from context_engine.tools.retrieval import SearchDocumentsTool
@@ -22,64 +14,21 @@ from context_engine.workbench.documents import (
     construct_uploaded_document,
     load_preloaded_documents,
 )
+from tests.source_index_fixtures import (
+    FixtureEmbeddingProvider,
+    MemorySourceStore,
+    coordinator,
+    fixture_chunker,
+)
 
 
-class _EmbeddingProvider:
-    model_id = "fake-embedding"
-    dimensions = 2
-
-    def embed_documents(self, documents: Sequence[Document]) -> Sequence[Embedding]:
-        return tuple(
-            Embedding.from_sequence(
-                vector=(float(index), float(len(document.content))),
-                model_id=self.model_id,
-            )
-            for index, document in enumerate(documents, start=1)
-        )
-
-    def embed_query(self, query: str) -> Embedding:
-        return Embedding.from_sequence(vector=(float(len(query)), 1.0), model_id=self.model_id)
-
-
-class _RecordingVectorStore(VectorStore):
-    def __init__(self) -> None:
-        self.records: dict[str, VectorStoreRecord] = {}
-        self.upsert_batches: list[tuple[str, ...]] = []
-        self.delete_calls: list[tuple[str, ...]] = []
-
-    def upsert(self, records: Sequence[VectorStoreRecord]) -> None:
-        self.upsert_batches.append(tuple(record.document.document_id for record in records))
-        self.records.update({record.document.document_id: record for record in records})
-
-    def search(
-        self,
-        query_embedding: Embedding,
-        *,
-        top_k: int = 5,
-        metadata_filter: MetadataFilter | None = None,
-    ) -> Sequence[SearchResult]:
-        del query_embedding, top_k, metadata_filter
-        return ()
-
-    def delete(self, document_ids: Sequence[str]) -> None:
-        normalized_ids = tuple(document_ids)
-        self.delete_calls.append(normalized_ids)
-        for document_id in normalized_ids:
-            self.records.pop(document_id, None)
-
-
-def _catalog(*, max_files: int = 5) -> tuple[DocumentCatalog, _RecordingVectorStore]:
-    store = _RecordingVectorStore()
+def _catalog(*, max_files: int = 5) -> tuple[DocumentCatalog, MemorySourceStore]:
+    store = MemorySourceStore(fixture_chunker())
     catalog = DocumentCatalog(
-        ingestor=Ingestor(embedding_provider=_EmbeddingProvider(), vector_store=store),
-        vector_store=store,
+        ingestion=coordinator(store),
         upload_limits=UploadLimits(max_files=max_files, max_bytes_per_file=64),
-        preloaded_documents=(
-            Document.from_mapping(
-                document_id="preloaded-demo",
-                content="demo",
-                metadata={"source_kind": "preloaded", "source_name": "demo.md"},
-            ),
+        preloaded_sources=(
+            SourceInput("preloaded-demo", "demo.md", b"demo", SourceFormat.MARKDOWN, "preloaded"),
         ),
     )
     return catalog, store
@@ -137,26 +86,22 @@ def test_uploaded_document_validation_rejects_invalid_input(
 
 def test_prepare_is_idempotent() -> None:
     catalog, store = _catalog()
-
+    first = catalog.prepare()
     catalog.prepare()
-    catalog.prepare()
+    assert len(store.upsert_batches) == 1
+    assert set(store.records) == set(first.outcomes[0].chunk_ids)
+    assert catalog.last_report.outcomes[0].status.value == "unchanged"
 
-    assert store.upsert_batches == [("preloaded-demo",)]
 
-
-def test_clear_uploads_deletes_only_uploaded_documents() -> None:
+def test_clear_uploads_deletes_only_uploaded_sources_after_restart() -> None:
     catalog, store = _catalog()
-    catalog.prepare()
-    uploaded_ids = catalog.ingest_uploads(
-        (UploadCandidate(name="facts.txt", content=b"meeting fact"),)
-    ).document_ids
-
-    cleared_ids = catalog.clear_uploads()
-
-    assert cleared_ids == uploaded_ids
-    assert store.delete_calls == [uploaded_ids]
-    assert "preloaded-demo" in store.records
-    assert catalog.uploaded_documents == ()
+    preloaded = catalog.prepare().outcomes[0].chunk_ids
+    report = catalog.ingest_uploads((UploadCandidate(name="facts.txt", content=b"meeting fact"),))
+    restarted = DocumentCatalog(ingestion=coordinator(store), preloaded_sources=())
+    assert restarted.uploaded_sources[0].source_id == report.source_ids[0]
+    assert restarted.clear_uploads() == report.source_ids
+    assert set(store.records) == set(preloaded)
+    assert catalog.uploaded_sources == ()
 
 
 def test_upload_limit_is_checked_before_ingestion() -> None:
@@ -176,14 +121,14 @@ def test_upload_limit_is_checked_before_ingestion() -> None:
 def test_upload_revision_replaces_same_source_without_consuming_count_limit() -> None:
     catalog, store = _catalog(max_files=1)
     first = catalog.ingest_uploads((UploadCandidate("facts.md", b"# First"),))
-    revision = catalog.uploaded_documents[0].metadata_as_mapping()["content_sha256"]
+    revision = catalog.uploaded_sources[0].content_sha256
     second = catalog.ingest_uploads((UploadCandidate("facts.md", b"# Second"),))
-    assert first.document_ids == second.document_ids
-    assert len(catalog.uploaded_documents) == len(store.records) == 1
-    document = store.records[first.document_ids[0]].document
+    assert first.source_ids == second.source_ids
+    assert len(catalog.uploaded_sources) == len(store.records) == 1
+    document = store.records[second.outcomes[0].chunk_ids[0]].document
     assert document.content == "# Second"
     assert document.metadata_as_mapping()["content_sha256"] != revision
-    assert catalog.clear_uploads() == first.document_ids
+    assert catalog.clear_uploads() == first.source_ids
     assert store.records == {}
 
 
@@ -203,44 +148,24 @@ def test_invalid_upload_batch_does_not_ingest_valid_prefix() -> None:
         )
     assert isinstance(exc.value.__cause__, ValueError)
     assert store.upsert_batches == []
-    assert catalog.uploaded_documents == ()
+    assert catalog.uploaded_sources == ()
 
 
 def test_processed_uploads_remain_searchable_through_tool_runtime() -> None:
-    class SearchableStore(_RecordingVectorStore):
-        def search(
-            self,
-            query_embedding: Embedding,
-            *,
-            top_k: int = 5,
-            metadata_filter: MetadataFilter | None = None,
-        ) -> Sequence[SearchResult]:
-            return tuple(SearchResult(record.document, 1.0) for record in self.records.values())[
-                :top_k
-            ]
-
-    provider = _EmbeddingProvider()
-    store = SearchableStore()
-    catalog = DocumentCatalog(
-        ingestor=Ingestor(provider, store),
-        vector_store=store,
-    )
+    provider = FixtureEmbeddingProvider()
+    store = MemorySourceStore(fixture_chunker())
+    catalog = DocumentCatalog(ingestion=coordinator(store, provider), preloaded_sources=())
     text = "# Meeting\n\nAccess code: COBALT-742.\n"
     report = catalog.ingest_uploads((UploadCandidate("meeting.md", text.encode()),))
     registry = ToolRegistry()
     registry.register(
         SearchDocumentsTool(
-            EmbeddingVectorStoreRetriever(
-                embedding_provider=provider,
-                vector_store=store,
-            )
+            EmbeddingVectorStoreRetriever(embedding_provider=provider, vector_store=store)
         )
     )
-    runtime = ToolRuntime(registry)
-    result = runtime.execute(
+    result = ToolRuntime(registry).execute(
         ToolInvocation.from_mapping(
-            tool_name="search_documents",
-            arguments={"query": "meeting access code"},
+            tool_name="search_documents", arguments={"query": "meeting access code"}
         )
     )
     assert result.status is ToolResultStatus.SUCCESS
@@ -250,9 +175,10 @@ def test_processed_uploads_remain_searchable_through_tool_runtime() -> None:
     assert isinstance(matches, list)
     match = matches[0]
     assert isinstance(match, dict)
-    assert match["document_id"] == report.document_ids[0]
+    assert match["document_id"] == report.outcomes[0].chunk_ids[0]
     assert match["content"] == text
-    assert match["metadata"] == catalog.uploaded_documents[0].metadata_as_mapping()
+    assert match["metadata"]["source_id"] == report.source_ids[0]
+    assert match["metadata"]["spans"]
 
 
 def test_pdf_uploads_keep_page_metadata_and_diagnostics_in_catalog() -> None:
@@ -260,14 +186,14 @@ def test_pdf_uploads_keep_page_metadata_and_diagnostics_in_catalog() -> None:
 
     catalog, store = _catalog()
     report = catalog.ingest_uploads((UploadCandidate("facts.pdf", make_pdf(("Fact", None))),))
-    document = store.records[report.document_ids[0]].document
-    assert document.metadata_as_mapping()["page_numbers"] == [1, 2]
+    document = store.records[report.outcomes[0].chunk_ids[0]].document
+    assert document.metadata_as_mapping()["page_numbers"] == [1]
     assert len(catalog.upload_diagnostics) == 2
     assert catalog.upload_diagnostics[0][0] == "facts.pdf"
     catalog.ingest_uploads((UploadCandidate("facts.pdf", make_pdf(("Updated fact",))),))
     assert not catalog.upload_diagnostics
     catalog.clear_uploads()
-    assert catalog.uploaded_documents == ()
+    assert catalog.uploaded_sources == ()
 
 
 def test_pdf_uploads_use_explicit_separate_limits() -> None:
@@ -283,3 +209,33 @@ def test_pdf_uploads_use_explicit_separate_limits() -> None:
     ]:
         with pytest.raises(WorkbenchDocumentError, match=message):
             construct_uploaded_document(candidate, limits)
+
+
+def test_source_batch_storage_failure_reports_committed_prefix_and_restart_rollback() -> None:
+    from context_engine.retrieval.source_store import SourceIndexUnavailableError
+
+    catalog, store = _catalog()
+    store.fail_on["upsert"] = 2
+    with pytest.raises(WorkbenchDocumentError, match="recover"):
+        catalog.ingest_uploads(
+            (UploadCandidate("one.txt", b"one"), UploadCandidate("two.txt", b"two"))
+        )
+    assert [outcome.status.value for outcome in catalog.last_report.outcomes] == [
+        "created",
+        "failed",
+    ]
+    with pytest.raises(SourceIndexUnavailableError):
+        catalog.uploaded_sources
+    catalog.prepare()
+    assert [source.source_name for source in catalog.uploaded_sources] == ["one.txt"]
+    assert catalog.recovery_outcomes[0].recovered
+
+
+def test_individual_upload_deletion_preserves_other_source() -> None:
+    catalog, store = _catalog()
+    report = catalog.ingest_uploads(
+        (UploadCandidate("one.txt", b"one"), UploadCandidate("two.txt", b"two"))
+    )
+    catalog.delete_upload(report.source_ids[0])
+    assert [source.source_name for source in catalog.uploaded_sources] == ["two.txt"]
+    assert catalog.last_report.outcomes[0].status.value == "deleted"

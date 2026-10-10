@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import importlib
+import json
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
-from typing import Any, Protocol
+from dataclasses import asdict, dataclass
+from hashlib import sha256
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from context_engine.retrieval.embeddings import Document, Embedding, EmbeddingProvider
+
+if TYPE_CHECKING:
+    from context_engine.knowledge.chunking import TokenCounter
 
 
 class LocalEmbeddingProviderError(Exception):
@@ -123,6 +128,34 @@ class LocalEmbeddingProvider(EmbeddingProvider):
         """Return the in-memory parameter footprint when it can be measured."""
         return self._backend.model_parameter_bytes
 
+    def build_token_counter(self) -> TokenCounter:
+        """Expose exact token accounting from the already-loaded embedding runtime."""
+        factory = getattr(self._backend, "build_token_counter", None)
+        if not callable(factory):
+            raise LocalEmbeddingProviderConfigurationError(
+                "Backend does not expose compatible exact token accounting."
+            )
+        return cast("TokenCounter", factory())
+
+    @property
+    def indexing_identity(self) -> str:
+        """Bind model/tokenizer revision and preprocessing to persisted index configuration."""
+        counter = self.build_token_counter()
+        settings = asdict(self._config)
+        settings.pop("batch_size")
+        # Acquisition path may differ after a restart; resolved weights/tokenizer own identity.
+        settings.pop("model_reference")
+        return sha256(
+            json.dumps(
+                {
+                    "settings": settings,
+                    "tokenizer": counter.tokenizer_id,
+                    "runtime_limit": counter.max_input_tokens,
+                },
+                sort_keys=True,
+            ).encode()
+        ).hexdigest()
+
     def embed_documents(self, documents: Sequence[Document]) -> tuple[Embedding, ...]:
         if not documents:
             return ()
@@ -213,6 +246,48 @@ class _SentenceTransformerEmbeddingBackend:
 
         self._model_id = config.model_id
         self._dimensions = int(dimensions)
+        self._counter: TokenCounter | None = None
+
+    def build_token_counter(self) -> TokenCounter:
+        from context_engine.knowledge.token_counting import TokenizerTokenCounter
+
+        if self._counter is not None:
+            return self._counter
+        module = self._model[0]
+        tokenizer = module.tokenizer
+        # Hash the loaded tokenizer and weights, including local models without Hub revisions.
+        # This is computed once; a mutable model name/path cannot silently reuse an old index.
+        digest = sha256(tokenizer.backend_tokenizer.to_str().encode())
+        modules = [
+            {
+                "type": f"{type(item).__module__}.{type(item).__qualname__}",
+                "config": item.get_config_dict(),
+            }
+            for item in self._model.children()
+        ]
+        digest.update(json.dumps(modules, sort_keys=True).encode())
+        model_config = module.auto_model.config.to_dict()
+        model_config.pop("_name_or_path", None)
+        model_config.pop("_commit_hash", None)
+        digest.update(json.dumps(model_config, sort_keys=True).encode())
+        for name, parameter in self._model.named_parameters():
+            digest.update(name.encode())
+            digest.update(str(parameter.dtype).encode())
+            digest.update(str(tuple(parameter.shape)).encode())
+            import torch
+
+            digest.update(
+                parameter.detach().cpu().contiguous().view(-1).view(torch.uint8).numpy().tobytes()
+            )
+        self._counter = TokenizerTokenCounter(
+            tokenizer,
+            model_id=self.model_id,
+            tokenizer_id=f"loaded-runtime-sha256:{digest.hexdigest()}",
+            max_input_tokens=int(self._model.max_seq_length),
+            strip_text=True,
+            lowercase=bool(module.do_lower_case),
+        )
+        return self._counter
 
     @property
     def model_id(self) -> str:

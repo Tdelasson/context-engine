@@ -5,9 +5,16 @@ from __future__ import annotations
 import importlib
 import uuid
 from collections.abc import Mapping, Sequence
+from dataclasses import asdict
 from typing import Any, cast
 
 from context_engine.retrieval.embeddings import Document, Embedding, normalize_document_metadata
+from context_engine.retrieval.source_store import (
+    SourceIndexPhase,
+    SourceIndexRevision,
+    SourceIndexState,
+    SourceIndexUnavailableError,
+)
 from context_engine.retrieval.vector_store import (
     MetadataFilter,
     SearchResult,
@@ -43,6 +50,81 @@ class QdrantVectorStore(VectorStore):
         )
         self._ensure_collection()
 
+    @property
+    def collection_config(self) -> VectorStoreCollectionConfig:
+        return self._config
+
+    def list_source_states(self) -> tuple[SourceIndexState, ...]:
+        if self._config.index_version != "m5-chunks-v1":
+            raise VectorStoreCompatibilityError("Source lifecycle requires an M5 collection.")
+        states: list[SourceIndexState] = []
+        offset = None
+        while True:
+            points, offset = self._client.scroll(
+                collection_name=self._config.collection_name,
+                scroll_filter=self._qdrant_models.Filter(
+                    must=[
+                        self._qdrant_models.FieldCondition(
+                            key="_ce_record_kind",
+                            match=self._qdrant_models.MatchValue(value="source_state"),
+                        )
+                    ]
+                ),
+                offset=offset,
+                limit=128,
+                with_payload=True,
+                with_vectors=False,
+            )
+            for point in points:
+                state = _decode_source_state(point.payload)
+                for revision in (state.active, state.target):
+                    if (
+                        revision is not None
+                        and revision.configuration_id != self._config.index_configuration_id
+                    ):
+                        raise VectorStoreCompatibilityError(
+                            "Persisted source configuration mismatch; explicit repair required."
+                        )
+                states.append(state)
+            if offset is None:
+                return tuple(sorted(states, key=lambda state: state.source_id))
+
+    def save_source_state(self, state: SourceIndexState) -> None:
+        if self._config.index_version != "m5-chunks-v1":
+            raise VectorStoreCompatibilityError("Source lifecycle requires an M5 collection.")
+        for revision in (state.active, state.target):
+            if (
+                revision is not None
+                and revision.configuration_id != self._config.index_configuration_id
+            ):
+                raise VectorStoreCompatibilityError(
+                    "Source indexing identity mismatch; rebuild required."
+                )
+        self._client.upsert(
+            collection_name=self._config.collection_name,
+            points=[
+                self._qdrant_models.PointStruct(
+                    id=str(
+                        uuid.uuid5(
+                            uuid.NAMESPACE_URL,
+                            f"context-engine:source-state:{self._config.collection_name}:{state.source_id}",
+                        )
+                    ),
+                    vector=[0.0] * self._config.dimensions,
+                    payload={"_ce_record_kind": "source_state", "state": asdict(state)},
+                )
+            ],
+            wait=True,
+        )
+
+    def _search_snapshot(self) -> tuple[SourceIndexState, ...]:
+        if self._config.index_version != "m5-chunks-v1":
+            return ()
+        states = self.list_source_states()
+        if any(state.phase is not SourceIndexPhase.ACTIVE for state in states):
+            raise SourceIndexUnavailableError("Source index has pending operations; run recovery.")
+        return states
+
     def upsert(self, records: Sequence[VectorStoreRecord]) -> None:
         if not records:
             return
@@ -50,6 +132,15 @@ class QdrantVectorStore(VectorStore):
         points: list[Any] = []
         for record in records:
             self._config.ensure_embedding_compatible(record.embedding)
+            metadata = record.document.metadata_as_mapping()
+            if self._config.index_version == "m5-chunks-v1" and (
+                metadata.get("index_configuration_id") != self._config.index_configuration_id
+                or not metadata.get("source_id")
+                or not metadata.get("chunk_configuration_id")
+            ):
+                raise VectorStoreCompatibilityError(
+                    "M5 requires compatible chunk records; rebuild required."
+                )
             points.append(
                 self._qdrant_models.PointStruct(
                     id=_qdrant_point_id_for_document_id(
@@ -58,6 +149,9 @@ class QdrantVectorStore(VectorStore):
                     ),
                     vector=list(record.embedding.vector),
                     payload={
+                        "_ce_record_kind": "chunk"
+                        if self._config.index_version == "m5-chunks-v1"
+                        else "document",
                         "document_id": record.document.document_id,
                         "content": record.document.content,
                         "metadata": record.document.metadata_as_mapping(),
@@ -84,6 +178,7 @@ class QdrantVectorStore(VectorStore):
             raise VectorStoreConfigurationError("top_k must be greater than zero.")
 
         self._config.ensure_embedding_compatible(query_embedding)
+        snapshot = self._search_snapshot()
         query_filter = self._build_qdrant_filter(metadata_filter)
 
         response = self._client.query_points(
@@ -94,6 +189,8 @@ class QdrantVectorStore(VectorStore):
             with_payload=True,
             with_vectors=False,
         )
+        if snapshot != self._search_snapshot():
+            raise SourceIndexUnavailableError("Source index changed during search; retry.")
         return tuple(self._build_search_result(point) for point in response.points)
 
     def delete(self, document_ids: Sequence[str]) -> None:
@@ -162,6 +259,15 @@ class QdrantVectorStore(VectorStore):
                 f"expected '{self._config.embedding_model_id}' but found "
                 f"'{config_embedding_model_id}'."
             )
+        payload = _extract_collection_metadata(collection).get(_COLLECTION_METADATA_KEY)
+        assert isinstance(payload, Mapping)
+        if (
+            payload.get("index_version", "m4-documents-v1") != self._config.index_version
+            or payload.get("index_configuration_id") != self._config.index_configuration_id
+        ):
+            raise VectorStoreCompatibilityError(
+                "Collection indexing configuration mismatch; select a new collection and rebuild."
+            )
 
     def _extract_vector_params(self, vectors_config: Any) -> Any | None:
         if hasattr(vectors_config, "size") and hasattr(vectors_config, "distance"):
@@ -188,6 +294,12 @@ class QdrantVectorStore(VectorStore):
                         match=self._qdrant_models.MatchValue(value=metadata_value),
                     )
                 )
+        if self._config.index_version == "m5-chunks-v1":
+            must_conditions.append(
+                self._qdrant_models.FieldCondition(
+                    key="_ce_record_kind", match=self._qdrant_models.MatchValue(value="chunk")
+                )
+            )
         return self._qdrant_models.Filter(must=must_conditions)
 
     def _read_collection_embedding_model_id(self) -> str | None:
@@ -205,6 +317,8 @@ class QdrantVectorStore(VectorStore):
             _COLLECTION_METADATA_KEY: {
                 "embedding_model_id": self._config.embedding_model_id,
                 "embedding_dimensions": self._config.dimensions,
+                "index_version": self._config.index_version,
+                "index_configuration_id": self._config.index_configuration_id,
             }
         }
 
@@ -274,3 +388,33 @@ def _extract_collection_metadata(collection: Any) -> Mapping[str, object]:
     if isinstance(metadata, Mapping):
         return cast(Mapping[str, object], metadata)
     return {}
+
+
+def _decode_source_state(payload: Any) -> SourceIndexState:
+    try:
+        raw = payload["state"]
+
+        def revision(value: Any) -> SourceIndexRevision | None:
+            if value is None:
+                return None
+            return SourceIndexRevision(
+                source_id=value["source_id"],
+                source_name=value["source_name"],
+                source_kind=value["source_kind"],
+                content_sha256=value["content_sha256"],
+                configuration_id=value["configuration_id"],
+                chunk_ids=tuple(value["chunk_ids"]),
+                metadata=tuple((key, item) for key, item in value["metadata"]),
+            )
+
+        return SourceIndexState(
+            source_id=raw["source_id"],
+            operation_id=raw["operation_id"],
+            phase=SourceIndexPhase(raw["phase"]),
+            active=revision(raw["active"]),
+            target=revision(raw["target"]),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise VectorStoreCompatibilityError(
+            "Malformed source lifecycle state; explicit repair required."
+        ) from exc

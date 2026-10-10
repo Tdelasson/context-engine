@@ -3,21 +3,13 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
+from context_engine.knowledge.processing import SourceFormat, SourceInput
 from context_engine.models import (
     ModelFinishReason,
     ModelGatewayExecutionError,
     ModelRequest,
     ModelResponse,
     ModelToolCall,
-)
-from context_engine.retrieval import (
-    Document,
-    Embedding,
-    Ingestor,
-    MetadataFilter,
-    SearchResult,
-    VectorStore,
-    VectorStoreRecord,
 )
 from context_engine.tools import (
     ToolInputField,
@@ -33,6 +25,7 @@ from context_engine.workbench.application import (
 from context_engine.workbench.config import WorkbenchSettings
 from context_engine.workbench.documents import DocumentCatalog
 from context_engine.workbench.presentation import WorkbenchRunStatus
+from tests.source_index_fixtures import MemorySourceStore, coordinator, fixture_chunker
 
 
 class _Gateway:
@@ -59,38 +52,6 @@ class _MalformedProposalGateway:
             output_text="malformed",
             finish_reason=cast(ModelFinishReason, "malformed"),
         )
-
-
-class _NoOpEmbeddingProvider:
-    model_id = "fake"
-    dimensions = 2
-
-    def embed_documents(self, documents: Sequence[Document]) -> Sequence[Embedding]:
-        return tuple(
-            Embedding.from_sequence(vector=(1.0, 0.0), model_id=self.model_id) for _ in documents
-        )
-
-    def embed_query(self, query: str) -> Embedding:
-        del query
-        return Embedding.from_sequence(vector=(1.0, 0.0), model_id=self.model_id)
-
-
-class _NoOpVectorStore(VectorStore):
-    def upsert(self, records: Sequence[VectorStoreRecord]) -> None:
-        del records
-
-    def search(
-        self,
-        query_embedding: Embedding,
-        *,
-        top_k: int = 5,
-        metadata_filter: MetadataFilter | None = None,
-    ) -> Sequence[SearchResult]:
-        del query_embedding, top_k, metadata_filter
-        return ()
-
-    def delete(self, document_ids: Sequence[str]) -> None:
-        del document_ids
 
 
 class _SearchFixtureTool:
@@ -124,7 +85,7 @@ class _FailingSearchTool(_SearchFixtureTool):
 
 
 def _application(*, gateway: object, search_tool: object | None = None) -> WorkbenchApplication:
-    store = _NoOpVectorStore()
+    store = MemorySourceStore(fixture_chunker())
     registry = ToolRegistry()
     registry.register(Calculator())
     if search_tool is not None:
@@ -132,12 +93,10 @@ def _application(*, gateway: object, search_tool: object | None = None) -> Workb
     return WorkbenchApplication(
         settings=WorkbenchSettings(),
         document_catalog=DocumentCatalog(
-            ingestor=Ingestor(
-                embedding_provider=_NoOpEmbeddingProvider(),
-                vector_store=store,
+            ingestion=coordinator(store),
+            preloaded_sources=(
+                SourceInput("preloaded", "demo.txt", b"demo", SourceFormat.TEXT, "preloaded"),
             ),
-            vector_store=store,
-            preloaded_documents=(Document(document_id="preloaded", content="demo"),),
         ),
         model_gateway=gateway,  # type: ignore[arg-type]
         tool_registry=registry,

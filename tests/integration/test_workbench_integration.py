@@ -39,7 +39,9 @@ def test_live_workbench_search_upload_calculation_and_cleanup() -> None:
             "Search the uploaded documents: what is the meeting access code?"
         )
         assert uploaded.status is WorkbenchRunStatus.SUCCESS, uploaded.error_message
-        assert any(item.document_id in uploaded_ids for item in uploaded.evidence)
+        assert any(
+            dict(item.metadata).get("source_id") in uploaded_ids for item in uploaded.evidence
+        )
         assert uploaded.final_response and "COBALT-742" in uploaded.final_response.upper()
 
         calculation = application.run_prompt(PROMPT_PRESETS["Calculator"])
@@ -50,7 +52,7 @@ def test_live_workbench_search_upload_calculation_and_cleanup() -> None:
             for result in calculation.tool_results
         )
         assert application.clear_uploads() == uploaded_ids
-        assert not application.documents.uploaded_documents
+        assert not application.documents.uploaded_sources
         after_cleanup = application.run_prompt(PROMPT_PRESETS["Project architecture"])
         assert after_cleanup.status is WorkbenchRunStatus.SUCCESS, after_cleanup.error_message
         assert after_cleanup.evidence

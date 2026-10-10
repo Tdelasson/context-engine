@@ -176,3 +176,41 @@ def test_pdf_evidence_page_references_render(monkeypatch: pytest.MonkeyPatch) ->
     assert not app.exception
     assert any("Source pages · [2]" in caption.value for caption in app.caption)
     assert "facts.pdf" in app.expander[0].label
+
+
+def test_individual_source_delete_updates_real_widgets(monkeypatch: pytest.MonkeyPatch) -> None:
+    from context_engine.workbench.documents import UploadCandidate
+
+    application = _application(gateway=_Gateway(()))
+    application.ingest_uploads((UploadCandidate("facts.txt", b"A fact"),))
+    monkeypatch.setattr(streamlit_app, "build_live_workbench", lambda: application)
+    app = _app()
+    assert any("Uploaded · facts.txt" in item.value for item in app.caption)
+    _click(app, "Delete facts.txt")
+    assert not app.exception
+    assert not application.documents.uploaded_sources
+    assert application.documents.preloaded_sources
+    assert not any("Uploaded · facts.txt" in item.value for item in app.caption)
+
+
+def test_pending_source_index_can_be_recovered_from_real_widgets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from context_engine.workbench.documents import UploadCandidate, WorkbenchDocumentError
+    from tests.source_index_fixtures import MemorySourceStore
+
+    application = _application(gateway=_Gateway(()))
+    monkeypatch.setattr(streamlit_app, "build_live_workbench", lambda: application)
+    app = _app()
+    store = application.documents._ingestion._store
+    assert isinstance(store, MemorySourceStore)
+    store.fail_on["upsert"] = 1
+    with pytest.raises(WorkbenchDocumentError):
+        application.ingest_uploads((UploadCandidate("broken.txt", b"A fact"),))
+    app.run()
+    assert not app.exception
+    assert any("Source index unavailable" in item.value for item in app.error)
+    _click(app, "Recover source index")
+    assert not app.exception
+    assert not application.documents.uploaded_sources
+    assert any("rolled back" in item.value for item in app.warning)

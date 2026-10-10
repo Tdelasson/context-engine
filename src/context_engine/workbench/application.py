@@ -5,10 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from context_engine.agent import AgentRuntime
+from context_engine.knowledge.chunking import ChunkingConfig, StructureAwareChunker
+from context_engine.knowledge.ingestion import (
+    INDEX_VERSION,
+    SourceIngestionCoordinator,
+    indexing_configuration_id,
+)
 from context_engine.models import ModelGateway, OllamaModelGateway
 from context_engine.retrieval import (
     EmbeddingVectorStoreRetriever,
-    Ingestor,
     LocalEmbeddingProvider,
     LocalEmbeddingProviderConfig,
     QdrantVectorStore,
@@ -74,8 +79,8 @@ class WorkbenchApplication:
         self.documents.prepare()
 
     def ingest_uploads(self, candidates: tuple[UploadCandidate, ...]) -> tuple[str, ...]:
-        """Ingest validated uploads through the existing Document/Ingestor path."""
-        return self.documents.ingest_uploads(candidates).document_ids
+        """Ingest source revisions and return stable source IDs, not passage IDs."""
+        return self.documents.ingest_uploads(candidates).source_ids
 
     def clear_uploads(self) -> tuple[str, ...]:
         """Clear only uploads tracked by this workbench."""
@@ -127,6 +132,15 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
                 normalize_embeddings=True,
             )
         )
+        chunker = StructureAwareChunker(
+            ChunkingConfig(
+                model_id=embedding_provider.model_id,
+                max_input_tokens=active_settings.chunk_max_input_tokens,
+                overlap_tokens=active_settings.chunk_overlap_tokens,
+            ),
+            embedding_provider.build_token_counter(),
+        )
+        embedding_identity = embedding_provider.indexing_identity
     except Exception as exc:
         raise WorkbenchDependencyError("embedding", f"{type(exc).__name__}: {exc}") from exc
     try:
@@ -135,6 +149,10 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
                 collection_name=active_settings.collection_name,
                 embedding_model_id=embedding_provider.model_id,
                 dimensions=embedding_provider.dimensions,
+                index_version=INDEX_VERSION,
+                index_configuration_id=indexing_configuration_id(
+                    chunker, embedding_identity=embedding_identity
+                ),
             ),
             url=active_settings.qdrant_url,
             timeout_seconds=active_settings.qdrant_timeout_seconds,
@@ -142,7 +160,12 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
     except Exception as exc:
         raise WorkbenchDependencyError("vector_store", f"{type(exc).__name__}: {exc}") from exc
 
-    ingestor = Ingestor(embedding_provider=embedding_provider, vector_store=vector_store)
+    ingestion = SourceIngestionCoordinator(
+        chunker=chunker,
+        embedding_provider=embedding_provider,
+        vector_store=vector_store,
+        embedding_identity=embedding_identity,
+    )
     retriever = EmbeddingVectorStoreRetriever(
         embedding_provider=embedding_provider,
         vector_store=vector_store,
@@ -151,8 +174,7 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
     registry.register(Calculator())
     registry.register(SearchDocumentsTool(retriever))
     catalog = DocumentCatalog(
-        ingestor=ingestor,
-        vector_store=vector_store,
+        ingestion=ingestion,
         upload_limits=UploadLimits(
             max_files=active_settings.max_uploads,
             max_bytes_per_file=active_settings.max_upload_bytes,

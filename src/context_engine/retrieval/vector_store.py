@@ -65,6 +65,8 @@ class VectorStoreCollectionConfig:
     embedding_model_id: str
     dimensions: int
     distance_metric: VectorDistanceMetric = VectorDistanceMetric.COSINE
+    index_version: str = "m4-documents-v1"
+    index_configuration_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.collection_name:
@@ -73,6 +75,10 @@ class VectorStoreCollectionConfig:
             raise VectorStoreConfigurationError("embedding_model_id must be a non-empty string.")
         if self.dimensions <= 0:
             raise VectorStoreConfigurationError("dimensions must be greater than zero.")
+        if self.index_version not in {"m4-documents-v1", "m5-chunks-v1"}:
+            raise VectorStoreConfigurationError("Unsupported index version.")
+        if self.index_version == "m5-chunks-v1" and not self.index_configuration_id:
+            raise VectorStoreConfigurationError("M5 requires an effective indexing identity.")
 
     def ensure_embedding_compatible(self, embedding: Embedding) -> None:
         """Raise when the embedding does not match the collection configuration."""

@@ -13,8 +13,8 @@
 5. Launch the workbench and wait for preloaded-document ingestion to finish.
 
 Initial embedding-model setup can require a download; subsequent inference runs locally.
-The current workbench catalog embeds whole documents. Reusable M5 chunking is available
-through explicit application composition; automatic chunk indexing is a later lifecycle task.
+The workbench indexes exact-token chunks and persists source lifecycle state in Qdrant.
+See [source ingestion](../api/source-ingestion.md) for replacement, recovery, and rebuild semantics.
 
 ## Run locally
 
@@ -30,8 +30,9 @@ The default configuration uses:
 
 - Ollama: `http://localhost:11434`
 - Qdrant: `http://localhost:6333`
-- collection: `context-engine-workbench`
+- collection: `context-engine-workbench-m5-v1`
 - embedding model: `sentence-transformers/all-MiniLM-L6-v2`
+- chunk budget: 128 tokens including heading context/special tokens; overlap: up to 16 tokens
 - five uploads maximum across `.txt`, `.md`, and `.pdf`
 - text/Markdown: 256 KiB per file
 - PDF: 10 MiB per file, 100 pages, 1048576 extracted characters
@@ -46,6 +47,8 @@ Optional environment variables:
 - `CONTEXT_ENGINE_QDRANT_URL`
 - `CONTEXT_ENGINE_QDRANT_TIMEOUT_SECONDS`
 - `CONTEXT_ENGINE_WORKBENCH_COLLECTION`
+- `CONTEXT_ENGINE_WORKBENCH_CHUNK_TOKENS`
+- `CONTEXT_ENGINE_WORKBENCH_CHUNK_OVERLAP_TOKENS`
 - `CONTEXT_ENGINE_WORKBENCH_MAX_UPLOADS`
 - `CONTEXT_ENGINE_WORKBENCH_MAX_UPLOAD_BYTES`
 - `CONTEXT_ENGINE_WORKBENCH_MAX_PDF_BYTES`
@@ -66,9 +69,11 @@ remain owned by the Tool Runtime. Model decisions and latency can vary.
 The UI displays the final response, execution lifecycle, retrieved evidence, structured tool results,
 and traces. Evidence identifies its document, source, metadata, score, and any content truncation.
 Uploads are validated before ingestion and labeled separately from preloaded project documents.
-Clearing uploads removes only documents tracked as uploaded by the current session.
+The source list shows chunk counts and ingestion outcomes. Same-name uploads replace their
+previous chunks; individual delete and clear actions remove all chunks for the persisted
+uploaded sources, including after restart. Preloaded sources remain indexed.
 
-Automatic chunk indexing, context assembly, hybrid retrieval, and reranking remain M5/M6 work.
+Context assembly, hybrid retrieval, and reranking remain future work.
 
 ## Verification
 
@@ -118,8 +123,10 @@ The existing search-tool integration and deterministic Streamlit widget tests al
 | Iteration limit | Use a shorter, specific request and inspect repeated tool proposals; no successful final run is claimed. |
 
 Dependency labels distinguish a configured model from initialized embeddings/vector storage.
-They are not continuous health monitoring. Uploaded-document tracking and displayed runs belong to
-the browser session; Qdrant records persist independently. Clear uploads before closing the session.
+They are not continuous health monitoring. Displayed runs belong to the browser session;
+source tracking and index lifecycle state persist in Qdrant. Startup explicitly recovers
+interrupted writes. A pending index blocks search; use Recover source index or reload.
+Run one writer process per collection. No cross-process transaction or atomic visibility is claimed.
 
 
 ## Reusable source processing
@@ -130,17 +137,20 @@ processing failures into UI errors. The core validates byte and extracted-charac
 limits, UTF-8 or PDF format, and nonempty extracted content. Text/Markdown uploads use the configured
 per-file byte limit as both the byte and character cap. PDF uploads have separate byte,
 page, and extracted-character limits. Markdown syntax and whitespace remain intact; a leading
-UTF-8 BOM is removed. Each source still becomes one complete retrieval document.
+UTF-8 BOM is removed. Each processed source is split into budget-checked retrieval chunks.
 
 Within the upload catalog, a filename identifies a logical source. Uploading revised
 content under the same name updates that record and does not consume another upload
 slot. SHA-256 revision metadata is separate from source identity. Different filenames
-remain distinct sources. Preloaded IDs stay unchanged. Older persisted content-derived
-upload IDs are not migrated; clear uploads in old sessions before upgrading.
+remain distinct sources. Upload filenames are identities within a collection-wide namespace.
+Preloaded IDs use full package filenames, including extensions. M4 collections are retained;
+use the new M5 default or a new collection for rebuilding and explicitly reupload original files.
 
 See [ADR-006](../architecture/decisions/ADR-006-knowledge-document-processing.md) for block
-location semantics and the knowledge/retrieval boundary. Source replacement/deletion,
-index migration, and automatic chunk indexing are separate M5 tasks.
+location semantics and the knowledge/retrieval boundary. See
+[ADR-009](../architecture/decisions/ADR-009-source-index-lifecycle.md) for durable lifecycle state
+and the [rebuild instructions](../api/source-ingestion.md#migration-and-rebuild).
+The 128/16 token settings are operational defaults, not benchmark-selected quality settings.
 
 ## PDF extraction and diagnostics
 

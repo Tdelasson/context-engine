@@ -8,6 +8,12 @@ from hashlib import sha256
 from importlib import resources
 from pathlib import PurePath
 
+from context_engine.knowledge.ingestion import (
+    IngestionOutcome,
+    IngestionStatus,
+    SourceIngestionCoordinator,
+    source_diagnostics,
+)
 from context_engine.knowledge.processing import (
     ProcessedSource,
     ProcessingDiagnostic,
@@ -18,7 +24,8 @@ from context_engine.knowledge.processing import (
     process_source,
     to_document,
 )
-from context_engine.retrieval import Document, Ingestor, VectorStore
+from context_engine.retrieval import Document
+from context_engine.retrieval.source_store import SourceIndexRevision
 
 _DEMO_PACKAGE = "context_engine.workbench.demo_documents"
 _SUPPORTED_SUFFIXES = frozenset({".md", ".txt", ".pdf"})
@@ -62,41 +69,58 @@ class UploadCandidate:
 
 @dataclass(frozen=True, slots=True)
 class IngestionReport:
-    """Structured result for one document-ingestion operation."""
+    """Source-level outcomes; retrieved document IDs refer to chunks."""
 
-    document_ids: tuple[str, ...]
+    source_ids: tuple[str, ...]
     source_names: tuple[str, ...]
+    outcomes: tuple[IngestionOutcome, ...]
+
+    @property
+    def chunk_count(self) -> int:
+        return sum(outcome.chunk_count for outcome in self.outcomes)
+
+
+def load_preloaded_sources() -> tuple[SourceInput, ...]:
+    package_root = resources.files(_DEMO_PACKAGE)
+    sources = tuple(
+        SourceInput(
+            source_id=f"preloaded-{sha256(entry.name.encode()).hexdigest()}",
+            source_name=entry.name,
+            source_kind="preloaded",
+            content=entry.read_bytes(),
+            format=_format_for(entry.name),
+        )
+        for entry in sorted(package_root.iterdir(), key=lambda item: item.name)
+        if entry.is_file() and PurePath(entry.name).suffix.lower() in _SUPPORTED_SUFFIXES
+    )
+
+    if not sources:
+        raise WorkbenchDocumentError("No preloaded workbench project sources were found.")
+    return sources
+
+
+def _format_for(name: str) -> SourceFormat:
+    suffix = PurePath(name).suffix.lower()
+    return (
+        SourceFormat.PDF
+        if suffix == ".pdf"
+        else SourceFormat.MARKDOWN
+        if suffix == ".md"
+        else SourceFormat.TEXT
+    )
 
 
 def load_preloaded_documents() -> tuple[Document, ...]:
     """Load the version-controlled project corpus as deterministic M4 documents."""
-    package_root = resources.files(_DEMO_PACKAGE)
-    documents: list[Document] = []
-    for entry in sorted(package_root.iterdir(), key=lambda item: item.name):
-        if not entry.is_file() or PurePath(entry.name).suffix.lower() not in _SUPPORTED_SUFFIXES:
-            continue
-        try:
-            processed = process_source(
-                SourceInput(
-                    source_id=f"preloaded-{PurePath(entry.name).stem}",
-                    source_name=entry.name,
-                    source_kind="preloaded",
-                    content=entry.read_bytes(),
-                    format=(
-                        SourceFormat.PDF
-                        if entry.name.endswith(".pdf")
-                        else SourceFormat.MARKDOWN
-                        if entry.name.endswith(".md")
-                        else SourceFormat.TEXT
-                    ),
-                )
-            )
-        except ProcessingError as exc:
-            raise WorkbenchDocumentError(str(exc)) from exc
-        documents.append(to_document(processed))
+    try:
+        documents = tuple(
+            to_document(process_source(source)) for source in load_preloaded_sources()
+        )
+    except ProcessingError as exc:
+        raise WorkbenchDocumentError(str(exc)) from exc
     if not documents:
         raise WorkbenchDocumentError("No preloaded workbench project documents were found.")
-    return tuple(documents)
+    return documents
 
 
 def process_uploaded_source(candidate: UploadCandidate, limits: UploadLimits) -> ProcessedSource:
@@ -149,80 +173,118 @@ def construct_uploaded_document(candidate: UploadCandidate, limits: UploadLimits
 
 
 class DocumentCatalog:
-    """Own workbench-specific ingestion state without leaking storage details to the UI."""
+    """Manage indexed sources through the durable ingestion coordinator."""
 
     def __init__(
         self,
         *,
-        ingestor: Ingestor,
-        vector_store: VectorStore,
+        ingestion: SourceIngestionCoordinator,
         upload_limits: UploadLimits | None = None,
-        preloaded_documents: Sequence[Document] | None = None,
+        preloaded_sources: Sequence[SourceInput] | None = None,
     ) -> None:
-        self._ingestor = ingestor
-        self._vector_store = vector_store
+        self._ingestion = ingestion
         self._upload_limits = upload_limits or UploadLimits()
-        self._preloaded_documents = tuple(preloaded_documents or load_preloaded_documents())
-        self._uploaded_documents: dict[str, Document] = {}
-        self._prepared = False
-        self._upload_diagnostics: dict[str, tuple[ProcessingDiagnostic, ...]] = {}
+        self._preloaded = tuple(
+            load_preloaded_sources() if preloaded_sources is None else preloaded_sources
+        )
+        self.last_report = IngestionReport((), (), ())
+        self.recovery_outcomes: tuple[IngestionOutcome, ...] = ()
 
     @property
-    def preloaded_documents(self) -> tuple[Document, ...]:
-        return self._preloaded_documents
+    def preloaded_sources(self) -> tuple[SourceIndexRevision, ...]:
+        return tuple(
+            source for source in self._ingestion.list_sources() if source.source_kind == "preloaded"
+        )
 
     @property
-    def uploaded_documents(self) -> tuple[Document, ...]:
-        return tuple(self._uploaded_documents[key] for key in sorted(self._uploaded_documents))
+    def uploaded_sources(self) -> tuple[SourceIndexRevision, ...]:
+        return tuple(
+            source for source in self._ingestion.list_sources() if source.source_kind == "uploaded"
+        )
 
     @property
     def upload_diagnostics(self) -> tuple[tuple[str, ProcessingDiagnostic], ...]:
         return tuple(
-            (name, diagnostic)
-            for name in sorted(self._upload_diagnostics)
-            for diagnostic in self._upload_diagnostics[name]
+            (source.source_name, diagnostic)
+            for source in self.uploaded_sources
+            for diagnostic in source_diagnostics(source)
         )
 
     def prepare(self) -> IngestionReport:
-        """Ingest the preloaded corpus once per application composition."""
-        if not self._prepared:
-            self._ingestor.ingest_documents(self._preloaded_documents)
-            self._prepared = True
-        return _report_for(self._preloaded_documents)
+        self.recovery_outcomes = self._ingestion.recover()
+        self._ensure_success(
+            tuple(item for item in self.recovery_outcomes if item.requires_recovery)
+        )
+        outcomes = tuple(self._ingestion.ingest(source) for source in self._preloaded)
+        self.last_report = IngestionReport(
+            tuple(source.source_id for source in self._preloaded),
+            tuple(source.source_name for source in self._preloaded),
+            outcomes,
+        )
+        self._ensure_success(outcomes)
+        return self.last_report
 
     def ingest_uploads(self, candidates: Sequence[UploadCandidate]) -> IngestionReport:
-        """Validate a batch before ingesting it and track only successfully ingested uploads."""
+        # Validate every file before committing any member of the batch. Each source
+        # has its own transaction; storage failures can leave earlier sources committed.
         processed = tuple(
             process_uploaded_source(candidate, self._upload_limits) for candidate in candidates
         )
-        documents = tuple(to_document(source) for source in processed)
-        distinct_documents = {document.document_id: document for document in documents}
-        projected_ids = set(self._uploaded_documents) | set(distinct_documents)
-        if len(projected_ids) > self._upload_limits.max_files:
+        distinct = {source.provenance.source_id: source for source in processed}
+        if len(distinct) != len(processed):
+            raise WorkbenchDocumentError("Select each upload filename only once per batch.")
+        projected = {source.source_id for source in self.uploaded_sources} | set(distinct)
+        if len(projected) > self._upload_limits.max_files:
             raise WorkbenchDocumentError(
                 f"At most {self._upload_limits.max_files} uploaded documents are allowed."
             )
-        self._ingestor.ingest_documents(tuple(distinct_documents.values()))
-        self._uploaded_documents.update(distinct_documents)
-        self._upload_diagnostics.update(
-            {source.provenance.source_name: source.diagnostics for source in processed}
+        outcomes = []
+        for source in distinct.values():
+            outcome = self._ingestion.ingest_processed(source)
+            outcomes.append(outcome)
+            if outcome.status is IngestionStatus.FAILED:
+                break
+        attempted = tuple(distinct[item.source_id] for item in outcomes)
+        self.last_report = IngestionReport(
+            tuple(source.provenance.source_id for source in attempted),
+            tuple(source.provenance.source_name for source in attempted),
+            tuple(outcomes),
         )
-        return _report_for(tuple(distinct_documents.values()))
+        self._ensure_success(tuple(outcomes))
+        return self.last_report
+
+    def delete_upload(self, source_id: str) -> IngestionOutcome:
+        source = next((item for item in self.uploaded_sources if item.source_id == source_id), None)
+        if source is None:
+            raise WorkbenchDocumentError("Only an indexed uploaded source can be deleted here.")
+        outcome = self._ingestion.delete_source(source_id)
+        self.last_report = IngestionReport((source_id,), (source.source_name,), (outcome,))
+        self._ensure_success((outcome,))
+        return outcome
 
     def clear_uploads(self) -> tuple[str, ...]:
-        """Delete uploaded records while preserving every preloaded project record."""
-        uploaded_ids = tuple(sorted(self._uploaded_documents))
-        self._vector_store.delete(uploaded_ids)
-        self._uploaded_documents.clear()
-        self._upload_diagnostics.clear()
-        return uploaded_ids
+        sources = self.uploaded_sources
+        outcomes = []
+        for source in sources:
+            outcome = self._ingestion.delete_source(source.source_id)
+            outcomes.append(outcome)
+            if outcome.status is IngestionStatus.FAILED:
+                break
+        self.last_report = IngestionReport(
+            tuple(item.source_id for item in outcomes),
+            tuple(source.source_name for source in sources[: len(outcomes)]),
+            tuple(outcomes),
+        )
+        self._ensure_success(tuple(outcomes))
+        return tuple(item.source_id for item in outcomes)
 
-
-def _report_for(documents: Sequence[Document]) -> IngestionReport:
-    return IngestionReport(
-        document_ids=tuple(document.document_id for document in documents),
-        source_names=tuple(
-            str(document.metadata_as_mapping().get("source_name", document.document_id))
-            for document in documents
-        ),
-    )
+    @staticmethod
+    def _ensure_success(outcomes: tuple[IngestionOutcome, ...]) -> None:
+        failed = next((item for item in outcomes if item.status is IngestionStatus.FAILED), None)
+        if failed is not None:
+            suffix = (
+                " Restart/recover the index before searching or retrying."
+                if failed.requires_recovery
+                else ""
+            )
+            raise WorkbenchDocumentError(f"{failed.error_phase}: {failed.error_message}.{suffix}")

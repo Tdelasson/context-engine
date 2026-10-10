@@ -35,6 +35,13 @@ from context_engine.retrieval.retriever import (
     RetrieverConfigurationError,
     RetrieverError,
 )
+from context_engine.retrieval.source_store import (
+    SourceIndexPhase,
+    SourceIndexRevision,
+    SourceIndexState,
+    SourceIndexUnavailableError,
+    SourceLifecycleStore,
+)
 from context_engine.retrieval.vector_store import (
     MetadataFilter,
     SearchResult,
@@ -48,6 +55,11 @@ from context_engine.retrieval.vector_store import (
 )
 
 __all__ = [
+    "SourceIndexPhase",
+    "SourceIndexRevision",
+    "SourceIndexState",
+    "SourceIndexUnavailableError",
+    "SourceLifecycleStore",
     "Document",
     "Embedding",
     "EmbeddingProvider",
