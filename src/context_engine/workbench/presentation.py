@@ -270,7 +270,13 @@ def _extract_evidence(tool_results: tuple[ToolResult, ...]) -> tuple[RetrievedEv
                     metadata=tuple(sorted(metadata.items())),
                     content=content,
                     content_truncated=bool(raw_result.get("content_truncated", False)),
-                    diagnostics=tuple(raw_result.get("diagnostics", [])),
+                    diagnostics=_diagnostics(raw_result.get("diagnostics")),
                 )
             )
     return tuple(evidence)
+
+
+def _diagnostics(value: object) -> tuple[object, ...]:
+    if not isinstance(value, (list, tuple)) or not all(isinstance(v, dict) for v in value):
+        return ()
+    return tuple(value)

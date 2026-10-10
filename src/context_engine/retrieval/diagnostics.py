@@ -6,7 +6,7 @@ from math import isfinite
 
 @dataclass(frozen=True, slots=True)
 class RetrievalStageDiagnostic:
-    """One ranking stage; higher scores are better within its documented score kind."""
+    """One ranking stage; native score semantics are defined by score_kind."""
 
     strategy: str
     score_kind: str

@@ -111,6 +111,12 @@ class SearchResult:
     score: float
     diagnostics: tuple[RetrievalStageDiagnostic, ...] = ()
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.diagnostics, tuple) or not all(
+            isinstance(stage, RetrievalStageDiagnostic) for stage in self.diagnostics
+        ):
+            raise VectorStoreConfigurationError("diagnostics must be a tuple of typed stages.")
+
 
 @runtime_checkable
 class VectorStore(Protocol):

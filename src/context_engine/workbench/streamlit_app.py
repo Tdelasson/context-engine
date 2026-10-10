@@ -200,6 +200,9 @@ def _render_run(st: Any, run_view: WorkbenchRunView) -> None:
                 elif metadata.get("source_page_count"):
                     st.caption(f"Source pages · 1–{metadata['source_page_count']}")
             st.json(metadata)
+            if item.diagnostics:
+                st.caption("Ranking diagnostics")
+                st.json(list(item.diagnostics))
             st.text(item.content)
             if item.content_truncated:
                 st.caption("Content was bounded by the search_documents tool configuration.")

@@ -424,3 +424,14 @@ M4 whole-document `Ingestor` and benchmark artifacts remain available separately
 See [ADR-009](decisions/ADR-009-source-index-lifecycle.md) and the
 [source ingestion API](../api/source-ingestion.md) for recovery, single-writer limits,
 index version compatibility, and rebuild instructions.
+
+## Optional M5 reranking
+
+`RerankingRetriever` composes any upstream Retriever with typed Reranker scoring.
+The optional local Sentence Transformers adapter validates complete query/passage inputs
+before inference, preserves original evidence, and reports native logits and stage diagnostics.
+Enabled failure never silently falls back. Workbench composition remains within the existing
+search tool policy/runtime boundary; no model-chosen inference settings or indexing changes.
+See [ADR-012](decisions/ADR-012-local-cross-encoder-reranking.md),
+[reranking API](../api/reranking.md) and the workbench setup guide. Hybrid integration
+and evidence-benchmark comparison remain explicit issue dependencies.
