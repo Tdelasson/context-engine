@@ -421,7 +421,12 @@ Source-level chunk ingestion, replacement, deletion, and restart recovery (#62) 
 The chunked dense benchmark (#64) now provides pinned evidence-span labels, separate
 development/held-out queries, real MiniLM chunk/model comparisons, and deployed Qdrant
 verification. See the [dense experiment](../experiments/m5-chunked-dense-benchmark.md).
-Lexical/hybrid retrieval, reranking, and context selection remain future work.
+Lexical BM25 (#66, PR #72), hybrid reciprocal rank fusion (#67, PR #74), and optional
+local cross-encoder reranking (#68, PR #73) are implemented with recorded comparisons.
+See the [lexical](../experiments/m5-lexical-retrieval-benchmark.md),
+[hybrid](../experiments/m5-hybrid-retrieval.md), and
+[reranking](../experiments/m5-local-reranking.md) reports. Dense retrieval remains the
+default; deterministic evidence selection and token budgeting (#69) remain future work.
 
 ---
 
@@ -745,5 +750,6 @@ Context Engine v1.0 should demonstrate:
 
 * [x] M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62).
 * [x] Establish the M5 chunked dense benchmark (#64, PR #71), with evidence-span evaluation and recorded dense comparisons.
-* [ ] Add and benchmark sparse/hybrid retrieval, reranking, and context selection against the M4 dense baseline.
+* [x] Add and benchmark lexical BM25 (#66), hybrid retrieval (#67), and optional reranking (#68) against the M5 evidence-span dense baseline.
+* [ ] Add deterministic evidence selection and application-controlled token budgeting (#69).
 * [ ] Keep automatic context assembly and lifecycle integration in M6 and the broader evaluation/MLOps framework in M9.
