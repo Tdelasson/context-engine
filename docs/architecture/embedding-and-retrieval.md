@@ -468,3 +468,15 @@ reader around both sequential searches. Changed or pending manifests fail the
 whole operation; the observations do not constitute an atomic snapshot.
 See [ADR-013](decisions/ADR-013-hybrid-reciprocal-rank-fusion.md) and the
 [recorded comparison](../experiments/m5-hybrid-retrieval.md).
+
+## Optional evidence selection
+
+`EvidenceSelector` is separate from Retriever and model inference. The deterministic
+implementation consumes supplied ranked SearchResults, application-owned budgets, a
+provider-independent answering-token counter, and the tool's whole-passage serializer.
+It deduplicates canonical identities, suppresses same-source/revision span overlap, and
+recounts complete rendered JSON. It does not retrieve, truncate, infer answerability,
+change runtime state transitions, or assemble M6 context. The initial tokenizer adapter
+supports a pinned local Qwen2.5 tokenizer; full provider request budgeting remains outside
+this evidence boundary. See [ADR-014](decisions/ADR-014-evidence-selection-and-accounting.md)
+and the [recorded comparison](../experiments/m5-evidence-selection.md).

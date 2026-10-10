@@ -192,6 +192,8 @@ def _render_run(st: Any, run_view: WorkbenchRunView) -> None:
             f"{item.document_id} · {item.score:.4f} · {item.source_kind} · {item.source_name}",
             expanded=True,
         ):
+            if item.evidence_selected:
+                st.caption("Selected whole passage within the evidence budget")
             metadata = dict(item.metadata)
             if metadata.get("source_format") == "pdf":
                 pages = metadata.get("page_numbers")

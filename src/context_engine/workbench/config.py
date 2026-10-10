@@ -15,6 +15,12 @@ class WorkbenchConfigurationError(ValueError):
 class WorkbenchSettings:
     """Typed local dependency and execution settings."""
 
+    evidence_selection_enabled: bool = False
+    evidence_token_budget: int = 4096
+    evidence_overlap_threshold: float = 0.8
+    evidence_candidate_limit: int = 20
+    evidence_max_results: int = 5
+    evidence_tokenizer_directory: str = ""
     retrieval_strategy: str = "dense"
     lexical_collection_name: str = "context-engine-workbench-m5-bm25-v1"
     hybrid_dense_candidates: int = 20
@@ -48,6 +54,29 @@ class WorkbenchSettings:
     reranking_input_tokens: int = 512
 
     def __post_init__(self) -> None:
+        from context_engine.retrieval.evidence_selection import EvidenceSelectionConfig
+
+        if type(self.evidence_selection_enabled) is not bool:
+            raise WorkbenchConfigurationError("Evidence selection flag must be boolean.")
+        try:
+            EvidenceSelectionConfig(
+                self.evidence_token_budget,
+                self.evidence_max_results,
+                overlap_threshold=self.evidence_overlap_threshold,
+            )
+        except ValueError as exc:
+            raise WorkbenchConfigurationError(str(exc)) from exc
+        if (
+            type(self.evidence_candidate_limit) is not int
+            or not 1 <= self.evidence_candidate_limit <= 1000
+        ):
+            raise WorkbenchConfigurationError("Evidence candidate limit must be in [1, 1000].")
+        if self.evidence_selection_enabled and (
+            self.model_id != "qwen2.5:0.5b" or not self.evidence_tokenizer_directory.strip()
+        ):
+            raise WorkbenchConfigurationError(
+                "Selection supports qwen2.5:0.5b with a local tokenizer directory."
+            )
         from context_engine.retrieval.local_cross_encoder import LocalCrossEncoderConfig
         from context_engine.retrieval.reranking import RerankingRetrieverConfig
 
@@ -134,6 +163,24 @@ class WorkbenchSettings:
         """Build settings from documented environment variables."""
         defaults = cls()
         return cls(
+            evidence_selection_enabled=_read_bool(
+                "CONTEXT_ENGINE_EVIDENCE_SELECTION_ENABLED", False
+            ),
+            evidence_token_budget=_read_int(
+                "CONTEXT_ENGINE_EVIDENCE_TOKEN_BUDGET", defaults.evidence_token_budget
+            ),
+            evidence_overlap_threshold=_read_float(
+                "CONTEXT_ENGINE_EVIDENCE_OVERLAP_THRESHOLD", defaults.evidence_overlap_threshold
+            ),
+            evidence_candidate_limit=_read_int(
+                "CONTEXT_ENGINE_EVIDENCE_CANDIDATES", defaults.evidence_candidate_limit
+            ),
+            evidence_max_results=_read_int(
+                "CONTEXT_ENGINE_EVIDENCE_MAX_RESULTS", defaults.evidence_max_results
+            ),
+            evidence_tokenizer_directory=os.getenv(
+                "CONTEXT_ENGINE_EVIDENCE_TOKENIZER_DIRECTORY", ""
+            ),
             retrieval_strategy=os.getenv(
                 "CONTEXT_ENGINE_RETRIEVAL_STRATEGY", defaults.retrieval_strategy
             ),
