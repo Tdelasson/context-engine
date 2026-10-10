@@ -224,7 +224,7 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
         raise WorkbenchDependencyError("reranking", f"{type(exc).__name__}: {exc}") from exc
     registry = ToolRegistry()
     registry.register(Calculator())
-    registry.register(SearchDocumentsTool(retriever))
+    registry.register(configure_evidence_selection(retriever, active_settings))
     catalog = DocumentCatalog(
         ingestion=ingestion,
         upload_limits=UploadLimits(
@@ -268,3 +268,34 @@ def configure_reranking(upstream: Retriever, settings: WorkbenchSettings) -> Ret
             settings.reranking_candidate_limit, settings.reranking_final_limit
         ),
     )
+
+
+def configure_evidence_selection(
+    retriever: Retriever, settings: WorkbenchSettings
+) -> SearchDocumentsTool:
+    """Compose optional selection after retrieval/reranking without altering runtime policy."""
+    if not settings.evidence_selection_enabled:
+        return SearchDocumentsTool(retriever)
+    from context_engine.models.evidence_counting import QwenEvidenceTokenCounter
+    from context_engine.retrieval.evidence_selection import EvidenceSelectionConfig
+    from context_engine.tools.retrieval import SearchDocumentsToolConfig
+
+    try:
+        counter = QwenEvidenceTokenCounter(
+            settings.evidence_tokenizer_directory, model_id=settings.model_id
+        )
+        return SearchDocumentsTool(
+            retriever,
+            config=SearchDocumentsToolConfig(
+                top_k=settings.evidence_max_results,
+                candidate_limit=settings.evidence_candidate_limit,
+            ),
+            selection_config=EvidenceSelectionConfig(
+                settings.evidence_token_budget,
+                settings.evidence_max_results,
+                overlap_threshold=settings.evidence_overlap_threshold,
+            ),
+            evidence_counter=counter,
+        )
+    except Exception as exc:
+        raise WorkbenchDependencyError("evidence_selection", str(exc)) from exc

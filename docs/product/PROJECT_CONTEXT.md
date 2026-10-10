@@ -109,8 +109,11 @@ verification. See [the dense benchmark report](../experiments/m5-chunked-dense-b
 for results, failure analysis, and measurement limits. Retrieval defaults are unchanged.
 Lexical BM25 (#66, PR #72), hybrid reciprocal rank fusion (#67, PR #74), and optional local
 cross-encoder reranking (#68, PR #73) are implemented with recorded comparisons against
-the evidence-span benchmark. Dense retrieval remains the default. Deterministic evidence
-selection and application-controlled token budgeting (#69) remain unimplemented.
+the evidence-span benchmark. Dense retrieval remains the default. Optional deterministic evidence
+selection and application-controlled token budgeting (#69) are implemented with pinned
+answering-tokenizer accounting and recorded dense/hybrid-reranked comparisons. See
+[the selection report](../experiments/m5-evidence-selection.md) for coverage regressions
+and the distinction between evidence JSON budgets and full request context limits.
 Automatic context assembly remains M6 work.
 
 ## M4 Candidate Models

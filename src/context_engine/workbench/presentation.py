@@ -42,6 +42,7 @@ class RetrievedEvidence:
     content: str
     content_truncated: bool
     diagnostics: tuple[object, ...] = ()
+    evidence_selected: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -271,6 +272,7 @@ def _extract_evidence(tool_results: tuple[ToolResult, ...]) -> tuple[RetrievedEv
                     content=content,
                     content_truncated=bool(raw_result.get("content_truncated", False)),
                     diagnostics=_diagnostics(raw_result.get("diagnostics")),
+                    evidence_selected="selection_diagnostics" in tool_result.output_as_mapping(),
                 )
             )
     return tuple(evidence)

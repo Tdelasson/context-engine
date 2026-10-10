@@ -22,6 +22,7 @@ from context_engine.models.gateway import (
     ModelUsage,
     normalize_tool_call_arguments,
 )
+from context_engine.models.tool_serialization import model_visible_tool_output
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,7 +108,9 @@ class OllamaModelGateway(ModelGateway):
             if message.tool_result.tool_call_id is not None:
                 tool_content["tool_call_id"] = message.tool_result.tool_call_id
             if message.tool_result.status is ModelToolResultStatus.SUCCESS:
-                tool_content["output"] = message.tool_result.output_as_mapping()
+                tool_content["output"] = model_visible_tool_output(
+                    message.tool_result.tool_name, message.tool_result.output_as_mapping()
+                )
             else:
                 tool_content["error"] = {
                     "error_type": message.tool_result.error_type,

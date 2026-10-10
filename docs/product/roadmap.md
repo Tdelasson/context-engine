@@ -426,7 +426,11 @@ local cross-encoder reranking (#68, PR #73) are implemented with recorded compar
 See the [lexical](../experiments/m5-lexical-retrieval-benchmark.md),
 [hybrid](../experiments/m5-hybrid-retrieval.md), and
 [reranking](../experiments/m5-local-reranking.md) reports. Dense retrieval remains the
-default; deterministic evidence selection and token budgeting (#69) remain future work.
+default. Optional deterministic evidence selection and token budgeting (#69) now preserve
+whole passages within a pinned answering-tokenizer JSON budget; see the
+[selection comparison](../experiments/m5-evidence-selection.md) for measured regressions
+and full-request budgeting limitations. M5 remains in progress; query transformation and
+broader retrieval evaluation have not been implemented by this change.
 
 ---
 
@@ -751,5 +755,5 @@ Context Engine v1.0 should demonstrate:
 * [x] M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62).
 * [x] Establish the M5 chunked dense benchmark (#64, PR #71), with evidence-span evaluation and recorded dense comparisons.
 * [x] Add and benchmark lexical BM25 (#66), hybrid retrieval (#67), and optional reranking (#68) against the M5 evidence-span dense baseline.
-* [ ] Add deterministic evidence selection and application-controlled token budgeting (#69).
+* [x] Add optional deterministic evidence selection and application-controlled token budgeting (#69), with paired dense/hybrid-reranked comparisons.
 * [ ] Keep automatic context assembly and lifecycle integration in M6 and the broader evaluation/MLOps framework in M9.

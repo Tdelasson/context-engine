@@ -264,3 +264,14 @@ Not yet implemented:
 - capability isolation beyond the current policy/runtime boundary
 
 These are later concerns and should not be conflated with the deterministic runtime foundation delivered in M3.
+
+## Search evidence accounting and UI diagnostics
+
+Optional search_documents selection preserves the normal runtime policy/execution boundary.
+The reserved `selection_diagnostics` output field is retained in ToolResult/traces for UI
+inspection and removed before model history via `model_visible_tool_output`. Ollama applies
+that projection to direct ModelToolResults too. All other evidence fields and original
+ranking diagnostics are model-visible. `render_tool_output` defines the sorted JSON output
+object counted by selection, matching the object's serialization inside Ollama's envelope.
+The surrounding provider tool wrapper and chat template are outside the evidence budget.
+See ADR-014; this does not impose a full request or global conversation budget.

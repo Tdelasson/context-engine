@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from math import isfinite
 from typing import TypeAlias
 
 from context_engine.retrieval import RetrievalRequest, Retriever, SearchResult
+from context_engine.retrieval.evidence_selection import (
+    EvidenceSelectionConfig,
+    EvidenceTokenCounter,
+    RankedEvidenceSelector,
+)
 from context_engine.tools.retrieval.errors import (
     SearchDocumentsToolConfigurationError,
     SearchDocumentsToolInputError,
@@ -28,8 +33,11 @@ class SearchDocumentsToolConfig:
 
     top_k: int = 3
     max_content_chars: int = 2_000
+    candidate_limit: int = 20
 
     def __post_init__(self) -> None:
+        if type(self.candidate_limit) is not int or not 1 <= self.candidate_limit <= 1000:
+            raise SearchDocumentsToolConfigurationError("candidate_limit must be in [1, 1000].")
         if isinstance(self.top_k, bool) or not isinstance(self.top_k, int) or self.top_k <= 0:
             raise SearchDocumentsToolConfigurationError(
                 "top_k must be an integer greater than zero."
@@ -56,9 +64,30 @@ class SearchDocumentsTool:
         retriever: Retriever,
         *,
         config: SearchDocumentsToolConfig | None = None,
+        selection_config: EvidenceSelectionConfig | None = None,
+        evidence_counter: EvidenceTokenCounter | None = None,
     ) -> None:
         self._retriever = retriever
         self._config = config or SearchDocumentsToolConfig()
+        if (selection_config is None) != (evidence_counter is None):
+            raise SearchDocumentsToolConfigurationError(
+                "Selection requires both config and counter."
+            )
+        self._selector = (
+            RankedEvidenceSelector(
+                replace(
+                    selection_config,
+                    max_results=min(selection_config.max_results, self._config.top_k),
+                    max_content_chars=min(
+                        selection_config.max_content_chars, self._config.max_content_chars
+                    ),
+                ),
+                evidence_counter,
+                lambda result: self._serialize_result(result, preserve_content=True),
+            )
+            if selection_config is not None and evidence_counter is not None
+            else None
+        )
 
     def execute(self, invocation: ToolInvocation) -> Mapping[str, object]:
         """Retrieve and serialize bounded model-visible search results."""
@@ -70,8 +99,32 @@ class SearchDocumentsTool:
         if not query:
             raise SearchDocumentsToolInputError("query must contain non-whitespace characters.")
 
-        request = RetrievalRequest(query=query, top_k=self._config.top_k)
+        request = RetrievalRequest(
+            query=query,
+            top_k=self._config.candidate_limit
+            if self._selector is not None
+            else self._config.top_k,
+        )
         raw_results = self._retriever.retrieve(request)
+        if self._selector is not None:
+            from itertools import islice
+
+            selection = self._selector.select(
+                query, tuple(islice(raw_results, self._config.candidate_limit))
+            )
+            return {
+                **selection.output,
+                "selection_diagnostics": {
+                    "status": selection.status,
+                    "token_count": selection.token_count,
+                    "configuration_id": selection.configuration_id,
+                    "configuration": asdict(self._selector.config),
+                    "counter_id": self._selector.counter.configuration_id,
+                    "counting_method": self._selector.counter.method,
+                    "answering_model": self._selector.counter.model_id,
+                    "candidates": [asdict(item) for item in selection.diagnostics],
+                },
+            }
         bounded_results = tuple(raw_results)[: self._config.top_k]
         results = [self._serialize_result(result) for result in bounded_results]
 
@@ -81,7 +134,9 @@ class SearchDocumentsTool:
             "results": results,
         }
 
-    def _serialize_result(self, result: SearchResult) -> dict[str, object]:
+    def _serialize_result(
+        self, result: SearchResult, *, preserve_content: bool = False
+    ) -> dict[str, object]:
         document_id = result.document.document_id
         if not isinstance(document_id, str) or not document_id:
             raise SearchDocumentsToolOutputError(
@@ -100,7 +155,7 @@ class SearchDocumentsTool:
                 f"Search result '{document_id}' has a non-finite score."
             )
 
-        bounded_content = content[: self._config.max_content_chars]
+        bounded_content = content if preserve_content else content[: self._config.max_content_chars]
         metadata = _normalize_json_mapping(
             result.document.metadata_as_mapping(),
             path=f"document[{document_id}].metadata",

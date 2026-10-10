@@ -241,3 +241,46 @@ results. Requests above the configured maximum fail explicitly. Dense and lexica
 standalone strategies remain available; dense remains the default. A failing
 branch or observed source update fails hybrid search, requiring retry/recovery.
 See ADR-013 for consistency limits and the experiment for measured trade-offs.
+
+## Optional whole-passage evidence selection (#69)
+
+Selection runs after the configured dense/lexical/hybrid retrieval and optional reranker,
+through the existing search_documents validation, policy, execution and tracing boundary.
+It is disabled by default. Enable it with an explicit answering-tokenizer configuration:
+
+```bash
+export CONTEXT_ENGINE_EVIDENCE_SELECTION_ENABLED=true
+export CONTEXT_ENGINE_WORKBENCH_MODEL=qwen2.5:0.5b
+export CONTEXT_ENGINE_EVIDENCE_TOKENIZER_DIRECTORY=/local/pinned-qwen-tokenizer
+export CONTEXT_ENGINE_EVIDENCE_TOKEN_BUDGET=4096
+export CONTEXT_ENGINE_EVIDENCE_OVERLAP_THRESHOLD=0.8
+export CONTEXT_ENGINE_EVIDENCE_CANDIDATES=20
+export CONTEXT_ENGINE_EVIDENCE_MAX_RESULTS=5
+```
+
+The answering model must already be available in Ollama. The tokenizer directory must contain
+`tokenizer.json` and `tokenizer_config.json` from the official Qwen/Qwen2.5-0.5B-Instruct revision
+`7ae557604adf67be50417f59c2c2f167def9a775`; runtime verifies their SHA-256 fingerprints and never
+downloads files or model weights. Existing workbench dependencies provide the tokenizers runtime.
+Other models, revisions, missing tokenizer files, and invalid limits fail explicitly.
+
+Budget the complete sorted JSON evidence object (query, count, passages, citations, metadata,
+and original ranking diagnostics), counted without truncation or added special tokens.
+Whole passages exceeding the existing 2,000-character resource limit are excluded instead of
+clipped. Selection preserves supplied ranks/scores/citations, skips non-fitting candidates,
+and continues to later candidates. Candidate count/result count remain independent bounds.
+Reranking/hybrid ceilings can reduce the available candidates before selection.
+
+The evidence panel identifies selected whole passages. Structured tool results and traces
+include `selection_diagnostics`: original ranks/scores, exclusions, comparable overlap,
+status, final tokenizer count and effective configuration identity. These selection reports
+are UI-only and excluded from model history; original retrieval diagnostics remain counted
+and model-visible. Empty/no-fit outcomes do not assert that the question is answerable.
+
+The hard limit applies to the pinned tokenizer's raw evidence encoding. Ollama/GGUF parity
+is not verified. The provider tool wrapper/chat template, instructions, conversation history,
+tool definitions, other calls and reserved answer tokens are not included. Repeated calls
+accumulate evidence in history. The application/request owner still owns full-request limits;
+this setting is not a model-context guarantee. See
+[the selection benchmark](../experiments/m5-evidence-selection.md) and ADR-014 for measured
+coverage regressions and limits. Selection and reranking remain optional, with dense default.
