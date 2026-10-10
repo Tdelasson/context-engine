@@ -458,3 +458,13 @@ retriever for reads. Filters and committed source revision checks apply to both.
 BM25 strategy/configuration diagnostics are separate from immutable provenance.
 See ADR-011 for tokenizer behavior, version compatibility, and rebuild procedure.
 
+### Optional hybrid ranking
+
+`HybridRetriever` composes dense and lexical Retriever dependencies with bounded,
+equal-weight Python reciprocal rank fusion. Canonical chunk provenance is retained;
+branch scores and fused rank scores remain separate diagnostics. Workbench hybrid
+uses the shared BM25 chunk store and an application-bound lifecycle visibility
+reader around both sequential searches. Changed or pending manifests fail the
+whole operation; the observations do not constitute an atomic snapshot.
+See [ADR-013](decisions/ADR-013-hybrid-reciprocal-rank-fusion.md) and the
+[recorded comparison](../experiments/m5-hybrid-retrieval.md).

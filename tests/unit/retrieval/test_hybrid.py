@@ -184,3 +184,45 @@ def test_duplicate_metadata_keys_and_blank_source_fail_typed() -> None:
     for candidate in (bad_metadata, result("a", source_id=" ", content_sha256="rev")):
         with pytest.raises(HybridRetrievalError):
             reciprocal_rank_fusion((candidate,), (), config=HybridRetrieverConfig())
+
+
+def test_tool_runtime_preserves_provenance_policy_and_failure() -> None:
+    from context_engine.tools import (
+        ToolInvocation,
+        ToolNamePolicy,
+        ToolPolicyDecision,
+        ToolRegistry,
+        ToolResultStatus,
+        ToolRuntime,
+    )
+    from context_engine.tools.retrieval import SearchDocumentsTool
+
+    dense, lexical = (
+        Branch((result("a", source_name="facts.txt"),)),
+        Branch((result("a", source_name="facts.txt"),)),
+    )
+    hybrid = HybridRetriever(dense_retriever=dense, lexical_retriever=lexical)
+    registry = ToolRegistry()
+    registry.register(SearchDocumentsTool(hybrid))
+    invocation = ToolInvocation.from_mapping(
+        tool_name="search_documents", arguments={"query": "facts"}
+    )
+    output = ToolRuntime(registry).execute(invocation)
+    assert output.status is ToolResultStatus.SUCCESS
+    records = cast(list[dict[str, object]], output.output_as_mapping()["results"])
+    assert cast(dict[str, object], records[0]["metadata"])["source_name"] == "facts.txt"
+    assert records[0]["diagnostics"]
+    dense.requests.clear()
+    lexical.requests.clear()
+    denied = ToolRuntime(
+        registry, policy=ToolNamePolicy.from_mapping({"search_documents": ToolPolicyDecision.DENY})
+    ).execute(invocation)
+    assert denied.status is ToolResultStatus.ERROR and not dense.requests and not lexical.requests
+    lexical.error = RuntimeError("failed")
+    failed = ToolRuntime(registry).execute(invocation)
+    assert failed.status is ToolResultStatus.ERROR
+    assert (
+        failed.error
+        and failed.error.error_type == "HybridRetrievalError"
+        and "lexical" in failed.error.message
+    )

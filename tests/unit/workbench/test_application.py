@@ -246,3 +246,50 @@ def test_blank_prompt_fails_before_model_execution() -> None:
     assert view.status is WorkbenchRunStatus.FAILED
     assert view.error_phase == "prompt_validation"
     assert gateway.requests == []
+
+
+def test_live_hybrid_composition_retains_tool_boundary(monkeypatch: object) -> None:
+    import pytest
+
+    from context_engine.retrieval import VectorStoreCollectionConfig
+    from context_engine.retrieval.hybrid import HybridRetriever
+    from context_engine.retrieval.retriever import RetrievalRequest
+    from context_engine.retrieval.vector_store import SearchResult
+    from context_engine.workbench import application
+    from tests.source_index_fixtures import CharacterCounter, FixtureEmbeddingProvider
+
+    class Provider(FixtureEmbeddingProvider):
+        indexing_identity = "fixture-v1"
+
+        def build_token_counter(self) -> CharacterCounter:
+            return CharacterCounter()
+
+    class EmptyLexical:
+        def retrieve(self, request: RetrievalRequest) -> tuple[SearchResult, ...]:
+            return ()
+
+    captured: list[object] = []
+
+    def store_factory(config: VectorStoreCollectionConfig, **kwargs: object) -> MemorySourceStore:
+        store = MemorySourceStore(fixture_chunker())
+        store.collection_config = config
+        return store
+
+    def capture_tool(retriever: object) -> object:
+        from context_engine.tools.retrieval import SearchDocumentsTool
+
+        captured.append(retriever)
+        return SearchDocumentsTool(retriever)  # type: ignore[arg-type]
+
+    patch = cast(pytest.MonkeyPatch, monkeypatch)
+    patch.setattr(application, "LocalEmbeddingProvider", lambda _: Provider())
+    patch.setattr(
+        "context_engine.retrieval.qdrant_lexical_index.QdrantBM25ChunkStore", store_factory
+    )
+    patch.setattr(application, "_build_lexical_retriever", lambda _: EmptyLexical())
+    patch.setattr(application, "SearchDocumentsTool", capture_tool)
+    built = application.build_live_workbench(
+        WorkbenchSettings(retrieval_strategy="hybrid", chunk_overlap_tokens=0)
+    )
+    assert isinstance(captured[0], HybridRetriever)
+    assert built.settings.retrieval_strategy == "hybrid"
