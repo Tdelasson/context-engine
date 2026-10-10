@@ -118,7 +118,7 @@ def test_uploaded_document_is_deterministic_and_labeled() -> None:
 @pytest.mark.parametrize(
     ("candidate", "message"),
     [
-        (UploadCandidate(name="facts.pdf", content=b"text"), "Only UTF-8"),
+        (UploadCandidate(name="facts.docx", content=b"text"), "Only UTF-8"),
         (UploadCandidate(name="../facts.md", content=b"text"), "must not contain a path"),
         (UploadCandidate(name="facts.md", content=b"\xff"), "valid UTF-8"),
         (UploadCandidate(name="facts.md", content=b"   "), "only whitespace"),
@@ -253,3 +253,33 @@ def test_processed_uploads_remain_searchable_through_tool_runtime() -> None:
     assert match["document_id"] == report.document_ids[0]
     assert match["content"] == text
     assert match["metadata"] == catalog.uploaded_documents[0].metadata_as_mapping()
+
+
+def test_pdf_uploads_keep_page_metadata_and_diagnostics_in_catalog() -> None:
+    from tests.pdf_fixtures import make_pdf
+
+    catalog, store = _catalog()
+    report = catalog.ingest_uploads((UploadCandidate("facts.pdf", make_pdf(("Fact", None))),))
+    document = store.records[report.document_ids[0]].document
+    assert document.metadata_as_mapping()["page_numbers"] == [1, 2]
+    assert len(catalog.upload_diagnostics) == 2
+    assert catalog.upload_diagnostics[0][0] == "facts.pdf"
+    catalog.ingest_uploads((UploadCandidate("facts.pdf", make_pdf(("Updated fact",))),))
+    assert not catalog.upload_diagnostics
+    catalog.clear_uploads()
+    assert catalog.uploaded_documents == ()
+
+
+def test_pdf_uploads_use_explicit_separate_limits() -> None:
+    from tests.pdf_fixtures import make_pdf
+
+    candidate = UploadCandidate("facts.pdf", make_pdf(("Fact", "Page two")))
+    document = construct_uploaded_document(candidate, UploadLimits(max_bytes_per_file=1))
+    assert "Page two" in document.content
+    for limits, message in [
+        (UploadLimits(max_pdf_bytes_per_file=1), "exceeds 1 bytes"),
+        (UploadLimits(max_pdf_pages=1), "exceeds 1 pages"),
+        (UploadLimits(max_pdf_text_characters=1), "exceeds 1 extracted"),
+    ]:
+        with pytest.raises(WorkbenchDocumentError, match=message):
+            construct_uploaded_document(candidate, limits)

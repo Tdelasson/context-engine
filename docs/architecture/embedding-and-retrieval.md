@@ -366,15 +366,50 @@ M4 should remain focused on making the underlying semantic retrieval primitive c
 - `ADR-004-vector-store-and-retrieval-architecture.md`
 - `ADR-005-retrieval-evaluation-strategy.md`
 
-## M5 source processing
+## M5 processing and chunking
 
-`context_engine.knowledge.processing` now owns supplied-byte validation and UTF-8
-text/Markdown interpretation. Acquisition remains with the application. Source identity
-is caller-assigned and separate from the SHA-256 content revision. Structural blocks
-retain headings and code with character offsets in the BOM-free extracted text.
+Knowledge now owns source interpretation and searchable passage construction:
 
-Use `process_source(SourceInput(...), ProcessingLimits(...))`, then `to_document(result)`
-and `Ingestor.ingest_documents((document,))`. Conversion preserves full text and provenance
-metadata; processing does not embed, persist, search, or chunk. See
-[ADR-006](decisions/ADR-006-knowledge-document-processing.md) for representation semantics
-and the knowledge/retrieval boundary. Existing `Document` callers remain supported.
+```text
+SourceInput (supplied bytes, stable identity, explicit format)
+   ↓
+process_source (UTF-8 text/Markdown or optional PDF text-layer extraction)
+   ↓
+ProcessedSource (text, located blocks/pages, revision, diagnostics)
+   ├── to_document ────────────────────────────┐
+   ↓                                          │
+StructureAwareChunker + model-compatible       │
+token counter                                 │
+   ↓                                          │
+DocumentChunk.to_document                     │
+   └──────────────────────────────────────────┘
+   ↓
+Ingestor → EmbeddingProvider → VectorStore
+   ↓
+Retriever → search_documents → Tool Runtime → Agent
+```
+
+Applications acquire bytes and assign stable logical source IDs. Knowledge processing
+validates formats and byte/text/page limits, preserves source revision and locations,
+and reports extraction diagnostics. PDF extraction uses original one-based page numbers;
+empty pages are explicit and partial extraction is reported. Offsets reference the
+combined extracted Unicode text, not PDF byte or visual coordinates.
+
+Chunking prefers sections, paragraphs, and sentence boundaries, with a Unicode-safe
+fallback. It records exact source spans, page references, heading context, actual overlap,
+and deterministic identities tied to source revision and configuration. The full embedding
+input is counted with the configured model's tokenizer, including document prefix,
+special tokens, and supplemental heading context. Chunk size and overlap are explicit
+experiment settings; retrieval-quality defaults have not been selected by a benchmark.
+
+Knowledge does not embed, persist, or retrieve. The existing `Ingestor` accepts mapped
+chunk `Document` values as an explicit composition path. The workbench continues its
+whole-document catalog pending ingestion-lifecycle integration; replacing/deleting sets
+of chunks and migrating an index are separate work. The existing tool validation, policy,
+execution, and tracing boundary applies to either document representation.
+
+See [processing API](../api/document-processing.md),
+[PDF API](../api/pdf-processing.md), [chunking API](../api/document-chunking.md),
+[ADR-006](decisions/ADR-006-knowledge-document-processing.md),
+[ADR-007](decisions/ADR-007-pdf-text-extraction.md), and
+[ADR-008](decisions/ADR-008-structure-aware-document-chunking.md).

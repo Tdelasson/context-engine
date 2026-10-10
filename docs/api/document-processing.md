@@ -49,3 +49,11 @@ bytes and 262144 extracted characters. Failures return no partial result. Nonfat
 report removal of a BOM and an unclosed code fence (preserved through end of source).
 
 See [ADR-006](../architecture/decisions/ADR-006-knowledge-document-processing.md).
+
+## PDF extension
+
+`SourceFormat.PDF` uses the optional local PDF adapter. `BlockLocation.page_number`
+is optional and one-based; `SourceProvenance.encoding` is `None` for PDF input.
+`ProcessingLimits.max_pages` applies to PDFs. Existing text/Markdown defaults and
+locations are unchanged. See [PDF processing](pdf-processing.md) for separators,
+page diagnostics, errors, dependencies, and resource-limit guarantees.

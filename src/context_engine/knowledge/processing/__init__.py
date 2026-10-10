@@ -15,6 +15,7 @@ from context_engine.knowledge.processing.contracts import (
     SourceInput,
     SourceProvenance,
 )
+from context_engine.knowledge.processing.pdf import process_pdf
 from context_engine.knowledge.processing.readers import process_source
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     "SourceInput",
     "SourceProvenance",
     "process_source",
+    "process_pdf",
     "to_document",
 ]
