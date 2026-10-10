@@ -64,11 +64,17 @@ class RerankingRequest:
     def __post_init__(self) -> None:
         if not isinstance(self.query, str) or not self.query.strip():
             raise RerankerConfigurationError("query must contain non-whitespace characters.")
+        if not isinstance(self.candidates, tuple):
+            raise RerankerConfigurationError("candidates must be an immutable tuple.")
         identities: set[str] = set()
         for candidate in self.candidates:
             if not isinstance(candidate, RerankingCandidate):
                 raise RerankerConfigurationError("candidates must be RerankingCandidate values.")
-            if not candidate.candidate_id.strip() or candidate.candidate_id in identities:
+            if (
+                not isinstance(candidate.candidate_id, str)
+                or not candidate.candidate_id.strip()
+                or candidate.candidate_id in identities
+            ):
                 raise RerankerConfigurationError("Candidates must have unique nonblank identities.")
             if not isinstance(candidate.document.content, str) or not candidate.document.content:
                 raise RerankerConfigurationError("Candidate content must be nonempty text.")

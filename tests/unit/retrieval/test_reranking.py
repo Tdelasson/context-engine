@@ -364,3 +364,15 @@ def test_library_path_disables_truncation_and_preserves_exact_text() -> None:
     assert backend.score_pairs([(" q ", "Heading\n🦊å"), ("q", "b")]) == (1.0, 2.0)
     assert calls[0][:2] == (" q ", "Heading\n🦊å")
     assert calls[1][0] == [" q ", "q"]
+
+
+@pytest.mark.parametrize("identity", [42, True, "   "])
+def test_malformed_candidate_identity_is_typed(identity: Any) -> None:
+    candidate = RerankingCandidate(Document(document_id=identity, content="evidence"))
+    with pytest.raises(RerankerConfigurationError):
+        RerankingRequest("query", (candidate,))
+
+
+def test_malformed_candidate_container_is_typed() -> None:
+    with pytest.raises(RerankerConfigurationError):
+        RerankingRequest("query", cast(Any, None))
