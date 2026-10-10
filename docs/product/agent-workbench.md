@@ -73,7 +73,7 @@ The source list shows chunk counts and ingestion outcomes. Same-name uploads rep
 previous chunks; individual delete and clear actions remove all chunks for the persisted
 uploaded sources, including after restart. Preloaded sources remain indexed.
 
-Context assembly and optional reranking remain future work.
+Context assembly remains future work. Hybrid retrieval and local reranking are optional as described below.
 
 ## Verification
 
@@ -170,6 +170,37 @@ See the [PDF API](../api/pdf-processing.md) and
 text/PDF processing, chunk coverage and token limits, embedding composition, page provenance
 in search evidence, and tool policy enforcement. They use controlled model/tokenizer fixtures;
 live inference and retrieval-quality benchmarking remain separate checks.
+
+## Optional local reranking
+
+Reranking is disabled by default. Install `python -m pip install -e ".[reranking]"`
+and explicitly prepare `cross-encoder/ms-marco-MiniLM-L6-v2` before enabling it:
+
+```bash
+hf download cross-encoder/ms-marco-MiniLM-L6-v2 --revision 233902d25c440f23af6f7d6e94d2946bac0bee0a
+export CONTEXT_ENGINE_RERANKING_ENABLED=true
+export CONTEXT_ENGINE_RERANKING_MODEL_REFERENCE=/absolute/path/to/prepared/snapshot
+```
+
+The workbench always loads this model offline with remote code disabled. Model preparation
+is an explicit setup operation. Enabled initialization failures are labeled `reranking`;
+enabled scoring/input failures appear in structured tool results and traces. Set enabled
+back to `false` to intentionally compare the same upstream retrieval without reranking.
+
+Additional application settings: `CONTEXT_ENGINE_RERANKING_REVISION` (optional),
+`CONTEXT_ENGINE_RERANKING_DEVICE` (`cpu`), `CONTEXT_ENGINE_RERANKING_CANDIDATES` (20),
+`CONTEXT_ENGINE_RERANKING_FINAL_LIMIT` (5), `CONTEXT_ENGINE_RERANKING_BATCH_SIZE` (8),
+`CONTEXT_ENGINE_RERANKING_INPUT_TOKENS` (512). Candidate and final limits are positive
+integers; final cannot exceed candidate. The search tool uses top_k=3, so the effective workbench output limit is min(3,
+configured final limit, available candidates). Combined query/passage input includes special tokens; oversized pairs fail without
+truncation. These are operational bounds, not benchmark-selected defaults. Reranking
+requires no reindexing. The model cannot choose providers or resource settings.
+
+Evidence displays upstream and reranker diagnostics separately from canonical metadata.
+Logits are higher-is-more-relevant native scores, not relevance probabilities. Actual local
+verification is opt-in with `CONTEXT_ENGINE_RERANKING_INTEGRATION_MODEL` set to the
+prepared snapshot and `pytest tests/integration/test_local_reranking_integration.py`.
+
 
 ### Lexical BM25 backend
 

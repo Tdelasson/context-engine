@@ -20,6 +20,11 @@ from context_engine.retrieval import (
     Retriever,
     VectorStoreCollectionConfig,
 )
+from context_engine.retrieval.local_cross_encoder import (
+    LocalCrossEncoderConfig,
+    LocalCrossEncoderReranker,
+)
+from context_engine.retrieval.reranking import RerankingRetriever, RerankingRetrieverConfig
 from context_engine.tools import AllowAllToolPolicy, ToolRegistry, ToolRuntime
 from context_engine.tools.calculator.tool import Calculator
 from context_engine.tools.retrieval import SearchDocumentsTool
@@ -213,6 +218,10 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
                 ),
                 visibility_reader=lifecycle_visibility_reader(vector_store),
             )
+    try:
+        retriever = configure_reranking(retriever, active_settings)
+    except Exception as exc:
+        raise WorkbenchDependencyError("reranking", f"{type(exc).__name__}: {exc}") from exc
     registry = ToolRegistry()
     registry.register(Calculator())
     registry.register(SearchDocumentsTool(retriever))
@@ -236,4 +245,26 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
         document_catalog=catalog,
         model_gateway=model_gateway,
         tool_registry=registry,
+    )
+
+
+def configure_reranking(upstream: Retriever, settings: WorkbenchSettings) -> Retriever:
+    """Application controls providers and budgets; tool schema remains unchanged."""
+    if not settings.reranking_enabled:
+        return upstream
+    reranker = LocalCrossEncoderReranker(
+        LocalCrossEncoderConfig(
+            model_reference=settings.reranking_model_reference,
+            revision=settings.reranking_revision,
+            device=settings.reranking_device,
+            batch_size=settings.reranking_batch_size,
+            max_input_tokens=settings.reranking_input_tokens,
+        )
+    )
+    return RerankingRetriever(
+        upstream,
+        reranker,
+        config=RerankingRetrieverConfig(
+            settings.reranking_candidate_limit, settings.reranking_final_limit
+        ),
     )

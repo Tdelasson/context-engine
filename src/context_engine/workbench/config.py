@@ -38,8 +38,32 @@ class WorkbenchSettings:
     max_pdf_upload_bytes: int = 10 * 1024 * 1024
     max_pdf_pages: int = 100
     max_pdf_text_characters: int = 1024 * 1024
+    reranking_enabled: bool = False
+    reranking_model_reference: str = "cross-encoder/ms-marco-MiniLM-L6-v2"
+    reranking_revision: str | None = None
+    reranking_device: str = "cpu"
+    reranking_candidate_limit: int = 20
+    reranking_final_limit: int = 5
+    reranking_batch_size: int = 8
+    reranking_input_tokens: int = 512
 
     def __post_init__(self) -> None:
+        from context_engine.retrieval.local_cross_encoder import LocalCrossEncoderConfig
+        from context_engine.retrieval.reranking import RerankingRetrieverConfig
+
+        if type(self.reranking_enabled) is not bool:
+            raise WorkbenchConfigurationError("reranking_enabled must be boolean.")
+        try:
+            LocalCrossEncoderConfig(
+                model_reference=self.reranking_model_reference,
+                revision=self.reranking_revision,
+                device=self.reranking_device,
+                batch_size=self.reranking_batch_size,
+                max_input_tokens=self.reranking_input_tokens,
+            )
+            RerankingRetrieverConfig(self.reranking_candidate_limit, self.reranking_final_limit)
+        except ValueError as exc:
+            raise WorkbenchConfigurationError(str(exc)) from exc
         if self.retrieval_strategy not in {"dense", "lexical", "hybrid"}:
             raise WorkbenchConfigurationError(
                 "retrieval_strategy must be dense, lexical, or hybrid."
@@ -55,6 +79,14 @@ class WorkbenchSettings:
             )
         except HybridConfigurationError as exc:
             raise WorkbenchConfigurationError(str(exc)) from exc
+        if (
+            self.reranking_enabled
+            and self.retrieval_strategy == "hybrid"
+            and self.reranking_candidate_limit > self.hybrid_final_results
+        ):
+            raise WorkbenchConfigurationError(
+                "Reranking candidate limit cannot exceed the hybrid final result ceiling."
+            )
         string_fields = {
             "lexical_collection_name": self.lexical_collection_name,
             "model_id": self.model_id,
@@ -107,6 +139,26 @@ class WorkbenchSettings:
             ),
             lexical_collection_name=os.getenv(
                 "CONTEXT_ENGINE_LEXICAL_COLLECTION", defaults.lexical_collection_name
+            ),
+            reranking_enabled=_read_bool("CONTEXT_ENGINE_RERANKING_ENABLED", False),
+            reranking_model_reference=os.getenv(
+                "CONTEXT_ENGINE_RERANKING_MODEL_REFERENCE", defaults.reranking_model_reference
+            ),
+            reranking_revision=os.getenv("CONTEXT_ENGINE_RERANKING_REVISION"),
+            reranking_device=os.getenv(
+                "CONTEXT_ENGINE_RERANKING_DEVICE", defaults.reranking_device
+            ),
+            reranking_candidate_limit=_read_int(
+                "CONTEXT_ENGINE_RERANKING_CANDIDATES", defaults.reranking_candidate_limit
+            ),
+            reranking_final_limit=_read_int(
+                "CONTEXT_ENGINE_RERANKING_FINAL_LIMIT", defaults.reranking_final_limit
+            ),
+            reranking_batch_size=_read_int(
+                "CONTEXT_ENGINE_RERANKING_BATCH_SIZE", defaults.reranking_batch_size
+            ),
+            reranking_input_tokens=_read_int(
+                "CONTEXT_ENGINE_RERANKING_INPUT_TOKENS", defaults.reranking_input_tokens
             ),
             hybrid_dense_candidates=_read_int(
                 "CONTEXT_ENGINE_HYBRID_DENSE_CANDIDATES", defaults.hybrid_dense_candidates
@@ -179,3 +231,12 @@ def _read_float(name: str, default: float) -> float:
         return float(raw_value)
     except ValueError as exc:
         raise WorkbenchConfigurationError(f"{name} must be a number.") from exc
+
+
+def _read_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    if value.lower() not in {"true", "false"}:
+        raise WorkbenchConfigurationError(f"{name} must be true or false.")
+    return value.lower() == "true"

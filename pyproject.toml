@@ -25,6 +25,9 @@ benchmark = [
     "einops>=0.8",
     "sentence-transformers>=5.0",
 ]
+reranking = [
+    "sentence-transformers>=5.0",
+]
 qdrant = [
     "qdrant-client>=1.16",
 ]

@@ -425,6 +425,28 @@ See [ADR-009](decisions/ADR-009-source-index-lifecycle.md) and the
 [source ingestion API](../api/source-ingestion.md) for recovery, single-writer limits,
 index version compatibility, and rebuild instructions.
 
+## Optional M5 reranking
+
+`RerankingRetriever` composes any upstream Retriever with typed Reranker scoring.
+The optional local Sentence Transformers adapter validates complete query/passage inputs
+before inference, preserves original evidence, and reports native logits and stage diagnostics.
+Enabled failure never silently falls back. Workbench composition remains within the existing
+search tool policy/runtime boundary; no model-chosen inference settings or indexing changes.
+See [ADR-012](decisions/ADR-012-local-cross-encoder-reranking.md),
+[reranking API](../api/reranking.md) and the workbench setup guide. A controlled dense-candidate evidence comparison is recorded in
+[the reranking experiment](../experiments/m5-local-reranking.md). Hybrid integration
+remains an explicit issue dependency.
+## M5 evidence-level benchmark
+
+The chunked dense benchmark labels supporting spans in canonical processed source
+text, binding source identity and revision rather than chunk IDs. Overlapping chunk
+copies and multi-page spans use cumulative union coverage. Development and held-out
+queries have separate aggregate denominators; unsupported queries record results
+without undefined recall or inferred abstention. See [ADR-010](decisions/ADR-010-evidence-span-retrieval-evaluation.md)
+and the [recorded dense experiment](../experiments/m5-chunked-dense-benchmark.md).
+M4 document-level results remain historical artifacts.
+
+
 ### Standalone lexical retrieval
 
 `LexicalIndex` owns typed text indexing/search/removal capability; `LexicalRetriever`
@@ -435,16 +457,6 @@ Compose the shared store with `SourceIngestionCoordinator` for writes and either
 retriever for reads. Filters and committed source revision checks apply to both.
 BM25 strategy/configuration diagnostics are separate from immutable provenance.
 See ADR-011 for tokenizer behavior, version compatibility, and rebuild procedure.
-
-## M5 evidence-level benchmark
-
-The chunked dense benchmark labels supporting spans in canonical processed source
-text, binding source identity and revision rather than chunk IDs. Overlapping chunk
-copies and multi-page spans use cumulative union coverage. Development and held-out
-queries have separate aggregate denominators; unsupported queries record results
-without undefined recall or inferred abstention. See [ADR-010](decisions/ADR-010-evidence-span-retrieval-evaluation.md)
-and the [recorded dense experiment](../experiments/m5-chunked-dense-benchmark.md).
-M4 document-level results remain historical artifacts.
 
 ### Optional hybrid ranking
 
