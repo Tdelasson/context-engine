@@ -191,8 +191,8 @@ Additional application settings: `CONTEXT_ENGINE_RERANKING_REVISION` (optional),
 `CONTEXT_ENGINE_RERANKING_DEVICE` (`cpu`), `CONTEXT_ENGINE_RERANKING_CANDIDATES` (20),
 `CONTEXT_ENGINE_RERANKING_FINAL_LIMIT` (5), `CONTEXT_ENGINE_RERANKING_BATCH_SIZE` (8),
 `CONTEXT_ENGINE_RERANKING_INPUT_TOKENS` (512). Candidate and final limits are positive
-integers; final cannot exceed candidate. Actual search tool top_k still caps returned
-results. Combined query/passage input includes special tokens; oversized pairs fail without
+integers; final cannot exceed candidate. The search tool uses top_k=3, so the effective workbench output limit is min(3,
+configured final limit, available candidates). Combined query/passage input includes special tokens; oversized pairs fail without
 truncation. These are operational bounds, not benchmark-selected defaults. Reranking
 requires no reindexing. The model cannot choose providers or resource settings.
 

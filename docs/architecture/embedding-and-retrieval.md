@@ -433,5 +433,6 @@ before inference, preserves original evidence, and reports native logits and sta
 Enabled failure never silently falls back. Workbench composition remains within the existing
 search tool policy/runtime boundary; no model-chosen inference settings or indexing changes.
 See [ADR-012](decisions/ADR-012-local-cross-encoder-reranking.md),
-[reranking API](../api/reranking.md) and the workbench setup guide. Hybrid integration
-and evidence-benchmark comparison remain explicit issue dependencies.
+[reranking API](../api/reranking.md) and the workbench setup guide. A controlled dense-candidate evidence comparison is recorded in
+[the reranking experiment](../experiments/m5-local-reranking.md). Hybrid integration
+remains an explicit issue dependency.

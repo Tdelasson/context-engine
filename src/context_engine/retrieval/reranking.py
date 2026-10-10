@@ -68,7 +68,7 @@ class RerankingRequest:
         for candidate in self.candidates:
             if not isinstance(candidate, RerankingCandidate):
                 raise RerankerConfigurationError("candidates must be RerankingCandidate values.")
-            if not candidate.candidate_id or candidate.candidate_id in identities:
+            if not candidate.candidate_id.strip() or candidate.candidate_id in identities:
                 raise RerankerConfigurationError("Candidates must have unique nonblank identities.")
             if not isinstance(candidate.document.content, str) or not candidate.document.content:
                 raise RerankerConfigurationError("Candidate content must be nonempty text.")
@@ -135,6 +135,10 @@ class RerankingRetriever:
         self._upstream = upstream
         self._reranker = reranker
         self._config = config or RerankingRetrieverConfig()
+        for name in ("model_id", "configuration_id", "score_kind"):
+            value = getattr(reranker, name, None)
+            if not isinstance(value, str) or not value.strip():
+                raise RerankerConfigurationError(f"Reranker {name} must be nonblank.")
 
     def retrieve(self, request: RetrievalRequest) -> tuple[SearchResult, ...]:
         if not request.query.strip():
@@ -167,7 +171,7 @@ class RerankingRetriever:
                 raise RerankerInferenceError("Upstream supplied an invalid score.")
         started = perf_counter()
         try:
-            outputs = tuple(self._reranker.score(scoring_request))
+            outputs = tuple(islice(self._reranker.score(scoring_request), len(candidates) + 1))
         except RerankerError:
             raise
         except Exception as exc:
@@ -180,7 +184,11 @@ class RerankingRetriever:
                 raise RerankerInferenceError("Reranker returned a malformed score record.")
             if output.candidate_id not in expected or output.candidate_id in scores:
                 raise RerankerInferenceError("Reranker returned an unknown or duplicate identity.")
-            if isinstance(output.score, bool) or not isfinite(output.score):
+            if (
+                isinstance(output.score, bool)
+                or not isinstance(output.score, (int, float))
+                or not isfinite(output.score)
+            ):
                 raise RerankerInferenceError("Reranker returned a non-finite score.")
             scores[output.candidate_id] = output.score
         if set(scores) != expected:
