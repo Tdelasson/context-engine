@@ -160,3 +160,18 @@ def test_lexical_tool_registry_schema_and_policy_are_enforced() -> None:
     )
     assert response.status is ToolResultStatus.ERROR
     assert not index.requests
+
+
+@pytest.mark.parametrize("predicates", [(("x",),), ("wrong",), {"x": "y"}])
+def test_malformed_filter_shapes_rejected(predicates: Any) -> None:
+    with pytest.raises(LexicalConfigurationError):
+        LexicalRetriever(lexical_index=FakeIndex()).retrieve(
+            RetrievalRequest("query", metadata_filter=MetadataFilter(predicates))
+        )
+
+
+def test_malformed_result_metadata_rejected() -> None:
+    malformed_metadata: Any = (("bad",),)
+    invalid = SearchResult(Document("chunk", "content", metadata=malformed_metadata), 1.0)
+    with pytest.raises(LexicalIndexError, match="metadata"):
+        LexicalRetriever(lexical_index=FakeIndex((invalid,))).retrieve(RetrievalRequest("q"))
