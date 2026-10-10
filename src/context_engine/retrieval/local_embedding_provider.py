@@ -270,14 +270,19 @@ class _SentenceTransformerEmbeddingBackend:
         model_config.pop("_name_or_path", None)
         model_config.pop("_commit_hash", None)
         digest.update(json.dumps(model_config, sort_keys=True).encode())
+        torch_module = importlib.import_module("torch")
         for name, parameter in self._model.named_parameters():
             digest.update(name.encode())
             digest.update(str(parameter.dtype).encode())
             digest.update(str(tuple(parameter.shape)).encode())
-            import torch
-
             digest.update(
-                parameter.detach().cpu().contiguous().view(-1).view(torch.uint8).numpy().tobytes()
+                parameter.detach()
+                .cpu()
+                .contiguous()
+                .view(-1)
+                .view(torch_module.uint8)
+                .numpy()
+                .tobytes()
             )
         self._counter = TokenizerTokenCounter(
             tokenizer,
