@@ -85,4 +85,4 @@ def test_lexical_strategy_is_application_controlled(monkeypatch: pytest.MonkeyPa
     assert settings.retrieval_strategy == "lexical"
     assert settings.lexical_collection_name == "lexical-test"
     with pytest.raises(WorkbenchConfigurationError):
-        WorkbenchSettings(retrieval_strategy="hybrid")
+        WorkbenchSettings(retrieval_strategy="unsupported")
