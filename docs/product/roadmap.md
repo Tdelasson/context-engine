@@ -418,8 +418,10 @@ The project has measurable retrieval benchmarks and can demonstrate why one retr
 **Status:** In progress. Core text/Markdown processing (#59) is implemented. PDF text-layer
 processing (#60) and deterministic structure-aware chunking (#61) extend that foundation.
 Source-level chunk ingestion, replacement, deletion, and restart recovery (#62) are implemented.
-The chunked dense benchmark (#64), lexical/hybrid retrieval, reranking, and context selection
-remain future work.
+The chunked dense benchmark (#64) now provides pinned evidence-span labels, separate
+development/held-out queries, real MiniLM chunk/model comparisons, and deployed Qdrant
+verification. See the [dense experiment](../experiments/m5-chunked-dense-benchmark.md).
+Lexical/hybrid retrieval, reranking, and context selection remain future work.
 
 ---
 

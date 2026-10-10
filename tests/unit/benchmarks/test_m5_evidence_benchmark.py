@@ -1,6 +1,7 @@
 """Validated corpus and actual M5 boundaries with deterministic embedding fixtures."""
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -90,3 +91,24 @@ def test_stale_processed_text_digest_fails(tmp_path: Path) -> None:
     path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="Stale"):
         load_evidence_dataset(path)
+
+
+def test_unsupported_only_split_has_no_quality_denominator() -> None:
+    dataset = load_evidence_dataset()
+    dataset = replace(
+        dataset, queries=tuple(replace(query, evidence=()) for query in dataset.queries)
+    )
+    run = run_dense_configuration(
+        dataset,
+        provider=FixtureEmbeddingProvider(),
+        dimensions=2,
+        counter=CharacterCounter(),
+        embedding_identity="fixture-v1",
+        chunk_config=ChunkingConfig("fixture-embedding", 96, 0),
+    )
+    assert run["aggregate"]["held_out"]["supported_query_count"] == 0
+    assert run["aggregate"]["held_out"]["macro_evidence_recall_at_k"] == {
+        1: None,
+        5: None,
+        10: None,
+    }
