@@ -15,6 +15,8 @@ class WorkbenchConfigurationError(ValueError):
 class WorkbenchSettings:
     """Typed local dependency and execution settings."""
 
+    retrieval_strategy: str = "dense"
+    lexical_collection_name: str = "context-engine-workbench-m5-bm25-v1"
     model_id: str = "llama3.2:1b"
     ollama_base_url: str = "http://localhost:11434"
     ollama_timeout_seconds: float = 30.0
@@ -58,7 +60,10 @@ class WorkbenchSettings:
             RerankingRetrieverConfig(self.reranking_candidate_limit, self.reranking_final_limit)
         except ValueError as exc:
             raise WorkbenchConfigurationError(str(exc)) from exc
+        if self.retrieval_strategy not in {"dense", "lexical"}:
+            raise WorkbenchConfigurationError("retrieval_strategy must be dense or lexical.")
         string_fields = {
+            "lexical_collection_name": self.lexical_collection_name,
             "model_id": self.model_id,
             "ollama_base_url": self.ollama_base_url,
             "embedding_model_id": self.embedding_model_id,
@@ -104,6 +109,12 @@ class WorkbenchSettings:
         """Build settings from documented environment variables."""
         defaults = cls()
         return cls(
+            retrieval_strategy=os.getenv(
+                "CONTEXT_ENGINE_RETRIEVAL_STRATEGY", defaults.retrieval_strategy
+            ),
+            lexical_collection_name=os.getenv(
+                "CONTEXT_ENGINE_LEXICAL_COLLECTION", defaults.lexical_collection_name
+            ),
             reranking_enabled=_read_bool("CONTEXT_ENGINE_RERANKING_ENABLED", False),
             reranking_model_reference=os.getenv(
                 "CONTEXT_ENGINE_RERANKING_MODEL_REFERENCE", defaults.reranking_model_reference

@@ -17,6 +17,7 @@ from context_engine.retrieval import (
     LocalEmbeddingProvider,
     LocalEmbeddingProviderConfig,
     QdrantVectorStore,
+    Retriever,
     VectorStoreCollectionConfig,
 )
 from context_engine.retrieval.local_cross_encoder import (
@@ -24,7 +25,6 @@ from context_engine.retrieval.local_cross_encoder import (
     LocalCrossEncoderReranker,
 )
 from context_engine.retrieval.reranking import RerankingRetriever, RerankingRetrieverConfig
-from context_engine.retrieval.retriever import Retriever
 from context_engine.tools import AllowAllToolPolicy, ToolRegistry, ToolRuntime
 from context_engine.tools.calculator.tool import Calculator
 from context_engine.tools.retrieval import SearchDocumentsTool
@@ -126,6 +126,18 @@ class WorkbenchApplication:
         )
 
 
+def _build_lexical_retriever(vector_store: QdrantVectorStore) -> Retriever:
+    from context_engine.retrieval.lexical import LexicalRetriever
+    from context_engine.retrieval.qdrant_lexical_index import (
+        QdrantBM25ChunkStore,
+        QdrantLexicalIndex,
+    )
+
+    if not isinstance(vector_store, QdrantBM25ChunkStore):
+        raise ValueError("Lexical composition requires a combined chunk store.")
+    return LexicalRetriever(lexical_index=QdrantLexicalIndex(chunk_store=vector_store))
+
+
 def build_live_workbench(settings: WorkbenchSettings | None = None) -> WorkbenchApplication:
     """Compose live local dependencies behind their existing provider-independent contracts."""
     active_settings = settings or WorkbenchSettings.from_environment()
@@ -150,9 +162,18 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
     except Exception as exc:
         raise WorkbenchDependencyError("embedding", f"{type(exc).__name__}: {exc}") from exc
     try:
-        vector_store = QdrantVectorStore(
+        from context_engine.retrieval.qdrant_lexical_index import QdrantBM25ChunkStore
+
+        store_class: type[QdrantVectorStore] | type[QdrantBM25ChunkStore] = QdrantVectorStore
+        if active_settings.retrieval_strategy == "lexical":
+            store_class = QdrantBM25ChunkStore
+        vector_store = store_class(
             VectorStoreCollectionConfig(
-                collection_name=active_settings.collection_name,
+                collection_name=(
+                    active_settings.lexical_collection_name
+                    if active_settings.retrieval_strategy == "lexical"
+                    else active_settings.collection_name
+                ),
                 embedding_model_id=embedding_provider.model_id,
                 dimensions=embedding_provider.dimensions,
                 index_version=INDEX_VERSION,
@@ -172,9 +193,12 @@ def build_live_workbench(settings: WorkbenchSettings | None = None) -> Workbench
         vector_store=vector_store,
         embedding_identity=embedding_identity,
     )
-    retriever: Retriever = EmbeddingVectorStoreRetriever(
-        embedding_provider=embedding_provider,
-        vector_store=vector_store,
+    retriever: Retriever = (
+        _build_lexical_retriever(vector_store)
+        if active_settings.retrieval_strategy == "lexical"
+        else EmbeddingVectorStoreRetriever(
+            embedding_provider=embedding_provider, vector_store=vector_store
+        )
     )
     try:
         retriever = configure_reranking(retriever, active_settings)

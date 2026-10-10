@@ -445,3 +445,16 @@ queries have separate aggregate denominators; unsupported queries record results
 without undefined recall or inferred abstention. See [ADR-010](decisions/ADR-010-evidence-span-retrieval-evaluation.md)
 and the [recorded dense experiment](../experiments/m5-chunked-dense-benchmark.md).
 M4 document-level results remain historical artifacts.
+
+
+### Standalone lexical retrieval
+
+`LexicalIndex` owns typed text indexing/search/removal capability; `LexicalRetriever`
+implements the existing request/result boundary without embedding inference.
+`QdrantLexicalIndex` provides a lexical view over `QdrantBM25ChunkStore`, the sole
+owner of canonical chunk payload, named dense/sparse vectors, and source journal.
+Compose the shared store with `SourceIngestionCoordinator` for writes and either
+retriever for reads. Filters and committed source revision checks apply to both.
+BM25 strategy/configuration diagnostics are separate from immutable provenance.
+See ADR-011 for tokenizer behavior, version compatibility, and rebuild procedure.
+
