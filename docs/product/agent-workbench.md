@@ -73,7 +73,7 @@ The source list shows chunk counts and ingestion outcomes. Same-name uploads rep
 previous chunks; individual delete and clear actions remove all chunks for the persisted
 uploaded sources, including after restart. Preloaded sources remain indexed.
 
-Context assembly, hybrid retrieval, and reranking remain future work.
+Context assembly and optional reranking remain future work.
 
 ## Verification
 
