@@ -8,6 +8,14 @@ from hashlib import sha256
 from importlib import resources
 from pathlib import PurePath
 
+from context_engine.knowledge.processing import (
+    ProcessingError,
+    ProcessingLimits,
+    SourceFormat,
+    SourceInput,
+    process_source,
+    to_document,
+)
 from context_engine.retrieval import Document, Ingestor, VectorStore
 
 _DEMO_PACKAGE = "context_engine.workbench.demo_documents"
@@ -53,14 +61,21 @@ def load_preloaded_documents() -> tuple[Document, ...]:
     for entry in sorted(package_root.iterdir(), key=lambda item: item.name):
         if not entry.is_file() or PurePath(entry.name).suffix.lower() not in _SUPPORTED_SUFFIXES:
             continue
-        content = entry.read_text(encoding="utf-8")
-        documents.append(
-            Document.from_mapping(
-                document_id=f"preloaded-{PurePath(entry.name).stem}",
-                content=content,
-                metadata={"source_kind": "preloaded", "source_name": entry.name},
+        try:
+            processed = process_source(
+                SourceInput(
+                    source_id=f"preloaded-{PurePath(entry.name).stem}",
+                    source_name=entry.name,
+                    source_kind="preloaded",
+                    content=entry.read_bytes(),
+                    format=SourceFormat.MARKDOWN
+                    if entry.name.endswith(".md")
+                    else SourceFormat.TEXT,
+                )
             )
-        )
+        except ProcessingError as exc:
+            raise WorkbenchDocumentError(str(exc)) from exc
+        documents.append(to_document(processed))
     if not documents:
         raise WorkbenchDocumentError("No preloaded workbench project documents were found.")
     return tuple(documents)
@@ -74,26 +89,25 @@ def construct_uploaded_document(candidate: UploadCandidate, limits: UploadLimits
     suffix = PurePath(normalized_name).suffix.lower()
     if suffix not in _SUPPORTED_SUFFIXES:
         raise WorkbenchDocumentError("Only UTF-8 .txt and .md files are supported.")
-    if not candidate.content:
-        raise WorkbenchDocumentError(f"Uploaded file '{normalized_name}' is empty.")
-    if len(candidate.content) > limits.max_bytes_per_file:
-        raise WorkbenchDocumentError(
-            f"Uploaded file '{normalized_name}' exceeds {limits.max_bytes_per_file} bytes."
-        )
+    # Filename is the logical identity in this UI namespace; bytes identify its revision.
+    digest = sha256(normalized_name.encode("utf-8")).hexdigest()
     try:
-        decoded_content = candidate.content.decode("utf-8-sig")
-    except UnicodeDecodeError as exc:
-        raise WorkbenchDocumentError(
-            f"Uploaded file '{normalized_name}' must contain valid UTF-8 text."
-        ) from exc
-    if not decoded_content.strip():
-        raise WorkbenchDocumentError(f"Uploaded file '{normalized_name}' contains only whitespace.")
-    digest = sha256(normalized_name.encode("utf-8") + b"\0" + candidate.content).hexdigest()[:20]
-    return Document.from_mapping(
-        document_id=f"uploaded-{digest}",
-        content=decoded_content,
-        metadata={"source_kind": "uploaded", "source_name": normalized_name},
-    )
+        processed = process_source(
+            SourceInput(
+                source_id=f"uploaded-{digest}",
+                source_name=normalized_name,
+                source_kind="uploaded",
+                content=candidate.content,
+                format=SourceFormat.MARKDOWN if suffix == ".md" else SourceFormat.TEXT,
+            ),
+            ProcessingLimits(
+                max_bytes=limits.max_bytes_per_file,
+                max_text_characters=limits.max_bytes_per_file,
+            ),
+        )
+    except ProcessingError as exc:
+        raise WorkbenchDocumentError(str(exc)) from exc
+    return to_document(processed)
 
 
 class DocumentCatalog:

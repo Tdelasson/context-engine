@@ -115,3 +115,22 @@ Dependency labels distinguish a configured model from initialized embeddings/vec
 They are not continuous health monitoring. Uploaded-document tracking and displayed runs belong to
 the browser session; Qdrant records persist independently. Clear uploads before closing the session.
 
+
+## Reusable source processing
+
+Uploads and preloaded text/Markdown now use `context_engine.knowledge.processing`.
+The workbench acquires bytes, checks upload filenames and counts, and translates typed
+processing failures into UI errors. The core validates byte and extracted-character
+limits, UTF-8, and nonempty content. Uploads use the configured per-file byte limit as
+both the byte and character cap. Markdown syntax and whitespace remain intact; a leading
+UTF-8 BOM is removed. Each source still becomes one complete retrieval document.
+
+Within the upload catalog, a filename identifies a logical source. Uploading revised
+content under the same name updates that record and does not consume another upload
+slot. SHA-256 revision metadata is separate from source identity. Different filenames
+remain distinct sources. Preloaded IDs stay unchanged. Older persisted content-derived
+upload IDs are not migrated; clear uploads in old sessions before upgrading.
+
+See [ADR-006](../architecture/decisions/ADR-006-knowledge-document-processing.md) for block
+location semantics and the knowledge/retrieval boundary. Chunking and indexing lifecycle
+are separate M5 tasks.
