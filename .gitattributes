@@ -1,0 +1,2 @@
+# PDF evaluation fixtures contain binary-format records, including fixed-width xref entries.
+benchmarks/data/retrieval/**/*.pdf binary

@@ -34,8 +34,13 @@ class SearchDocumentsToolConfig:
     top_k: int = 3
     max_content_chars: int = 2_000
     candidate_limit: int = 20
+    include_ranking_diagnostics: bool = True
 
     def __post_init__(self) -> None:
+        if type(self.include_ranking_diagnostics) is not bool:
+            raise SearchDocumentsToolConfigurationError(
+                "include_ranking_diagnostics must be a bool."
+            )
         if type(self.candidate_limit) is not int or not 1 <= self.candidate_limit <= 1000:
             raise SearchDocumentsToolConfigurationError("candidate_limit must be in [1, 1000].")
         if isinstance(self.top_k, bool) or not isinstance(self.top_k, int) or self.top_k <= 0:
@@ -84,6 +89,9 @@ class SearchDocumentsTool:
                 ),
                 evidence_counter,
                 lambda result: self._serialize_result(result, preserve_content=True),
+                serializer_identity=None
+                if self._config.include_ranking_diagnostics
+                else "search-documents-without-ranking-diagnostics-v1",
             )
             if selection_config is not None and evidence_counter is not None
             else None
@@ -122,6 +130,12 @@ class SearchDocumentsTool:
                     "counter_id": self._selector.counter.configuration_id,
                     "counting_method": self._selector.counter.method,
                     "answering_model": self._selector.counter.model_id,
+                    "include_ranking_diagnostics": self._config.include_ranking_diagnostics,
+                    "ranking_diagnostics": {
+                        result.document.document_id: [asdict(stage) for stage in result.diagnostics]
+                        for result in selection.selected
+                        if result.diagnostics
+                    },
                     "candidates": [asdict(item) for item in selection.diagnostics],
                 },
             }
@@ -167,7 +181,7 @@ class SearchDocumentsTool:
             "content_truncated": len(content) > len(bounded_content),
             "metadata": metadata,
         }
-        if result.diagnostics:
+        if result.diagnostics and self._config.include_ranking_diagnostics:
             serialized["diagnostics"] = [
                 _normalize_json_mapping(asdict(stage), path="diagnostics")
                 for stage in result.diagnostics

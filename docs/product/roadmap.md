@@ -429,8 +429,11 @@ See the [lexical](../experiments/m5-lexical-retrieval-benchmark.md),
 default. Optional deterministic evidence selection and token budgeting (#69) now preserve
 whole passages within a pinned answering-tokenizer JSON budget; see the
 [selection comparison](../experiments/m5-evidence-selection.md) for measured regressions
-and full-request budgeting limitations. M5 remains in progress; query transformation and
-broader retrieval evaluation have not been implemented by this change.
+and full-request budgeting limitations. M5 remains in progress. The #77–#79 follow-up adds a broader authored technical
+dataset, staged evidence ablations and actual-runtime answer evaluation tooling;
+independent annotation/answer review remains pending. See the
+[staged evaluation report](../experiments/english-technical-rag-evaluation.md).
+Query transformation remains unimplemented; runtime/load measurements (#80) are deferred.
 
 ---
 

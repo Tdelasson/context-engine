@@ -284,3 +284,14 @@ accumulate evidence in history. The application/request owner still owns full-re
 this setting is not a model-context guarantee. See
 [the selection benchmark](../experiments/m5-evidence-selection.md) and ADR-014 for measured
 coverage regressions and limits. Selection and reranking remain optional, with dense default.
+
+## Opt-in quality evaluation
+
+The English technical-document evaluation suite exercises the workbench's existing
+retrieval/tool/model boundaries through standalone benchmark runners. It includes
+staged evidence comparisons and an actual Ollama answer runner with request traces,
+prior chat scenarios, repeated calls, and explicit human scoring. Authored labels
+and pending answers are not certified ground truth or answer accuracy. See
+[the evaluation report](../experiments/english-technical-rag-evaluation.md) and
+[answer review rubric](../experiments/rag-answer-review-rubric.md). Runtime latency,
+memory and load measurements are deferred to #80.
