@@ -100,7 +100,12 @@ def validate_lexical_request(request: RetrievalRequest) -> None:
         if not isinstance(request.metadata_filter, MetadataFilter):
             raise LexicalConfigurationError("metadata_filter must be a MetadataFilter.")
         keys = []
-        for key, value in request.metadata_filter.equals:
+        if not isinstance(request.metadata_filter.equals, tuple):
+            raise LexicalConfigurationError("Metadata predicates must be a tuple.")
+        for predicate in request.metadata_filter.equals:
+            if not isinstance(predicate, tuple) or len(predicate) != 2:
+                raise LexicalConfigurationError("Metadata predicates require key/value pairs.")
+            key, value = predicate
             if (
                 not isinstance(key, str)
                 or not key.strip()
@@ -136,6 +141,16 @@ class LexicalRetriever(Retriever):
                 or result.score < 0
             ):
                 raise LexicalIndexError("Lexical index returned an invalid record or BM25 score.")
+            try:
+                metadata = result.document.metadata_as_mapping()
+            except (ValueError, TypeError) as exc:
+                raise LexicalIndexError("Lexical index returned malformed metadata.") from exc
+            if any(not isinstance(key, str) for key in metadata):
+                raise LexicalIndexError("Lexical result metadata needs string keys.")
+            if not isinstance(result.diagnostics, tuple) or any(
+                not isinstance(stage, RetrievalStageDiagnostic) for stage in result.diagnostics
+            ):
+                raise LexicalIndexError("Lexical index returned malformed diagnostics.")
         if len(results) > request.top_k or len({r.document.document_id for r in results}) != len(
             results
         ):
