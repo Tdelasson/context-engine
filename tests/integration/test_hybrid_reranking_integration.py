@@ -32,6 +32,7 @@ def test_native_hybrid_local_reranking_runtime() -> None:
     reference = os.getenv("CONTEXT_ENGINE_RERANKING_INTEGRATION_MODEL")
     if not reference or os.getenv("CONTEXT_ENGINE_RUN_QDRANT_LEXICAL_INTEGRATION") != "1":
         pytest.skip("Opt in to native Qdrant tests and supply a prepared offline reranking model.")
+    assert reference is not None
     chunker = StructureAwareChunker(ChunkingConfig("fixture-embedding", 240, 0), CharacterCounter())
     store = QdrantBM25ChunkStore(
         VectorStoreCollectionConfig(

@@ -51,6 +51,12 @@ def test_recorded_rankings_use_identical_saved_evidence(report_path: Path) -> No
             candidates = tuple(SearchResult(documents[r["document_id"]], r["score"]) for r in saved)
             assert row["candidate_ids"] == [r.document.document_id for r in candidates]
             assert row["candidate_count"] == len(candidates)
+            candidate_metrics = asdict(
+                evaluate_evidence_query(
+                    candidates, query.evidence, k_values=(configuration["candidate_limit"],)
+                )
+            )
+            assert json.loads(json.dumps(candidate_metrics)) == row["candidate_metrics"]
             before = asdict(
                 evaluate_evidence_query(candidates[:5], query.evidence, k_values=(1, 3, 5))
             )
