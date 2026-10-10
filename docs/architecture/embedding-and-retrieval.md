@@ -436,3 +436,12 @@ See [ADR-012](decisions/ADR-012-local-cross-encoder-reranking.md),
 [reranking API](../api/reranking.md) and the workbench setup guide. A controlled dense-candidate evidence comparison is recorded in
 [the reranking experiment](../experiments/m5-local-reranking.md). Hybrid integration
 remains an explicit issue dependency.
+## M5 evidence-level benchmark
+
+The chunked dense benchmark labels supporting spans in canonical processed source
+text, binding source identity and revision rather than chunk IDs. Overlapping chunk
+copies and multi-page spans use cumulative union coverage. Development and held-out
+queries have separate aggregate denominators; unsupported queries record results
+without undefined recall or inferred abstention. See [ADR-010](decisions/ADR-010-evidence-span-retrieval-evaluation.md)
+and the [recorded dense experiment](../experiments/m5-chunked-dense-benchmark.md).
+M4 document-level results remain historical artifacts.

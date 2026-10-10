@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
+import os
 import platform
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
@@ -244,16 +246,41 @@ def run_dense_configuration(
                     row["split"] == split and not row["metrics"]["supported"] for row in rows
                 ),
                 "macro_evidence_recall_at_k": {
-                    k: mean(row["metrics"]["recall_at_k"][k] for row in supported) for k in k_values
+                    k: (
+                        mean(row["metrics"]["recall_at_k"][k] for row in supported)
+                        if supported
+                        else None
+                    )
+                    for k in k_values
+                },
+                "macro_character_coverage_at_k": {
+                    k: (
+                        mean(mean(row["metrics"]["coverage_at_k"][k].values()) for row in supported)
+                        if supported
+                        else None
+                    )
+                    for k in k_values
                 },
                 "all_required_rate_at_k": {
-                    k: mean(row["metrics"]["all_required_at_k"][k] for row in supported)
+                    k: (
+                        mean(row["metrics"]["all_required_at_k"][k] for row in supported)
+                        if supported
+                        else None
+                    )
                     for k in k_values
                 },
             }
         chunk_count = sum(outcome.chunk_count for outcome in outcomes)
         return {
             "cleanup_errors": cleanup_errors,
+            "coverage_threshold": 1.0,
+            "k_values": list(k_values),
+            "collection_name": config.collection_name,
+            "collection_cleanup": (
+                "source records deleted; Qdrant collection and tombstones retained"
+                if backend == "qdrant-server"
+                else "in-memory store released after run"
+            ),
             "query_prefix": query_prefix,
             "retrieved_token_measurement": (
                 "sum of independently tokenized passage content "
@@ -312,17 +339,35 @@ def main() -> None:
             "python": platform.python_version(),
             "platform": platform.platform(),
             "processor": platform.processor(),
+            "cpu_count": os.cpu_count(),
+            "omp_threads": os.getenv("OMP_NUM_THREADS"),
+            "mkl_threads": os.getenv("MKL_NUM_THREADS"),
+            "packages": {
+                name: importlib.metadata.version(name)
+                for name in ("sentence-transformers", "torch", "transformers", "pypdf")
+            },
         },
         "runs": [],
         "failures": [],
     }
     try:
+        initialization_started = perf_counter()
         provider = LocalEmbeddingProvider(
             LocalEmbeddingProviderConfig(
                 args.model_id, args.model_reference, normalize_embeddings=True
             )
         )
+        output["model"] = {
+            "model_id": args.model_id,
+            "model_reference": args.model_reference,
+            "parameter_bytes": provider.model_parameter_bytes,
+            "initialization_seconds": perf_counter() - initialization_started,
+            "query_prefix": "",
+            "document_prefix": "",
+            "normalize_embeddings": True,
+        }
         counter = provider.build_token_counter()
+        output["model"]["runtime_max_input_tokens"] = counter.max_input_tokens
         for setting in args.chunk_settings.split(","):
             size, overlap = (int(value) for value in setting.split(":"))
             try:
