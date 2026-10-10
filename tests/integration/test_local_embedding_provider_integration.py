@@ -64,3 +64,36 @@ def test_local_embedding_provider_with_real_model() -> None:
     assert document_embeddings[0].dimensions > 0
     assert document_embeddings[0].dimensions == document_embeddings[1].dimensions
     assert document_embeddings[0].dimensions == query_embedding.dimensions
+
+
+def test_loaded_embedding_runtime_binds_exact_chunk_budget_and_index_identity() -> None:
+    from context_engine.knowledge.chunking import ChunkingConfig, StructureAwareChunker
+    from context_engine.knowledge.processing import SourceFormat, SourceInput, process_source
+
+    _skip_unless_local_embedding_enabled()
+    provider = _build_local_provider()
+    counter = provider.build_token_counter()
+    chunker = StructureAwareChunker(
+        ChunkingConfig(
+            provider.model_id,
+            min(128, counter.max_input_tokens),
+            0,
+            document_prefix=os.getenv("CONTEXT_ENGINE_EMBEDDING_DOCUMENT_PREFIX", ""),
+        ),
+        counter,
+    )
+    processed = process_source(
+        SourceInput(
+            "live-budget",
+            "budget.txt",
+            b"Embedding inputs must not be silently truncated. " * 100,
+            SourceFormat.TEXT,
+        )
+    )
+    chunks = chunker.chunk(processed)
+    assert len(chunks) > 1
+    assert all(chunk.token_count <= chunk.config.max_input_tokens for chunk in chunks)
+    assert len(provider.embed_documents(tuple(chunk.to_document() for chunk in chunks))) == len(
+        chunks
+    )
+    assert provider.indexing_identity == _build_local_provider().indexing_identity

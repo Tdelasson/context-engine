@@ -21,10 +21,10 @@ def main() -> None:
     st: Any = importlib.import_module("streamlit")
     st.set_page_config(page_title="Context Engine Agent Workbench", page_icon="⚙️", layout="wide")
     st.title("Context Engine Agent Workbench")
-    st.caption("LIVE · LOCAL · M3 deterministic tools + M4 tool-mediated retrieval")
+    st.caption("LIVE · LOCAL · deterministic tools + M5 chunked retrieval")
     st.info(
-        "Tool-mediated retrieval is implemented. Automatic context assembly, chunking, "
-        "reranking, and advanced RAG remain future M5/M6 work."
+        "Source processing, chunking, replacement, and deletion are implemented. "
+        "Automatic context assembly, hybrid retrieval, and reranking remain future work."
     )
 
     application = _get_application(st)
@@ -63,10 +63,30 @@ def _get_application(st: Any) -> WorkbenchApplication | None:
 def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
     with st.sidebar:
         st.header("Documents")
-        st.success(f"{len(application.documents.preloaded_documents)} project documents ready")
-        for document in application.documents.preloaded_documents:
-            source_name = document.metadata_as_mapping().get("source_name", document.document_id)
-            st.caption(f"Preloaded · {source_name}")
+        try:
+            preloaded = application.documents.preloaded_sources
+            application.documents.uploaded_sources
+        except Exception as exc:
+            st.error(f"Source index unavailable: {type(exc).__name__}: {exc}")
+            if st.button("Recover source index"):
+                try:
+                    application.prepare()
+                except Exception as recovery_error:
+                    st.error(f"Source recovery failed: {recovery_error}")
+                else:
+                    st.rerun()
+            return
+        st.success(f"{len(preloaded)} project sources ready")
+        if any(outcome.recovered for outcome in application.documents.recovery_outcomes):
+            if any(
+                outcome.status.value == "failed"
+                for outcome in application.documents.recovery_outcomes
+            ):
+                st.warning("Interrupted source changes were rolled back. Retry affected uploads.")
+            else:
+                st.caption("Interrupted source changes were recovered.")
+        for source in preloaded:
+            st.caption(f"Preloaded · {source.source_name} · {len(source.chunk_ids)} chunks")
 
         uploaded_files = st.file_uploader(
             "Upload UTF-8 text, Markdown, or text-based PDF",
@@ -95,11 +115,29 @@ def _render_sidebar(st: Any, application: WorkbenchApplication) -> None:
                 except Exception as exc:
                     st.error(f"Document ingestion failed: {type(exc).__name__}: {exc}")
                 else:
-                    st.success(f"Ingested {len(document_ids)} uploaded document(s).")
+                    st.success(
+                        f"Indexed {len(document_ids)} uploaded source(s), "
+                        f"{application.documents.last_report.chunk_count} chunks."
+                    )
+                    for outcome in application.documents.last_report.outcomes:
+                        st.caption(f"{outcome.status.value} · {outcome.chunk_count} chunks")
 
-        for document in application.documents.uploaded_documents:
-            source_name = document.metadata_as_mapping().get("source_name", document.document_id)
-            st.caption(f"Uploaded · {source_name}")
+        try:
+            uploaded_sources = application.documents.uploaded_sources
+        except Exception as exc:
+            st.error(f"Source index unavailable: {exc}. Reload to recover.")
+            return
+
+        for source in uploaded_sources:
+            st.caption(f"Uploaded · {source.source_name} · {len(source.chunk_ids)} chunks")
+            if st.button(f"Delete {source.source_name}", key=f"delete-source-{source.source_id}"):
+                try:
+                    application.documents.delete_upload(source.source_id)
+                except Exception as exc:
+                    st.error(f"Source deletion failed: {exc}")
+                    return
+                else:
+                    st.rerun()
         for source_name, diagnostic in application.documents.upload_diagnostics:
             st.warning(f"{source_name}: {diagnostic.message}")
         if st.button("Clear uploaded documents", width="stretch"):

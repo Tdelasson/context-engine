@@ -61,3 +61,18 @@ def test_invalid_pdf_limits_rejected(field: str) -> None:
             WorkbenchSettings(max_pdf_pages=0)
         else:
             WorkbenchSettings(max_pdf_text_characters=0)
+
+
+@pytest.mark.parametrize(
+    ("limit", "overlap"), [(128, -1), (128, 128), (0, 0), (True, 0), (128, True)]
+)
+def test_invalid_chunk_settings_are_rejected(limit: int, overlap: int) -> None:
+    with pytest.raises(WorkbenchConfigurationError):
+        WorkbenchSettings(chunk_max_input_tokens=limit, chunk_overlap_tokens=overlap)
+
+
+def test_chunk_environment_settings_are_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CONTEXT_ENGINE_WORKBENCH_CHUNK_TOKENS", "96")
+    monkeypatch.setenv("CONTEXT_ENGINE_WORKBENCH_CHUNK_OVERLAP_TOKENS", "0")
+    settings = WorkbenchSettings.from_environment()
+    assert settings.chunk_max_input_tokens == 96 and settings.chunk_overlap_tokens == 0

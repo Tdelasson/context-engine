@@ -417,8 +417,9 @@ The project has measurable retrieval benchmarks and can demonstrate why one retr
 
 **Status:** In progress. Core text/Markdown processing (#59) is implemented. PDF text-layer
 processing (#60) and deterministic structure-aware chunking (#61) extend that foundation.
-Chunk indexing lifecycle, sparse/hybrid retrieval, reranking, context selection, and M5
-retrieval-quality comparisons remain future work.
+Source-level chunk ingestion, replacement, deletion, and restart recovery (#62) are implemented.
+The chunked dense benchmark (#64), lexical/hybrid retrieval, reranking, and context selection
+remain future work.
 
 ---
 
@@ -740,6 +741,7 @@ Context Engine v1.0 should demonstrate:
 
 **Next milestone:**
 
-* [ ] Plan and implement M5 document processing and chunking using the existing retrieval contracts.
+* [x] M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62).
+* [ ] Establish the M5 chunked dense benchmark (#64).
 * [ ] Add and benchmark sparse/hybrid retrieval, reranking, and context selection against the M4 dense baseline.
 * [ ] Keep automatic context assembly and lifecycle integration in M6 and the broader evaluation/MLOps framework in M9.

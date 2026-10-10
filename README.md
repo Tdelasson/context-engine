@@ -29,7 +29,9 @@ structured results to the model. Approval support is available in the runtime ab
 
 M4 delivered the semantic retrieval foundation: provider-independent embeddings, local embedding
 inference, Qdrant-backed vector storage, metadata filtering, retrieval, and a small model-independent
-retrieval benchmark. Chunking, hybrid retrieval, reranking, and context selection are next in M5.
+retrieval benchmark. M5 adds processing, PDF extraction, exact-token chunking, and durable
+source replacement/deletion. The chunked dense benchmark, hybrid retrieval, reranking, and
+context selection are next. See [source ingestion](docs/api/source-ingestion.md).
 
 The M4 benchmark selected `sentence-transformers/all-MiniLM-L6-v2` as the initial default embedding
 model for the recorded local CPU environment. See the generated

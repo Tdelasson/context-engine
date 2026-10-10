@@ -151,3 +151,36 @@ def test_local_provider_surfaces_backend_initialization_errors() -> None:
 
     with pytest.raises(LocalEmbeddingProviderInitializationError, match="Failed to initialize"):
         LocalEmbeddingProvider(config, backend_factory=_failing_factory)
+
+
+def test_exact_counter_requires_backend_capability() -> None:
+    provider = _build_provider()
+    with pytest.raises(LocalEmbeddingProviderConfigurationError, match="exact token"):
+        provider.build_token_counter()
+
+
+def test_index_identity_tracks_preprocessing_not_batch_size() -> None:
+    from dataclasses import replace
+
+    from tests.source_index_fixtures import CharacterCounter
+
+    class CounterBackend(_FakeBackend):
+        def build_token_counter(self) -> CharacterCounter:
+            return CharacterCounter()
+
+    backend = CounterBackend()
+    config = LocalEmbeddingProviderConfig(backend.model_id, "local/model")
+    original = LocalEmbeddingProvider(config, backend_factory=lambda _: backend)
+    moved = LocalEmbeddingProvider(
+        replace(config, model_reference="other/path", batch_size=1),
+        backend_factory=lambda _: backend,
+    )
+    normalized = LocalEmbeddingProvider(
+        replace(config, normalize_embeddings=True), backend_factory=lambda _: backend
+    )
+    prefixed = LocalEmbeddingProvider(
+        replace(config, document_prefix="doc: "), backend_factory=lambda _: backend
+    )
+    assert original.indexing_identity == moved.indexing_identity
+    assert original.indexing_identity != normalized.indexing_identity
+    assert original.indexing_identity != prefixed.indexing_identity

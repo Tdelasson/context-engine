@@ -413,3 +413,14 @@ See [processing API](../api/document-processing.md),
 [ADR-006](decisions/ADR-006-knowledge-document-processing.md),
 [ADR-007](decisions/ADR-007-pdf-text-extraction.md), and
 [ADR-008](decisions/ADR-008-structure-aware-document-chunking.md).
+
+## M5 source indexing lifecycle
+
+M5 workbench ingestion processes supplied text/Markdown/PDF sources, chunks with the
+loaded embedding tokenizer, and uses `SourceIngestionCoordinator` for durable source
+replacement/deletion. `SourceLifecycleStore` persists source manifests alongside chunk
+records; Qdrant excludes manifests from retrieval and fails closed for pending mutations.
+M4 whole-document `Ingestor` and benchmark artifacts remain available separately.
+See [ADR-009](decisions/ADR-009-source-index-lifecycle.md) and the
+[source ingestion API](../api/source-ingestion.md) for recovery, single-writer limits,
+index version compatibility, and rebuild instructions.

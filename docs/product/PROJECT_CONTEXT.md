@@ -102,7 +102,8 @@ The integrated Agent Workbench (#53, PR #57) is merged. It supports live local m
 deterministic document search/calculation, uploads, evidence, and execution traces through Streamlit.
 See `docs/product/agent-workbench.md` for setup, behavior, failure guidance, and live verification.
 
-Next is M5 document processing and chunking, followed by measured retrieval improvements.
+M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62) are implemented.
+Next is the chunked dense benchmark (#64), followed by measured retrieval improvements.
 Automatic context assembly remains M6 work.
 
 ## M4 Candidate Models
