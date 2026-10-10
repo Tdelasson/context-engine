@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
+from context_engine.retrieval.diagnostics import RetrievalStageDiagnostic
 from context_engine.retrieval.embeddings import Document, Embedding
 
 
@@ -108,6 +109,7 @@ class SearchResult:
 
     document: Document
     score: float
+    diagnostics: tuple[RetrievalStageDiagnostic, ...] = ()
 
 
 @runtime_checkable

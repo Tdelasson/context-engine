@@ -170,3 +170,30 @@ See the [PDF API](../api/pdf-processing.md) and
 text/PDF processing, chunk coverage and token limits, embedding composition, page provenance
 in search evidence, and tool policy enforcement. They use controlled model/tokenizer fixtures;
 live inference and retrieval-quality benchmarking remain separate checks.
+
+### Lexical BM25 backend
+
+Set `CONTEXT_ENGINE_RETRIEVAL_STRATEGY=lexical` to compose standalone lexical search
+through the same registered `search_documents` tool and policy/runtime boundary.
+Dense remains the default (`dense`). Lexical uses a separate explicitly named
+combined collection: `CONTEXT_ENGINE_LEXICAL_COLLECTION` defaults to
+`context-engine-workbench-m5-bm25-v1`. Upload/replacement/deletion/recovery operate
+on this selected collection. Switching strategy selects that collection; reingest
+sources to compare the same corpus. No backend settings are model-controlled.
+
+Run a loopback Qdrant >=1.16.3 server with qdrant-client >=1.16. There is no BM25
+model download or hosted inference. Lexical mode still uses the embedding model
+for chunking and shared dense+lexical ingestion, while lexical queries themselves
+perform no embedding inference. Rebuild into a new collection after server,
+BM25, tokenizer, chunking, or embedding configuration changes (ADR-011).
+
+Opt-in actual native tokenization/lifecycle verification:
+
+```bash
+CONTEXT_ENGINE_RUN_QDRANT_LEXICAL_INTEGRATION=1 pytest tests/integration/test_qdrant_lexical_integration.py
+```
+
+The paired `benchmarks/benchmark_lexical_retrieval.py` runner uses the #64 evidence
+corpus, identical committed chunks, the same metadata/source visibility, and
+both retrievers. It records evidence metrics, search latency, and combined indexing
+cost; fixture tests are not performance measurements.
