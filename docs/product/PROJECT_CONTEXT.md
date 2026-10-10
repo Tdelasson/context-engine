@@ -103,7 +103,14 @@ deterministic document search/calculation, uploads, evidence, and execution trac
 See `docs/product/agent-workbench.md` for setup, behavior, failure guidance, and live verification.
 
 M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62) are implemented.
-Next is the chunked dense benchmark (#64), followed by measured retrieval improvements.
+The chunked dense benchmark (#64, PR #71) is implemented, with pinned source evidence spans,
+development/held-out queries, recorded MiniLM chunk/model comparisons, and deployed Qdrant
+verification. See [the dense benchmark report](../experiments/m5-chunked-dense-benchmark.md)
+for results, failure analysis, and measurement limits. Retrieval defaults are unchanged.
+Lexical BM25 (#66, PR #72), hybrid reciprocal rank fusion (#67, PR #74), and optional local
+cross-encoder reranking (#68, PR #73) are implemented with recorded comparisons against
+the evidence-span benchmark. Dense retrieval remains the default. Deterministic evidence
+selection and application-controlled token budgeting (#69) remain unimplemented.
 Automatic context assembly remains M6 work.
 
 ## M4 Candidate Models
