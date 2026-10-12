@@ -1,5 +1,11 @@
 # Staged English technical-workbench RAG evaluation
 
+**Historical v1 report.** The 2026-10-12 evidence review corrected these draft
+labels. Consult the [review findings and v2 rescored results](technical-evidence-review.md)
+for current measurements; the original labels/artifacts below remain preserved.
+No retrieval settings were retuned. The runner now defaults to v2, so reproducing
+this report requires explicitly selecting the original v1 manifest.
+
 Recorded for #77–#79 on 2026-10-10. This extends quality evaluation; #80's runtime
 latency, memory, capacity and load measurements remain deferred.
 
@@ -235,6 +241,7 @@ Set local snapshot directories and isolated server URLs explicitly:
 ```bash
 export PYTHONPATH=src OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 TOKENIZERS_PARALLELISM=false
 python -m benchmarks.benchmark_rag_ablation \
+  --dataset benchmarks/data/retrieval/technical-v1/dataset.json \
   --embedding-reference "$L6_SNAPSHOT" --tokenizer-directory "$QWEN_TOKENIZER" \
   --qdrant-url "$EVALUATION_QDRANT_URL" --reranking-reference "$RERANKER_SNAPSHOT" \
   --output /tmp/technical-v1-qdrant.json.gz
@@ -251,6 +258,7 @@ python -m benchmarks.benchmark_rag_ablation \
 python -m benchmarks.benchmark_selection_stress \
   --tokenizer-directory "$QWEN_TOKENIZER" --output /tmp/selection-stress.json
 python -m benchmarks.benchmark_rag_answers \
+  --dataset benchmarks/data/retrieval/technical-v1/dataset.json \
   --embedding-reference "$L6_SNAPSHOT" --tokenizer-directory "$QWEN_TOKENIZER" \
   --ollama-url "$EVALUATION_OLLAMA_URL" --split all --budget 4096 --threshold none \
   --omit-ranking-diagnostics --answer-tokens 256 --max-iterations 4 \

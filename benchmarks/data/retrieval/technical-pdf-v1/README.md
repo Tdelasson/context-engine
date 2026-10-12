@@ -1,5 +1,12 @@
 # Published technical PDF diagnostic v1
 
+The original `dataset.json` and v1 artifacts are preserved. `dataset-v2.json` records
+the 2026-10-12 AI evidence-review corrections without changing PDF bytes, extraction,
+questions or splits. For v2 runs, explicitly supply that manifest. AI self-review
+is recorded separately from the still-pending independent review. See the
+[current review packet](../../../../docs/experiments/technical-pdf-v2-annotation-review.md)
+and [review findings](../../../../docs/experiments/technical-evidence-review.md).
+
 This separate suite contains 12 draft questions over two licensed, published Python
 3.11.0 PDFs: the tutorial's virtual-environment chapter (original PDF pages 101–103)
 and the complete 12-page argparse tutorial. Original page objects, fonts, diagrams

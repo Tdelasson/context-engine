@@ -21,7 +21,7 @@ from context_engine.retrieval.evidence_evaluation import (
     validate_evidence,
 )
 
-DEFAULT_TECHNICAL_DATASET = Path(__file__).parent / "data/retrieval/technical-v1/dataset.json"
+DEFAULT_TECHNICAL_DATASET = Path(__file__).parent / "data/retrieval/technical-v1/dataset-v2.json"
 
 
 @dataclass(frozen=True)

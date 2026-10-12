@@ -1,4 +1,14 @@
-# English technical-workbench evaluation v1
+# English technical-workbench evaluation: immutable v1 and corrected v2
+
+`dataset.json` preserves the original v1 labels and historical results.
+`dataset-v2.json` is the 2026-10-12 AI evidence-review revision and is the current
+runner default. It uses identical source bytes, questions, groups and splits.
+Every query records its AI self-review decision and rationale separately from the
+unchanged independent-review fields. No independent or human approval is claimed.
+The [review findings and rescored results](../../../../docs/experiments/technical-evidence-review.md)
+explain the corrections; the [current packet](../../../../docs/experiments/technical-v2-annotation-review.md)
+includes exact labelled text and surrounding context. Historical v1 reproduction
+must explicitly pass `--dataset benchmarks/data/retrieval/technical-v1/dataset.json`.
 
 This dataset targets English API documentation search in the current workbench.
 It contains 24 original CPython 3.14.0 standard-library documentation files, four
@@ -56,6 +66,9 @@ Annotations were authored by Codex and checked against pinned source text, but a
 establish semantic correctness. The concrete [review packet](../../../../docs/experiments/technical-v1-annotation-review.md)
 contains every query, reference fact and alternative location.
 Generate it with `python -m benchmarks.review_rag_dataset --output /path/review.md`.
+That command now produces v2; explicitly supply the v1 manifest to regenerate its
+historical packet. The machine-readable review ledger is
+`../evidence-review-2026-10-12.json`.
 
 An independent reviewer checks the full question, reference fact, source context,
 all alternative spans, answerability, category and split grouping. Record notes and

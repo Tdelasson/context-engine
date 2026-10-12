@@ -69,3 +69,9 @@ review is an explicit remaining evaluation step, not a loader or test-suite resu
 The dataset is a bounded public-document workload and includes synthetic stress
 cases. It does not certify private production documents or choose defaults by itself.
 No latency, memory, capacity or load benchmark is added; those measurements remain #80.
+
+Evidence-label repairs are published as new manifests while preserving the original
+labels/artifacts. AI self-review records are separate from independent approval.
+Replay may regrade unchanged candidates and delivered passages, verifying identities
+and counts; it must not retune against the already-inspected held-out set or silently
+carry answer-review approval across changed reference requirements.

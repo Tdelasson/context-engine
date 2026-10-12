@@ -15,6 +15,7 @@ from benchmarks.technical_dataset import (
     load_technical_dataset,
     measure_evidence,
 )
+from context_engine.retrieval import SearchResult
 from context_engine.retrieval.evidence_evaluation import EvidenceItem, EvidenceSpan
 from tests.unit.retrieval.test_evidence_selection import candidate
 
@@ -123,3 +124,116 @@ def test_published_pdf_diagnostic_pins_layout_and_canonical_spans() -> None:
     assert {q.split for q in dataset.queries} == {"development", "held_out"}
     assert all(q.answerable and q.review_status == "draft" for q in dataset.queries)
     assert {s.provenance.format.value for s in dataset.corpus.processed_sources} == {"pdf"}
+
+
+def test_ai_review_preserves_original_corpus_and_does_not_claim_independence() -> None:
+    for folder in ("technical-v1", "technical-pdf-v1"):
+        directory = DEFAULT_TECHNICAL_DATASET.parent.parent / folder
+        before = json.loads((directory / "dataset.json").read_text())
+        after = json.loads((directory / "dataset-v2.json").read_text())
+        assert before["dataset_id"] != after["dataset_id"]
+        assert before["sources"] == after["sources"]
+        assert len(before["queries"]) == len(after["queries"])
+        for old, new in zip(before["queries"], after["queries"], strict=True):
+            assert all(old[k] == new[k] for k in ("query_id", "text", "group", "split"))
+            assert old["review"] == new["review"]
+            assert new["ai_review"]["status"] == "reviewed"
+            assert new["ai_review"]["reviewer_kind"] == "ai-self-review"
+        assert (
+            dataset_summary(load_technical_dataset(directory / "dataset-v2.json"))[
+                "independently_approved"
+            ]
+            == 0
+        )
+
+
+def test_named_api_evidence_needs_identity_and_actual_behaviour() -> None:
+    dataset = load_technical_dataset()
+    query = next(q for q in dataset.queries if q.query_id == "json-dumps")
+    declaration, behaviour = query.requirements[0].alternatives[0].spans
+    source = next(
+        s
+        for s in dataset.corpus.processed_sources
+        if s.provenance.source_id == declaration.source_id
+    )
+
+    def passage(span: EvidenceSpan) -> SearchResult:
+        return candidate(
+            start=span.start_offset,
+            end=span.end_offset,
+            identity=str(span.start_offset),
+            source=span.source_id,
+            revision=span.content_sha256,
+            text=source.text[span.start_offset : span.end_offset],
+        )
+
+    # A description omitting which API it describes cannot answer "which function".
+    description = passage(behaviour)
+    identity = passage(declaration)
+    assert not measure_evidence([description], query)["all_required"]
+    assert measure_evidence([identity, description], query)["all_required"]
+
+
+def test_review_fixes_missing_contracts_and_wrong_pdf_error() -> None:
+    dataset = load_technical_dataset()
+    sources = {s.provenance.source_id: s.text for s in dataset.corpus.processed_sources}
+    queries = {q.query_id: q for q in dataset.queries}
+
+    def excerpts(query: TechnicalQuery) -> str:
+        return "\n".join(
+            sources[s.source_id][s.start_offset : s.end_offset]
+            for r in query.requirements
+            for a in r.alternatives
+            for s in a.spans
+        )
+
+    assert ".read()" in excerpts(queries["json-load"])
+    assert ".write()" not in excerpts(queries["json-load"])
+    assert "responsible" in excerpts(queries["tempfile-mkstemp"])
+    assert "permission" in excerpts(queries["shutil-copy"])
+    assert "unrecognized arguments" in excerpts(queries["argparse-parse_known_args"])
+    path = DEFAULT_TECHNICAL_DATASET.parent.parent / "technical-pdf-v1/dataset-v2.json"
+    pdf = load_technical_dataset(path)
+    sources = {s.provenance.source_id: s.text for s in pdf.corpus.processed_sources}
+    count = next(q for q in pdf.queries if q.query_id == "pdf-argparse-count")
+    assert len(count.requirements) == 2
+    assert "'NoneType' and 'int'" in excerpts(count)
+    assert "unsupported operand type(s) for **" not in excerpts(count)
+
+
+def test_review_packet_shows_canonical_text_and_pending_human_review() -> None:
+    from benchmarks.review_rag_dataset import review_packet
+
+    packet = review_packet()
+    assert "Labelled source text:" in packet
+    assert "Surrounding canonical source context:" in packet
+    assert "Independent human approval remains pending" in packet
+    assert "Which json function returns a JSON string rather than writing to a stream?" in packet
+
+
+def test_answer_evidence_replay_preserves_actual_observations(tmp_path: Path) -> None:
+    from benchmarks.evaluation_artifacts import read_artifact, write_artifact
+    from benchmarks.replay_answer_evidence import replay
+
+    original_path = (
+        DEFAULT_TECHNICAL_DATASET.parents[3] / "results/technical-v1-answers-qwen-05b.json.gz"
+    )
+    original = read_artifact(original_path)
+    updated = replay(original_path, DEFAULT_TECHNICAL_DATASET)
+    assert updated["run_status"] == original["run_status"] == "interrupted"
+    assert updated["planned_query_ids"] == original["planned_query_ids"]
+    assert updated["not_run_query_ids"] == original["not_run_query_ids"]
+    assert updated["answering_configuration"] == original["answering_configuration"]
+    assert not updated["label_replay"]["live_inference"]
+    assert updated["review_summary"] is None
+    for before, after in zip(original["queries"], updated["queries"], strict=True):
+        assert all(
+            before[k] == after[k]
+            for k in ("answer", "outcome", "provider_requests", "tool_results", "tool_traces")
+        )
+        assert after["review"]["status"] == "pending"
+    original["queries"][0]["interactions"][0]["request"]["messages"][-1]["content"] = "changed"
+    corrupt = tmp_path / "changed.json"
+    write_artifact(corrupt, original)
+    with pytest.raises(ValueError, match="Changed question"):
+        replay(corrupt, DEFAULT_TECHNICAL_DATASET)

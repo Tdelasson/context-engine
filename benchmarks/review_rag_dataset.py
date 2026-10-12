@@ -1,6 +1,7 @@
 """Render a concrete annotation packet without silently approving authored labels."""
 
 import argparse
+import json
 from pathlib import Path
 
 from benchmarks.technical_dataset import DEFAULT_TECHNICAL_DATASET, load_technical_dataset
@@ -8,10 +9,17 @@ from benchmarks.technical_dataset import DEFAULT_TECHNICAL_DATASET, load_technic
 
 def review_packet(path: Path = DEFAULT_TECHNICAL_DATASET) -> str:
     dataset = load_technical_dataset(path)
+    sources = {s.provenance.source_id: s for s in dataset.corpus.processed_sources}
+    raw_queries = {q["query_id"]: q for q in json.loads(path.read_text())["queries"]}
     lines = [
         "# English technical-workbench annotation review",
         "",
+        f"Dataset: `{dataset.corpus.dataset_id}`",
+        "",
         f"Dataset SHA-256: `{dataset.corpus.sha256}`",
+        "",
+        "Quoted display omits trailing whitespace; canonical source bytes and labelled offsets "
+        "remain unchanged.",
         "",
         "All annotations are authored drafts. An independent reviewer must check the question, "
         "answerability, required facts, each complete alternative, source revision and offsets, "
@@ -38,6 +46,17 @@ def review_packet(path: Path = DEFAULT_TECHNICAL_DATASET) -> str:
                 "",
             ]
         )
+        ai_review = raw_queries[query.query_id].get("ai_review")
+        if ai_review:
+            lines.extend(
+                [
+                    f"AI self-review: **{ai_review['decision']}**, {ai_review['date']}. "
+                    "Independent human approval remains pending.",
+                    "",
+                    *[f"- {note}" for note in ai_review["notes"]],
+                    "",
+                ]
+            )
         for fact in query.requirements:
             lines.extend([f"Fact `{fact.requirement_id}`:", "", fact.reference_fact, ""])
             for alternative in fact.alternatives:
@@ -50,6 +69,18 @@ def review_packet(path: Path = DEFAULT_TECHNICAL_DATASET) -> str:
                     ]
                     + [""]
                 )
+                for span in alternative.spans:
+                    source = sources[span.source_id]
+                    excerpt = source.text[span.start_offset : span.end_offset]
+                    context = source.text[max(0, span.start_offset - 200) : span.end_offset + 200]
+                    # Quoted blocks preserve arbitrary source formatting without executing it.
+                    lines.extend(
+                        ["Labelled source text:", ""]
+                        + [("> " + line).rstrip() for line in excerpt.splitlines()]
+                        + ["", "Surrounding canonical source context:", ""]
+                        + [("> " + line).rstrip() for line in context.splitlines()]
+                        + [""]
+                    )
         lines.extend(["Review decision / disagreements / resolution: **pending**", ""])
     return "\n".join(lines)
 
