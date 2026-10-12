@@ -480,3 +480,16 @@ change runtime state transitions, or assemble M6 context. The initial tokenizer 
 supports a pinned local Qwen2.5 tokenizer; full provider request budgeting remains outside
 this evidence boundary. See [ADR-014](decisions/ADR-014-evidence-selection-and-accounting.md)
 and the [recorded comparison](../experiments/m5-evidence-selection.md).
+
+## Staged technical-workbench quality evaluation
+
+The opt-in #77–#79 runners add broader public-document labels, complete alternative
+support, grouped uncertainty, identical-candidate selection/rendering ablations and
+actual-runtime answer traces with explicit human review. Existing #64 diagnostic
+fixtures remain unchanged. See ADR-015 and
+[the staged evaluation report](../experiments/english-technical-rag-evaluation.md).
+SearchDocumentsToolConfig.include_ranking_diagnostics can explicitly omit ranking
+stage details from model-visible evidence while preserving content, scores and all
+canonical source metadata; selected ranking details remain in UI/tracing reports.
+Default rendering remains available. This changes evidence serialization, not ranking
+or the raw JSON versus complete provider-context accounting boundary.
