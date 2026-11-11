@@ -24,7 +24,8 @@ def main() -> None:
     st.caption("LIVE · LOCAL · deterministic tools + M5 chunked retrieval")
     st.info(
         "Source processing, chunking, replacement, and deletion are implemented. "
-        "Automatic context assembly, hybrid retrieval, and reranking remain future work."
+        "Dense retrieval is the default; lexical, hybrid, reranking, and evidence selection "
+        "are opt-in settings. Automatic context assembly remains future work."
     )
 
     application = _get_application(st)

@@ -1,9 +1,9 @@
 # Embedding & Retrieval Architecture
 
-**Status:** M4 architecture foundation  
-**Last updated:** 2026-08-19
+**Status:** M4 foundation (sections 1–10) with implemented M5 extensions (later sections)  
+**Last updated:** 2026-11-11
 
-This document describes the M4 embedding and semantic retrieval foundation. It intentionally does not define the full Modern RAG architecture planned for M5.
+Sections 1–10 describe the M4 embedding and semantic retrieval foundation, which remains the default dense retrieval path. The sections after them describe the M5 Modern RAG layer built on top: processing, chunking, source lifecycle, lexical and hybrid retrieval, reranking, and evidence selection.
 
 ## 1. Purpose
 
@@ -49,7 +49,7 @@ Document
 └── metadata
 ```
 
-M4 deliberately operates on complete documents. Chunking is deferred to M5.
+M4 operated on complete documents. Since M5, the workbench indexes chunks: each chunk is mapped to this same `Document` contract (see [M5 processing and chunking](#m5-processing-and-chunking)).
 
 ### Embedding
 
@@ -123,7 +123,7 @@ Embeddings
 
 ## 4. Candidate Embedding Models
 
-M4 will benchmark:
+M4 benchmarked:
 
 - BGE-M3
 - Qwen3-Embedding-0.6B
@@ -275,7 +275,8 @@ number or size of results.
 Tool-mediated retrieval is model-selected: the model proposes when to call
 `search_documents`, and the Tool Runtime validates, authorizes, executes, and traces
 that proposal. It is not automatic context retrieval, context assembly, query
-transformation, or advanced RAG; those remain later M5/M6 concerns.
+transformation. Automatic context assembly remains an M6 concern; query transformation
+is not implemented.
 
 ## 8. Simple Ingestion
 
@@ -294,7 +295,7 @@ Embeddings
 VectorStore.upsert()
 ```
 
-Advanced parsing, chunking, metadata extraction, asynchronous ingestion, and large-scale ingestion orchestration are deferred to later milestones.
+This path remains available for whole documents and is used by the M4 benchmark. Parsing, chunking, and source-level replacement and deletion were added in M5 (see below). Asynchronous and large-scale ingestion orchestration remain deferred.
 
 ## 9. M4 Evaluation
 
@@ -348,17 +349,18 @@ Similarity Search
 Results
 ```
 
-M5 will build the modern RAG layer on top of this foundation, including concerns such as:
+M5 builds the modern RAG layer on top of this foundation. Implemented, and described in the sections below:
 
-- document processing;
-- chunking;
-- dense + sparse retrieval;
-- hybrid retrieval;
-- reranking;
-- context selection; and
-- query transformation where useful.
+- document processing (text, Markdown, PDF);
+- structure-aware chunking;
+- lexical BM25 retrieval;
+- hybrid retrieval with reciprocal rank fusion;
+- optional cross-encoder reranking; and
+- optional evidence selection within a token budget.
 
-M4 should remain focused on making the underlying semantic retrieval primitive correct, measurable, and replaceable.
+Query transformation is not implemented. Dense retrieval remains the default; the other strategies are opt-in.
+
+The M4 layer stays focused on making the underlying semantic retrieval primitive correct, measurable, and replaceable.
 
 ## Related ADRs
 

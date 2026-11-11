@@ -1244,6 +1244,12 @@ SQLite
 Vector storage:
 Qdrant
 
+Local LLM serving (current adapter):
+Ollama
+
+Embedding model (initial default, M4 benchmark):
+sentence-transformers/all-MiniLM-L6-v2
+
 Artifacts:
 Local filesystem
 
@@ -1263,10 +1269,10 @@ Local development
 ### Not yet locked
 
 ```text
-LLM provider
-Embedding model
-Reranker
-Local inference runtime
+Default LLM
+Default retrieval strategy (dense today; lexical and hybrid are optional)
+Reranker adoption (an optional local cross-encoder exists; disabled by default)
+Local inference runtime beyond the current Ollama adapter
 HTTP framework
 Sandbox implementation
 Production database
@@ -1348,10 +1354,12 @@ overlap, and exact model-compatible embedding token accounting.
 
 Applications can map whole processed sources or individual chunks to the existing
 retrieval `Document` contract. `Ingestor` embeds and upserts those values; `Retriever`
-coordinates search through the existing tool policy boundary. The workbench retains
-whole-document indexing until chunk ingestion lifecycle is integrated. Chunk processing
-is synchronous and local; asynchronous orchestration and index migrations remain future work.
+coordinates search through the existing tool policy boundary. The workbench indexes
+chunks through the durable source ingestion lifecycle (ADR-009), which handles source
+replacement, deletion, and restart recovery. Chunk processing is synchronous and local;
+asynchronous orchestration and index migrations remain future work.
 
 See [embedding/retrieval architecture](embedding-and-retrieval.md),
-[ADR-007](decisions/ADR-007-pdf-text-extraction.md), and
-[ADR-008](decisions/ADR-008-structure-aware-document-chunking.md).
+[ADR-007](decisions/ADR-007-pdf-text-extraction.md),
+[ADR-008](decisions/ADR-008-structure-aware-document-chunking.md), and
+[ADR-009](decisions/ADR-009-source-index-lifecycle.md).
