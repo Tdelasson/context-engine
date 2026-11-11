@@ -3,7 +3,7 @@
 **Version:** 0.1
 **Status:** Active
 **Project:** Context Engine
-**Last Updated:** 2026-10-01
+**Last Updated:** 2026-11-11
 
 ---
 
@@ -66,9 +66,11 @@ v1.0
 | M9 | Evaluation & MLOps | Week 14 |
 | M10 | Hardening & v1.0 | Weeks 15–16 |
 
-**Next milestone:** M5 — Modern RAG
+**Current milestone:** M5 — Modern RAG (implementation merged; evaluation in progress)
 
 **Completed milestones:** M1, M2, M3, M4
+
+**Next milestone:** M6 — Context Engine
 
 ---
 
@@ -415,22 +417,36 @@ Build a production-oriented retrieval pipeline rather than a basic vector search
 
 The project has measurable retrieval benchmarks and can demonstrate why one retrieval strategy performs better than another.
 
-**Status:** In progress. Core text/Markdown processing (#59) is implemented. PDF text-layer
-processing (#60) and deterministic structure-aware chunking (#61) extend that foundation.
-Source-level chunk ingestion, replacement, deletion, and restart recovery (#62) are implemented.
-The chunked dense benchmark (#64) now provides pinned evidence-span labels, separate
-development/held-out queries, real MiniLM chunk/model comparisons, and deployed Qdrant
-verification. See the [dense experiment](../experiments/m5-chunked-dense-benchmark.md).
-Lexical BM25 (#66, PR #72), hybrid reciprocal rank fusion (#67, PR #74), and optional
-local cross-encoder reranking (#68, PR #73) are implemented with recorded comparisons.
-See the [lexical](../experiments/m5-lexical-retrieval-benchmark.md),
-[hybrid](../experiments/m5-hybrid-retrieval.md), and
-[reranking](../experiments/m5-local-reranking.md) reports. Dense retrieval remains the
-default. Optional deterministic evidence selection and token budgeting (#69) now preserve
-whole passages within a pinned answering-tokenizer JSON budget; see the
-[selection comparison](../experiments/m5-evidence-selection.md) for measured regressions
-and full-request budgeting limitations. M5 remains in progress; query transformation and
-broader retrieval evaluation have not been implemented by this change.
+**Status:** In progress. All retrieval pipeline deliverables are merged; the remaining
+work is evaluation.
+
+## Completed Implementation
+
+* [#59](https://github.com/Tdelasson/context-engine/issues/59) — Core document processing with text/Markdown readers (PR #63).
+* [#60](https://github.com/Tdelasson/context-engine/issues/60), [#61](https://github.com/Tdelasson/context-engine/issues/61) — PDF text-layer extraction and deterministic structure-aware chunking (PR #65).
+* [#62](https://github.com/Tdelasson/context-engine/issues/62) — Durable chunk ingestion with source replacement, deletion, and restart recovery (PR #70).
+* [#64](https://github.com/Tdelasson/context-engine/issues/64) — Chunked dense benchmark with evidence-span labels and development/held-out queries (PR #71, PR #75). See the [dense experiment](../experiments/m5-chunked-dense-benchmark.md).
+* [#66](https://github.com/Tdelasson/context-engine/issues/66) — Lexical BM25 retrieval through Qdrant (PR #72). See the [lexical experiment](../experiments/m5-lexical-retrieval-benchmark.md).
+* [#67](https://github.com/Tdelasson/context-engine/issues/67) — Hybrid retrieval with reciprocal rank fusion (PR #74). See the [hybrid experiment](../experiments/m5-hybrid-retrieval.md).
+* [#68](https://github.com/Tdelasson/context-engine/issues/68) — Optional local cross-encoder reranking (PR #73). See the [reranking experiment](../experiments/m5-local-reranking.md).
+* [#69](https://github.com/Tdelasson/context-engine/issues/69) — Optional deterministic evidence selection within a pinned-tokenizer budget (PR #76). See the [selection experiment](../experiments/m5-evidence-selection.md).
+
+Dense retrieval remains the default. On the four-source, nine-question M5 corpus, lexical,
+hybrid, reranked, and budget-selected retrieval did not show a held-out gain that justified
+changing it, so they are optional, application-configured strategies. That corpus is too
+small to separate the strategies, which is what the remaining work addresses.
+
+## Remaining Work
+
+* [#77](https://github.com/Tdelasson/context-engine/issues/77) — Larger RAG dataset with realistic workloads and a fresh held-out split.
+* [#78](https://github.com/Tdelasson/context-engine/issues/78) — Controlled ablations isolating retrieval, selection, and serialization trade-offs.
+* [#79](https://github.com/Tdelasson/context-engine/issues/79) — End-to-end answer quality and complete-request context usage.
+* [#80](https://github.com/Tdelasson/context-engine/issues/80) — Latency, memory, and capacity at realistic scale.
+
+Draft PR #81 addresses #77–#79 with provisional results; its labels are not yet
+independently reviewed and its answer-quality run is incomplete. Query transformation
+has not been implemented and has no issue yet. Metadata extraction is limited to
+source, heading, and page provenance recorded during processing and chunking.
 
 ---
 
@@ -687,9 +703,9 @@ Context Engine v1.0 should demonstrate:
 * [x] Policy-controlled actions
 * [x] Embedding generation
 * [x] Vector search
-* [ ] Modern RAG
-* [ ] Hybrid retrieval
-* [ ] Reranking
+* [ ] Modern RAG (pipeline implemented; evaluation in progress)
+* [x] Hybrid retrieval (optional; dense remains the default)
+* [x] Reranking (optional; disabled by default)
 * [ ] Local LLM inference
 * [ ] Inference benchmarking
 * [ ] Agent evaluation
@@ -706,9 +722,9 @@ Context Engine v1.0 should demonstrate:
 
 # 19. Current Status
 
-**Next milestone:** M5 — Modern RAG
+**Current milestone:** M5 — Modern RAG
 
-**Project phase:** Semantic retrieval foundation and integrated Agent Workbench merged; next is Modern RAG development.
+**Project phase:** The Modern RAG retrieval pipeline is merged. Broader RAG evaluation (#77–#80) is in progress before M5 closes and M6 — Context Engine begins.
 
 **Completed milestones:**
 
@@ -748,12 +764,18 @@ Context Engine v1.0 should demonstrate:
 
 **Agent Workbench:**
 
-* [x] [#53 — Integrated Context Engine agent workbench](https://github.com/Tdelasson/context-engine/issues/53), merged in PR #57. The workbench supports M3/M4 agent execution and retrieval; M5/M6 and Context-Aware DJ remain future work. See the workbench documentation for local setup and verification.
+* [x] [#53 — Integrated Context Engine agent workbench](https://github.com/Tdelasson/context-engine/issues/53), merged in PR #57. The workbench runs agent execution over M5 chunked ingestion, with lexical, hybrid, reranking, and evidence selection available as opt-in settings. M6 context assembly and Context-Aware DJ remain future work. See the [workbench documentation](agent-workbench.md) for local setup and verification.
 
-**Next milestone:**
+**M5 — Modern RAG (current):**
 
 * [x] M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62).
 * [x] Establish the M5 chunked dense benchmark (#64, PR #71), with evidence-span evaluation and recorded dense comparisons.
 * [x] Add and benchmark lexical BM25 (#66), hybrid retrieval (#67), and optional reranking (#68) against the M5 evidence-span dense baseline.
 * [x] Add optional deterministic evidence selection and application-controlled token budgeting (#69), with paired dense/hybrid-reranked comparisons.
-* [ ] Keep automatic context assembly and lifecycle integration in M6 and the broader evaluation/MLOps framework in M9.
+* [ ] Expand the RAG dataset and run controlled ablations (#77, #78; draft PR #81).
+* [ ] Measure end-to-end answer quality (#79; draft PR #81).
+* [ ] Benchmark latency, memory, and capacity at realistic scale (#80).
+* [ ] Decide whether query transformation is in M5 scope.
+
+Automatic context assembly and lifecycle integration remain M6 work. The broader
+evaluation/MLOps framework remains M9 work.

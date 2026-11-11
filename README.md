@@ -1,294 +1,90 @@
 # Context Engine
 
-> A local-first context-aware agent runtime for building intelligent, controllable AI applications.
+> A local-first, context-aware agent runtime for building controllable AI applications.
 
-## Overview
+Context Engine keeps probabilistic model behavior separate from deterministic application
+behavior. The model proposes actions; the runtime validates, authorizes, executes, and
+records them. Everything runs locally: Ollama for the language model, local embedding
+inference, and Qdrant for search.
 
-Context Engine is a local-first AI platform for building context-aware and agentic applications. The runtime is designed around a strict separation between probabilistic model behavior and deterministic application behavior: models propose actions, while the runtime validates, authorizes, executes, and records them.
+It is an engineering and learning project covering agentic AI, deterministic tool use,
+modern RAG, local inference, and evaluation. The planned reference application is a
+**Context-Aware DJ**.
 
-## Current Status
-
-**Next milestone:** M5 — Modern RAG
-
-**Completed:** M1 Foundation, M2 Agent Runtime, M3 Deterministic Tool Use, M4 Embeddings & Vector Search
-
-M3 established the deterministic tool execution boundary, including:
-
-- typed tool registration and lookup
-- input schema validation
-- policy-controlled execution
-- structured tool errors
-- execution tracing
-- human approval for selected tools
-- provider-independent model/tool integration
-- local Ollama end-to-end tool calling verification
-
-The Agent Workbench supports document search and calculation with a local Ollama model.
-The model proposes tool calls; the runtime validates, applies policy, executes, traces, and returns
-structured results to the model. Approval support is available in the runtime abstraction.
-
-M4 delivered the semantic retrieval foundation: provider-independent embeddings, local embedding
-inference, Qdrant-backed vector storage, metadata filtering, retrieval, and a small model-independent
-retrieval benchmark. M5 adds processing, PDF extraction, exact-token chunking, and durable
-source replacement/deletion. The chunked dense benchmark, hybrid retrieval, reranking, and
-context selection are next. See [source ingestion](docs/api/source-ingestion.md).
-
-The M4 benchmark selected `sentence-transformers/all-MiniLM-L6-v2` as the initial default embedding
-model for the recorded local CPU environment. See the generated
-[model comparison](docs/experiments/m4-embedding-model-comparison.md) for measured results and the
-documented Qwen3-Embedding-8B hardware exclusion.
-
-The current M3/M4 integration exposes semantic retrieval as a read-only
-`search_documents` tool. A model may propose a search, but the Tool Runtime still
-owns schema validation, policy evaluation, Retriever execution, structured results,
-and tracing. This tool-mediated search is deliberately separate from the automatic
-context assembly and advanced RAG work planned for M5/M6.
-
-## Goals
-
-- Agentic AI
-- Deterministic tool use
-- Embeddings and vector search
-- Modern RAG
-- Local LLM inference
-- MLOps
-- Evaluation
-
-## Architecture
-
-The core execution boundary is:
+## How it works
 
 ```text
-LLM
- ↓
-Tool Proposal
- ↓
-Schema Validation
- ↓
-Policy
- ├── ALLOW ───────────────┐
- ├── DENY                 │
- └── REQUIRE_APPROVAL     │
-          ↓               │
-       Approval            │
-       ├── APPROVED ──────┘
-       └── REJECTED
-                ↓
-          Tool Execution
-                ↓
-            ToolResult
-                ↓
-        ToolExecutionTrace
-                ↓
-               LLM
+User prompt
+    ↓
+LLM proposes a tool call
+    ↓
+Schema validation → Policy (allow / deny / require approval)
+    ↓
+Deterministic tool execution
+    ↓
+Structured result + execution trace
+    ↓
+LLM answers from the result
 ```
 
-The model never directly executes a tool or controls runtime state. Provider-specific model behavior is isolated behind the Model Gateway, while tools are controlled by the Tool Runtime.
+The model never executes a tool or changes runtime state directly.
 
-The M4 retrieval foundation is separated into embedding generation, vector storage, and retrieval orchestration:
+## Status
 
-```text
-Document
-   ↓
-LocalEmbeddingProvider
-   ↓
-Embedding
-   ↓
-QdrantVectorStore
-   ↓
-Retriever
-   ↓
-SearchResult[]
-```
+Milestones 1–4 are complete and milestone 5 (Modern RAG) is in its final stage.
 
-See the [Architecture Overview](docs/architecture/overview.md), [Embedding & Retrieval Architecture](docs/architecture/embedding-and-retrieval.md), and [Tool Runtime Architecture](docs/architecture/tool-runtime.md) for the current system design and the [Development Roadmap](docs/product/roadmap.md) for milestone status.
+| Area | State |
+| --- | --- |
+| Agent runtime with an explicit state machine | Done |
+| Tool runtime: validation, policy, human approval, tracing | Done |
+| Local embeddings, Qdrant vector search, retrieval benchmark | Done |
+| Document processing (text, Markdown, PDF), chunking, durable ingestion | Done |
+| Lexical BM25, hybrid retrieval, cross-encoder reranking, evidence selection | Done, optional (dense retrieval is the default) |
+| Larger RAG evaluation: dataset, ablations, answer quality | In progress |
+| Context system, inference optimization, Context-Aware DJ | Planned |
 
-## Example Application
+See the [roadmap](docs/product/roadmap.md) for details.
 
-**Context-Aware DJ** is the planned reference application demonstrating context-aware retrieval, agent orchestration, controlled tool use, and user-facing execution visibility.
+## Try it
 
-## Documentation
+The Agent Workbench is a local Streamlit app where you can ask questions over indexed
+documents, upload your own, and inspect every tool call and trace.
 
-- [Product Requirements](docs/product/prd.md)
-- [Project Context](docs/product/PROJECT_CONTEXT.md)
-- [Roadmap](docs/product/roadmap.md)
-- [Architecture](docs/architecture/overview.md)
-- [Embedding & Retrieval Architecture](docs/architecture/embedding-and-retrieval.md)
-- [Tool Runtime Architecture](docs/architecture/tool-runtime.md)
-- [Architecture Decisions](docs/architecture/decisions/)
-
-### M4 Architecture Decisions
-
-- [ADR-003 — Embedding Provider Abstraction](docs/architecture/decisions/ADR-003-embedding-provider-abstraction.md)
-- [ADR-004 — Vector Store and Retrieval Architecture](docs/architecture/decisions/ADR-004-vector-store-and-retrieval-architecture.md)
-- [ADR-005 — Retrieval Evaluation Strategy](docs/architecture/decisions/ADR-005-retrieval-evaluation-strategy.md)
-
-## Development
-
-The project uses automated formatting, linting, type checking, tests, and GitHub Actions CI. Development generally follows:
-
-```text
-Issue
- ↓
-Feature Branch
- ↓
-Implementation
- ↓
-Tests
- ↓
-Pull Request
- ↓
-Review
- ↓
-Merge
-```
-
-## Local Ollama Verification (Optional)
-
-You can verify the provider-independent model/tool boundary with a local Ollama instance.
-
-1. Install and run Ollama locally.
-2. Pull a local model, for example: `ollama pull llama3.2`.
-3. Set the integration environment variables.
-4. Run the optional integration test:
+You need Python 3.11+, [Ollama](https://ollama.com), and Docker.
 
 ```bash
-CONTEXT_ENGINE_RUN_OLLAMA_INTEGRATION=1 \
-CONTEXT_ENGINE_OLLAMA_MODEL=llama3.2 \
-pytest tests/integration/test_ollama_runtime_integration.py
-```
-
-Optional environment variables:
-
-- `CONTEXT_ENGINE_OLLAMA_BASE_URL` (default: `http://localhost:11434`)
-- `CONTEXT_ENGINE_OLLAMA_TIMEOUT_SECONDS` (default: `30`)
-
-The integration test verifies that the model receives the registered calculator tool, requests it, the runtime executes it, the result is returned to the model, and a final response is produced. The test is opt-in and does not run as part of the normal test suite unless explicitly enabled.
-
-## Agent Workbench
-
-Issue #53 (merged in PR #57) provides a local Streamlit workbench for the integrated live flow:
-prompt → local model tool proposal → registry/schema validation → policy → deterministic retrieval or calculator execution →
-structured result → final response and trace.
-
-```powershell
-python -m pip install -e ".[workbench,dev]"
-streamlit run src/context_engine/workbench/streamlit_app.py
-```
-
-The workbench uses local Ollama, local embedding inference, and local Qdrant. See the
-[setup, configuration, behavior, testing, and failure guidance](docs/product/agent-workbench.md).
-The [version-controlled design brief and integrated-flow wireframe](docs/product/agent-workbench-design.md)
-define the interface structure. This remains tool-mediated M4 retrieval; automatic context
-assembly and advanced RAG are explicitly out of scope.
-
-## Local Embedding Provider Verification (Optional)
-
-You can verify local embedding inference with a real embedding model available on your machine.
-
-1. Install a local embedding runtime dependency:
-   - `pip install sentence-transformers`
-2. Ensure a local embedding model is available (for example a Hugging Face model id or a local model path).
-3. Set integration environment variables.
-4. Run the optional integration test:
-
-```bash
-CONTEXT_ENGINE_RUN_LOCAL_EMBEDDING_INTEGRATION=1 \
-CONTEXT_ENGINE_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2 \
-pytest tests/integration/test_local_embedding_provider_integration.py
-```
-
-Optional environment variables:
-
-- `CONTEXT_ENGINE_EMBEDDING_MODEL_ID` (default: same as `CONTEXT_ENGINE_EMBEDDING_MODEL`)
-- `CONTEXT_ENGINE_EMBEDDING_BATCH_SIZE` (default: `8`)
-- `CONTEXT_ENGINE_EMBEDDING_NORMALIZE` (`1` enables normalized vectors, default: `0`)
-- `CONTEXT_ENGINE_EMBEDDING_QUERY_PREFIX` (default: empty string)
-- `CONTEXT_ENGINE_EMBEDDING_DOCUMENT_PREFIX` (default: empty string)
-
-## Qdrant Vector Store Verification (Optional)
-
-You can verify the `QdrantVectorStore` implementation with a local Qdrant instance.
-
-1. Install optional dependency:
-   - `pip install "qdrant-client>=1.16"`
-2. Start Qdrant locally with Docker:
-
-```bash
+git clone https://github.com/Tdelasson/context-engine.git
+cd context-engine
+python -m pip install -e ".[workbench,pdf]"
 docker run --rm -p 6333:6333 qdrant/qdrant
 ```
 
-3. Run the opt-in integration test:
+In a second terminal:
 
 ```bash
-CONTEXT_ENGINE_RUN_QDRANT_INTEGRATION=1 \
-pytest tests/integration/test_qdrant_vector_store_integration.py
+ollama pull llama3.2:1b
+streamlit run src/context_engine/workbench/streamlit_app.py
 ```
 
-Optional environment variables:
+Open `http://localhost:8501`. The first start downloads a small embedding model.
+Configuration, optional retrieval strategies, and troubleshooting are in the
+[workbench guide](docs/product/agent-workbench.md).
 
-- `CONTEXT_ENGINE_QDRANT_URL` (default: `http://localhost:6333`)
-- `CONTEXT_ENGINE_QDRANT_API_KEY` (default: unset)
-- `CONTEXT_ENGINE_QDRANT_TIMEOUT_SECONDS` (default: `5`)
+## Documentation
 
-## Retriever Tool Agent Verification (Optional)
+- [Product requirements](docs/product/prd.md) and [roadmap](docs/product/roadmap.md)
+- [Architecture overview](docs/architecture/overview.md), with
+  [tool runtime](docs/architecture/tool-runtime.md) and
+  [embedding and retrieval](docs/architecture/embedding-and-retrieval.md) details
+- [Architecture decision records](docs/architecture/decisions/)
+- [API notes](docs/api/) for processing, chunking, ingestion, and reranking
+- [Experiments and benchmark results](docs/experiments/)
 
-You can verify the complete local agent search loop with a local embedding model,
-Qdrant, and Ollama:
+## Contributing
 
-```text
-local model proposal
-  → Tool Runtime validation and policy
-  → search_documents
-  → Retriever
-  → structured ToolResult
-  → local model response
-```
-
-1. Complete the local embedding, Qdrant, and Ollama setup described above.
-2. Ensure the configured embedding and Ollama models are available locally.
-3. Run the opt-in integration test:
-
-```bash
-CONTEXT_ENGINE_RUN_SEARCH_TOOL_INTEGRATION=1 \
-CONTEXT_ENGINE_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2 \
-CONTEXT_ENGINE_OLLAMA_MODEL=llama3.2 \
-pytest tests/integration/test_search_documents_agent_integration.py
-```
-
-The test also honors the optional embedding, Qdrant, and Ollama environment variables
-documented in the preceding sections. It remains opt-in because it requires local model
-inference and a running Qdrant service.
-
-## M4 Embedding Model Benchmark (Optional)
-
-The M4 benchmark evaluates the candidate local embedding models against the same version-controlled
-documents, queries, relevance judgments, cosine search configuration, and K values (1, 5, and 10).
-It is intentionally opt-in because model downloads and local inference can be resource intensive.
-
-```bash
-python -m pip install -e ".[benchmark]"
-python -m benchmarks.benchmark_embedding_models \
-  --models bge-m3 qwen3-embedding-0.6b nomic-embed-text all-minilm-l6-v2 \
-  --hardware-excluded-models qwen3-embedding-8b
-```
-
-Model selection is mandatory so the runner never loads Qwen3-Embedding-8B accidentally. On hardware
-that can run every candidate, include `qwen3-embedding-8b` in `--models` and omit the hardware
-exclusion.
-
-To run a smaller development check:
-
-```bash
-python -m benchmarks.benchmark_embedding_models \
-  --models all-minilm-l6-v2 qwen3-embedding-0.6b
-```
-
-The runner writes machine-readable results under `benchmarks/results/` and a human-readable model
-comparison under `docs/experiments/`. See the
-[M4 retrieval benchmark methodology](docs/experiments/m4-retrieval-benchmark.md) for configuration,
-measurements, failure handling, and the quality-first default-selection policy.
+Development setup, validation commands, and opt-in integration tests are in
+[CONTRIBUTING.md](CONTRIBUTING.md). Rules for AI coding agents are in [AGENTS.md](AGENTS.md).
 
 ## License
 
-...
+[MIT](LICENSE)
