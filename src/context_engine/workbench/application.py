@@ -47,7 +47,7 @@ PROMPT_PRESETS: dict[str, str] = {
     "Project architecture": (
         "How does Context Engine keep model proposals separate from tool execution?"
     ),
-    "Project roadmap": "What has been implemented in M4, and what remains future M5 and M6 work?",
+    "Project roadmap": "What did M4 and M5 deliver, and what remains future M6 work?",
     "Calculator": "Use the calculator to compute (144 / 12) + 7.",
     "Uploaded fact": "Search the uploaded documents and answer using the most relevant fact.",
 }

@@ -8,21 +8,21 @@ The first reference application will be Context-Aware DJ.
 
 ## Current milestone
 
-M1–M4 complete. Next: M5 — Modern RAG.
+M1–M4 complete. M5 — Modern RAG is in progress: the retrieval pipeline is merged and the
+broader RAG evaluation (#77–#80) remains. Next: M6 — Context Engine.
 
 ## Development workflow
 
 Issue
-→ GitHub AI Agent
+→ AI coding agent
 → Feature Branch
 → PR
 → CI
 → Human review
 → Merge
 
-Cursor is used as the primary local AI IDE.
-
-GitHub AI Agents are used for issue-driven implementation.
+AI coding agents are used for issue-driven implementation and must follow `AGENTS.md`.
+Pull requests receive automated review before human review.
 
 ## Source of truth
 

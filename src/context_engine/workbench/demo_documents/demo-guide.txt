@@ -1,3 +1,4 @@
 The Context Engine workbench runs local agent requests. The model can propose either the
 search_documents tool or the calculator. Structured tool results are returned to the model before
-the final answer is generated. Uploaded text and Markdown files are treated as one document each.
+the final answer is generated. Uploaded text, Markdown, and text-based PDF files are each one source, split into
+token-bounded chunks for retrieval.
