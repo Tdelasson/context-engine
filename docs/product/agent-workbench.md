@@ -100,7 +100,8 @@ python -m pytest tests/integration/test_workbench_integration.py -v
 
 This live test checks preloaded search, uploaded-fact retrieval, calculation, and upload cleanup.
 It creates and removes its own unique Qdrant collection. It does not change the workbench collection.
-The existing search-tool integration test and its environment variables are documented in the README.
+The existing search-tool integration test and its environment variables are documented in
+[CONTRIBUTING.md](../../CONTRIBUTING.md#opt-in-integration-tests).
 
 ### Recorded local verification — 2026-10-01
 
