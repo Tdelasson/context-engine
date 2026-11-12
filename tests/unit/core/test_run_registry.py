@@ -164,7 +164,7 @@ def test_error_details_prefer_the_first_tool_error_over_the_runtime_message() ->
 def test_core_package_imports_without_a_ui_or_web_framework() -> None:
     script = (
         "import sys, context_engine.core;"
-        "loaded = [m for m in ('streamlit', 'fastapi', 'starlette') if m in sys.modules];"
+        "loaded = [m for m in ('fastapi', 'starlette') if m in sys.modules];"
         "print(','.join(loaded))"
     )
     completed = subprocess.run(

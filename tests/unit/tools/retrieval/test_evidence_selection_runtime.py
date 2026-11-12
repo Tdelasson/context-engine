@@ -1,4 +1,4 @@
-"""Accounting representation survives policy, runtime history and workbench presentation."""
+"""Accounting representation survives policy, and runtime history."""
 
 import json
 from types import SimpleNamespace
@@ -6,6 +6,8 @@ from types import SimpleNamespace
 import pytest
 
 from context_engine.agent import AgentRuntime
+from context_engine.core.composition import configure_evidence_selection
+from context_engine.core.settings import ApplicationConfigurationError, ApplicationSettings
 from context_engine.models import ModelFinishReason, ModelResponse, ModelToolCall
 from context_engine.models.evidence_counting import QwenEvidenceTokenCounter
 from context_engine.models.ollama import OllamaModelGateway
@@ -17,14 +19,11 @@ from context_engine.retrieval.evidence_selection import (
 from context_engine.tools import ToolInvocation, ToolRegistry, ToolResultStatus, ToolRuntime
 from context_engine.tools.policy import ToolNamePolicy, ToolPolicyDecision
 from context_engine.tools.retrieval import SearchDocumentsTool
-from context_engine.workbench.application import configure_evidence_selection
-from context_engine.workbench.config import WorkbenchConfigurationError, WorkbenchSettings
-from context_engine.workbench.presentation import build_run_view
 from tests.unit.retrieval.test_evidence_selection import Counter, candidate
 from tests.unit.tools.retrieval.test_agent_integration import _SequenceGateway
 
 
-def test_policy_failure_accounted_history_and_selected_workbench_evidence() -> None:
+def test_policy_failure_accounted_history_and_selected_evidence() -> None:
     result = candidate(text="Whole café passage.")
     calls = []
 
@@ -56,7 +55,7 @@ def test_policy_failure_accounted_history_and_selected_workbench_evidence() -> N
         ]
     )
     runtime = AgentRuntime(model_gateway=gateway, tool_runtime=ToolRuntime(registry))
-    run = runtime.run(model_id="fixture-answerer", user_prompt="q", max_model_iterations=3)
+    runtime.run(model_id="fixture-answerer", user_prompt="q", max_model_iterations=3)
     model_result = gateway.requests[1].messages[-1].tool_result
     assert model_result is not None
     output = model_result.output_as_mapping()
@@ -74,15 +73,11 @@ def test_policy_failure_accounted_history_and_selected_workbench_evidence() -> N
     envelope = json.loads(content)
     assert render_tool_output(envelope["output"]) == render_tool_output(output)
     assert render_tool_output(output) in content
-    view = build_run_view(
-        prompt="q",
-        result=run,
-        tool_results=runtime.tool_results,
-        traces=runtime.tool_execution_traces,
-    )
-    assert view.evidence[0].evidence_selected
-    assert view.evidence[0].content == result.document.content
-    assert not view.evidence[0].content_truncated
+    results = runtime_output["results"]
+    assert isinstance(results, list) and len(results) == 1
+    selected = results[0]
+    assert selected["content"] == result.document.content
+    assert not selected["content_truncated"]
     assert runtime.tool_execution_traces[0].output_as_mapping() == runtime_output
 
 
@@ -102,19 +97,21 @@ def test_counting_error_is_a_structured_tool_failure() -> None:
     assert result.error and result.error.error_type == "EvidenceSelectionError"
 
 
-def test_workbench_explicit_configuration_and_unavailable_counter(tmp_path: object) -> None:
-    with pytest.raises(WorkbenchConfigurationError):
-        WorkbenchSettings(evidence_selection_enabled=True)
-    with pytest.raises(WorkbenchConfigurationError):
-        WorkbenchSettings(evidence_token_budget=True)
-    settings = WorkbenchSettings(
+def test_explicit_configuration_and_unavailable_counter(tmp_path: object) -> None:
+    with pytest.raises(ApplicationConfigurationError):
+        ApplicationSettings(evidence_selection_enabled=True)
+    with pytest.raises(ApplicationConfigurationError):
+        ApplicationSettings(evidence_token_budget=True)
+    settings = ApplicationSettings(
         model_id="qwen2.5:0.5b",
         evidence_selection_enabled=True,
         evidence_tokenizer_directory="/does-not-exist",
     )
     with pytest.raises(Exception, match="evidence_selection"):
         configure_evidence_selection(SimpleNamespace(retrieve=lambda _: []), settings)
-    assert configure_evidence_selection(SimpleNamespace(retrieve=lambda _: []), WorkbenchSettings())
+    assert configure_evidence_selection(
+        SimpleNamespace(retrieve=lambda _: []), ApplicationSettings()
+    )
 
 
 def test_tokenizer_rejects_other_models_missing_files_and_wrong_revision(tmp_path: object) -> None:
@@ -137,5 +134,5 @@ def test_environment_selection_settings(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("CONTEXT_ENGINE_EVIDENCE_TOKENIZER_DIRECTORY", "/local/qwen")
     monkeypatch.setenv("CONTEXT_ENGINE_EVIDENCE_TOKEN_BUDGET", "2048")
     monkeypatch.setenv("CONTEXT_ENGINE_EVIDENCE_OVERLAP_THRESHOLD", "0.5")
-    settings = WorkbenchSettings.from_environment()
+    settings = ApplicationSettings.from_environment()
     assert settings.evidence_token_budget == 2048 and settings.evidence_overlap_threshold == 0.5

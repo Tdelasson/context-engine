@@ -22,7 +22,7 @@ Optional extras, defined in `pyproject.toml`:
 | `qdrant` | Qdrant client |
 | `reranking` | Local cross-encoder reranking |
 | `benchmark` | Local embedding inference for the benchmark runners |
-| `workbench` | Streamlit workbench with Qdrant and local embeddings |
+| `api` | HTTP API and the React app: FastAPI, Qdrant and local embeddings |
 
 ### Frontend
 
@@ -84,7 +84,7 @@ is set to `1`. They need real local services:
 - **Ollama** with a tool-capable model pulled, for example `ollama pull llama3.2`.
 - **Qdrant** on `http://localhost:6333`: `docker run --rm -p 6333:6333 qdrant/qdrant`.
 - **A local embedding model**, for example `sentence-transformers/all-MiniLM-L6-v2`
-  (install the `benchmark` or `workbench` extra).
+  (install the `benchmark` or `api` extra).
 
 | Test file | Gate variable | Needs |
 | --- | --- | --- |
@@ -95,7 +95,7 @@ is set to `1`. They need real local services:
 | `test_retriever_integration.py` | `CONTEXT_ENGINE_RUN_RETRIEVER_INTEGRATION` | Qdrant, `CONTEXT_ENGINE_EMBEDDING_MODEL` |
 | `test_search_documents_agent_integration.py` | `CONTEXT_ENGINE_RUN_SEARCH_TOOL_INTEGRATION` | Ollama, Qdrant, `CONTEXT_ENGINE_EMBEDDING_MODEL`, `CONTEXT_ENGINE_OLLAMA_MODEL` |
 | `test_qdrant_lexical_integration.py` | `CONTEXT_ENGINE_RUN_QDRANT_LEXICAL_INTEGRATION` | Qdrant 1.16.3 or newer |
-| `test_workbench_integration.py` | `CONTEXT_ENGINE_RUN_WORKBENCH_INTEGRATION` | Ollama, Qdrant, `CONTEXT_ENGINE_WORKBENCH_MODEL` |
+| `test_core_application_integration.py` | `CONTEXT_ENGINE_RUN_WORKBENCH_INTEGRATION` | Ollama, Qdrant, `CONTEXT_ENGINE_WORKBENCH_MODEL` |
 
 Example:
 
@@ -106,9 +106,9 @@ CONTEXT_ENGINE_OLLAMA_MODEL=llama3.2 \
 pytest tests/integration/test_search_documents_agent_integration.py
 ```
 
-The reranking, hybrid-reranking, evidence-selection, chunked-workbench, and M5 benchmark
+The reranking, hybrid-reranking, evidence-selection, chunked-application, and M5 benchmark
 integration tests need prepared local model snapshots. Their setup is documented with the
-feature they verify: [workbench](docs/product/agent-workbench.md),
+feature they verify: [application](docs/product/agent-workbench.md),
 [reranking](docs/experiments/m5-local-reranking.md),
 [evidence selection](docs/experiments/m5-evidence-selection.md), and the
 [chunked dense benchmark](docs/experiments/m5-chunked-dense-benchmark.md).

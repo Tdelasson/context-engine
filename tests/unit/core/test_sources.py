@@ -1,19 +1,19 @@
 import pytest
 
+from context_engine.core.sources import (
+    DocumentCatalog,
+    SourceCatalogError,
+    UploadCandidate,
+    UploadLimits,
+    construct_uploaded_document,
+    load_preloaded_documents,
+)
 from context_engine.knowledge.processing import SourceFormat, SourceInput
 from context_engine.retrieval import (
     EmbeddingVectorStoreRetriever,
 )
 from context_engine.tools import ToolInvocation, ToolRegistry, ToolResultStatus, ToolRuntime
 from context_engine.tools.retrieval import SearchDocumentsTool
-from context_engine.workbench.documents import (
-    DocumentCatalog,
-    UploadCandidate,
-    UploadLimits,
-    WorkbenchDocumentError,
-    construct_uploaded_document,
-    load_preloaded_documents,
-)
 from tests.source_index_fixtures import (
     FixtureEmbeddingProvider,
     MemorySourceStore,
@@ -77,7 +77,7 @@ def test_uploaded_document_is_deterministic_and_labeled() -> None:
 def test_uploaded_document_validation_rejects_invalid_input(
     candidate: UploadCandidate, message: str
 ) -> None:
-    with pytest.raises(WorkbenchDocumentError, match=message):
+    with pytest.raises(SourceCatalogError, match=message):
         construct_uploaded_document(
             candidate,
             UploadLimits(max_files=2, max_bytes_per_file=64),
@@ -107,7 +107,7 @@ def test_clear_uploads_deletes_only_uploaded_sources_after_restart() -> None:
 def test_upload_limit_is_checked_before_ingestion() -> None:
     catalog, store = _catalog(max_files=1)
 
-    with pytest.raises(WorkbenchDocumentError, match="At most 1"):
+    with pytest.raises(SourceCatalogError, match="At most 1"):
         catalog.ingest_uploads(
             (
                 UploadCandidate(name="one.txt", content=b"one"),
@@ -142,7 +142,7 @@ def test_upload_bom_is_removed_by_core_processing() -> None:
 
 def test_invalid_upload_batch_does_not_ingest_valid_prefix() -> None:
     catalog, store = _catalog()
-    with pytest.raises(WorkbenchDocumentError) as exc:
+    with pytest.raises(SourceCatalogError) as exc:
         catalog.ingest_uploads(
             (UploadCandidate("valid.txt", b"valid"), UploadCandidate("bad.txt", b"\xff"))
         )
@@ -207,7 +207,7 @@ def test_pdf_uploads_use_explicit_separate_limits() -> None:
         (UploadLimits(max_pdf_pages=1), "exceeds 1 pages"),
         (UploadLimits(max_pdf_text_characters=1), "exceeds 1 extracted"),
     ]:
-        with pytest.raises(WorkbenchDocumentError, match=message):
+        with pytest.raises(SourceCatalogError, match=message):
             construct_uploaded_document(candidate, limits)
 
 
@@ -216,7 +216,7 @@ def test_source_batch_storage_failure_reports_committed_prefix_and_restart_rollb
 
     catalog, store = _catalog()
     store.fail_on["upsert"] = 2
-    with pytest.raises(WorkbenchDocumentError, match="recover"):
+    with pytest.raises(SourceCatalogError, match="recover"):
         catalog.ingest_uploads(
             (UploadCandidate("one.txt", b"one"), UploadCandidate("two.txt", b"two"))
         )

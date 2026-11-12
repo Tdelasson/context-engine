@@ -47,46 +47,23 @@ See the [roadmap](docs/product/roadmap.md) for details.
 
 ## Try it
 
-The Agent Workbench is a local Streamlit app where you can ask questions over indexed
-documents, upload your own, and inspect every tool call and trace.
+The Context Engine app is a local React UI where you can ask questions over indexed
+documents, upload your own, approve tool calls, and inspect every tool call and trace.
 
-You need Python 3.11+, [Ollama](https://ollama.com), and Docker.
+You need Python 3.11+, [Node.js](https://nodejs.org) LTS, [Ollama](https://ollama.com), and
+Docker.
 
 ```bash
 git clone https://github.com/Tdelasson/context-engine.git
 cd context-engine
-python -m pip install -e ".[workbench,pdf]"
+python -m pip install -e ".[api,pdf]"
 docker run --rm -p 6333:6333 qdrant/qdrant
 ```
 
-In a second terminal:
+In a second terminal, build the React app and start the API, which also serves the UI:
 
 ```bash
 ollama pull llama3.2:1b
-streamlit run src/context_engine/workbench/streamlit_app.py
-```
-
-Open `http://localhost:8501`. The first start downloads a small embedding model.
-Configuration, optional retrieval strategies, and troubleshooting are in the
-[workbench guide](docs/product/agent-workbench.md).
-
-### Local HTTP API
-
-```bash
-python -m pip install -e ".[api,pdf]"
-python -m context_engine.api
-```
-
-Serves `/api/v1` on `127.0.0.1:8000` (OpenAPI at `/openapi.json`). It has no authentication
-and is for local use only. See the [HTTP API reference](docs/api/http-api.md).
-
-### React app
-
-The React app in [`frontend/`](frontend/) shows the run thread with a live technical
-inspector, an approve/reject flow for tools that need approval, and a Knowledge screen for
-uploading and managing sources. It needs Node.js LTS.
-
-```bash
 cd frontend
 npm ci
 npm run build
@@ -94,8 +71,20 @@ cd ..
 python -m context_engine.api --static-dir frontend/dist
 ```
 
-Open `http://127.0.0.1:8000`. For development, run `npm run dev` in `frontend/` next to the
-API; it proxies `/api` to port 8000. The Streamlit workbench remains available.
+Open `http://127.0.0.1:8000`. The first start downloads a small embedding model.
+Configuration, optional retrieval strategies, and troubleshooting are in the
+[app guide](docs/product/agent-workbench.md).
+
+The UI ([`frontend/`](frontend/)) shows the run thread with a live technical inspector, an
+approve/reject flow for tools that need approval, and a Knowledge screen for uploading and
+managing sources. For development, run `npm run dev` in `frontend/` next to the API; it
+proxies `/api` to port 8000.
+
+### Local HTTP API
+
+`python -m context_engine.api` serves `/api/v1` on `127.0.0.1:8000` (OpenAPI at
+`/openapi.json`). It has no authentication and is for local use only. See the
+[HTTP API reference](docs/api/http-api.md).
 
 ## Documentation
 

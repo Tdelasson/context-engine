@@ -102,7 +102,8 @@ with Vite.
 ### 5. Streamlit
 
 Streamlit stays unchanged until the React application reaches feature parity. It is then
-removed, with its tests and dependency, in its own pull request (#93).
+removed, with its tests and dependency, in its own pull request (#93). Done: #93 removed the
+workbench package, the `workbench` extra and the Streamlit dependency.
 
 ## Delivery order
 

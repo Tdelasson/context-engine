@@ -1,16 +1,20 @@
-# Agent Workbench
+# Context Engine app (Agent Workbench)
+
+The React app in `frontend/`, served by the HTTP API, is the way to run Context Engine
+locally. It replaced the Streamlit workbench in #93.
 
 ## Setup
 
 1. Activate the project's Python environment and install dependencies with
-   `python -m pip install -e ".[workbench,pdf,dev]"`.
+   `python -m pip install -e ".[api,pdf,dev]"`.
 2. Start Docker Desktop, then local Qdrant on `http://localhost:6333`:
    `docker run --rm --name context-engine-qdrant -p 6333:6333 qdrant/qdrant`.
 3. Install/start Ollama and pull a small tool-capable model, for example
    `ollama pull llama3.2:3b`. Use a quantization suitable for the local hardware;
    inspect the installed model with `ollama show llama3.2:3b`.
 4. Set any non-default environment variables listed below.
-5. Launch the workbench and wait for preloaded-document ingestion to finish.
+5. Build the React app and start the API (below), and wait for preloaded-document ingestion
+   to finish.
 
 Initial embedding-model setup can require a download; subsequent inference runs locally.
 The workbench indexes exact-token chunks and persists source lifecycle state in Qdrant.
@@ -19,11 +23,15 @@ See [source ingestion](../api/source-ingestion.md) for replacement, recovery, an
 ## Run locally
 
 ```powershell
+cd frontend
+npm ci
+npm run build
+cd ..
 $env:CONTEXT_ENGINE_WORKBENCH_MODEL = "llama3.2:1b"
-streamlit run src/context_engine/workbench/streamlit_app.py
+python -m context_engine.api --static-dir frontend/dist
 ```
 
-Open `http://localhost:8501`. To use the 3B model instead of the 1B default,
+Open `http://127.0.0.1:8000`. To use the 3B model instead of the 1B default,
 set `CONTEXT_ENGINE_WORKBENCH_MODEL` to `llama3.2:3b` before launching.
 
 The default configuration uses:
@@ -60,9 +68,9 @@ Optional environment variables:
 
 Timeouts must be finite and positive. Each prompt starts a fresh run, with at most four
 model iterations and 256 output tokens per model invocation. The workbench allows its two
-registered tools through the existing policy boundary. The Streamlit workbench has no approval UI: if
-`CONTEXT_ENGINE_APPROVAL_TOOLS` names a tool, its run waits for the timeout and the call is
-rejected. Use the HTTP API to answer approval requests.
+registered tools through the existing policy boundary. If `CONTEXT_ENGINE_APPROVAL_TOOLS` names
+a tool, the run pauses and the UI shows an approve/reject card; an unanswered request is
+rejected after the timeout.
 
 ## Behavior
 
@@ -91,25 +99,26 @@ python -m mypy src/
 pre-commit run --all-files
 ```
 
-With the workbench extra installed, pytest also exercises actual Streamlit widgets with fake
-model/tool fixtures. These UI tests do not require running local services.
+Frontend checks run from `frontend/`: `npm run typecheck`, `npm run lint`, `npm run test`
+and `npm run build`. Neither suite needs running local services.
 
 Verify the application composition against local services separately:
 
 ```powershell
 $env:CONTEXT_ENGINE_RUN_WORKBENCH_INTEGRATION = "1"
 $env:CONTEXT_ENGINE_WORKBENCH_MODEL = "llama3.2:3b"
-python -m pytest tests/integration/test_workbench_integration.py -v
+python -m pytest tests/integration/test_core_application_integration.py -v
 ```
 
 This live test checks preloaded search, uploaded-fact retrieval, calculation, and upload cleanup.
-It creates and removes its own unique Qdrant collection. It does not change the workbench collection.
+It creates and removes its own unique Qdrant collection. It does not change the app collection.
 The existing search-tool integration test and its environment variables are documented in
 [CONTRIBUTING.md](../../CONTRIBUTING.md#opt-in-integration-tests).
 
 ### Recorded local verification — 2026-10-01
 
-The live workbench test passed with both `llama3.2:1b` (Q8_0) and `llama3.2:3b` (Q4_K_M),
+This note is history from the Streamlit workbench era (the test has since been ported to the
+core application, `test_core_application_integration.py`). The live workbench test passed with both `llama3.2:1b` (Q8_0) and `llama3.2:3b` (Q4_K_M),
 cached MiniLM embeddings, and local Docker Qdrant. It verified preloaded retrieval, an uploaded
 `COBALT-742` fact in the final answer, calculator output 19, and retrieval after upload removal.
 The existing search-tool integration and deterministic Streamlit widget tests also passed.
@@ -119,7 +128,7 @@ The existing search-tool integration and deterministic Streamlit widget tests al
 | Displayed failure | Recovery |
 | --- | --- |
 | Configuration | Correct the labeled environment value; timeouts and upload limits must be positive. |
-| Embedding dependency | Install the workbench extra and prepare the configured embedding model locally. |
+| Embedding dependency | Install the `api` extra and prepare the configured embedding model locally. |
 | Vector-store dependency | Start Docker/Qdrant, check port 6333 and collection compatibility, then reload. |
 | Preparation/ingestion | Check the embedding and vector-store services before retrying. |
 | Upload validation | Use non-empty UTF-8 `.txt`/`.md` files within the documented count/size limits. |
@@ -128,7 +137,7 @@ The existing search-tool integration and deterministic Streamlit widget tests al
 | Iteration limit | Use a shorter, specific request and inspect repeated tool proposals; no successful final run is claimed. |
 
 Dependency labels distinguish a configured model from initialized embeddings/vector storage.
-They are not continuous health monitoring. Displayed runs belong to the browser session;
+They are not continuous health monitoring. Displayed runs belong to the API process (they are not persisted);
 source tracking and index lifecycle state persist in Qdrant. Startup explicitly recovers
 interrupted writes. A pending index blocks search; use Recover source index or reload.
 Run one writer process per collection. No cross-process transaction or atomic visibility is claimed.
@@ -137,16 +146,14 @@ Run one writer process per collection. No cross-process transaction or atomic vi
 ## Code ownership
 
 Application composition, settings, the source catalog, prompt presets and the preloaded demo
-documents live in `context_engine.core`. The `context_engine.workbench` package is the
-Streamlit adapter: it calls the core facade and maps structured run records to the display
-models rendered here. `workbench.config`, `workbench.documents` and
-`workbench.application` re-export the core names under their previous workbench names.
+documents live in `context_engine.core`; `context_engine.api` is the HTTP adapter and
+`frontend/` the React client. The `context_engine.workbench` package no longer exists.
 Environment variable names are unchanged.
 
 ## Reusable source processing
 
 Uploads and preloaded documents use `context_engine.knowledge.processing`.
-The workbench acquires bytes, checks upload filenames and counts, and translates typed
+The application acquires bytes, checks upload filenames and counts, and translates typed
 processing failures into UI errors. The core validates byte and extracted-character
 limits, UTF-8 or PDF format, and nonempty extracted content. Text/Markdown uploads use the configured
 per-file byte limit as both the byte and character cap. PDF uploads have separate byte,
@@ -275,7 +282,7 @@ export CONTEXT_ENGINE_EVIDENCE_MAX_RESULTS=5
 The answering model must already be available in Ollama. The tokenizer directory must contain
 `tokenizer.json` and `tokenizer_config.json` from the official Qwen/Qwen2.5-0.5B-Instruct revision
 `7ae557604adf67be50417f59c2c2f167def9a775`; runtime verifies their SHA-256 fingerprints and never
-downloads files or model weights. Existing workbench dependencies provide the tokenizers runtime.
+downloads files or model weights. Existing application dependencies provide the tokenizers runtime.
 Other models, revisions, missing tokenizer files, and invalid limits fail explicitly.
 
 Budget the complete sorted JSON evidence object (query, count, passages, citations, metadata,

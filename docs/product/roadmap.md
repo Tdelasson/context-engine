@@ -764,7 +764,7 @@ Context Engine v1.0 should demonstrate:
 
 **Agent Workbench:**
 
-* [x] [#53 — Integrated Context Engine agent workbench](https://github.com/Tdelasson/context-engine/issues/53), merged in PR #57. The workbench runs agent execution over M5 chunked ingestion, with lexical, hybrid, reranking, and evidence selection available as opt-in settings. M6 context assembly and Context-Aware DJ remain future work. See the [workbench documentation](agent-workbench.md) for local setup and verification.
+* [x] [#53 — Integrated Context Engine agent workbench](https://github.com/Tdelasson/context-engine/issues/53), merged in PR #57. The workbench runs agent execution over M5 chunked ingestion, with lexical, hybrid, reranking, and evidence selection available as opt-in settings. M6 context assembly and Context-Aware DJ remain future work. The workbench UI is now the React app and the Streamlit version was removed (#93). See the [app documentation](agent-workbench.md) for local setup and verification.
 
 **M5 — Modern RAG (current):**
 
