@@ -455,3 +455,31 @@ def test_ollama_gateway_maps_unknown_done_reason_to_other(
     )
 
     assert response.finish_reason is ModelFinishReason.OTHER
+
+
+def test_ollama_gateway_rejects_tool_output_that_the_shared_renderer_cannot_render(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_urlopen(request: object, timeout: float) -> _FakeHTTPResponse:
+        raise AssertionError("an unrenderable tool output must not be sent")
+
+    monkeypatch.setattr("context_engine.models.ollama.urlopen", fake_urlopen)
+    gateway = OllamaModelGateway()
+
+    with pytest.raises(ModelGatewayRequestError, match="tool output"):
+        gateway.generate(
+            ModelRequest(
+                model_id="llama3.2",
+                messages=(
+                    ModelMessage(role=ModelRole.USER, content="Measure it."),
+                    ModelMessage(
+                        role=ModelRole.TOOL,
+                        tool_result=ModelToolResult.success(
+                            tool_name="measure",
+                            output={"value": float("nan")},
+                            tool_call_id="call-1",
+                        ),
+                    ),
+                ),
+            )
+        )
