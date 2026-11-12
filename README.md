@@ -83,7 +83,8 @@ and is for local use only. See the [HTTP API reference](docs/api/http-api.md).
 ### React app
 
 The React app in [`frontend/`](frontend/) shows the run thread with a live technical
-inspector and an approve/reject flow for tools that need approval. It needs Node.js LTS.
+inspector, an approve/reject flow for tools that need approval, and a Knowledge screen for
+uploading and managing sources. It needs Node.js LTS.
 
 ```bash
 cd frontend
