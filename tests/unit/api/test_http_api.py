@@ -13,6 +13,7 @@ from context_engine.core import (
     ApplicationSettings,
     ContextEngineApplication,
     DocumentCatalog,
+    SourceCatalogError,
 )
 from context_engine.knowledge.processing import SourceFormat, SourceInput
 from context_engine.models import (
@@ -312,6 +313,32 @@ def test_upload_without_files_is_a_structured_422() -> None:
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "invalid_request"
+
+
+def test_source_failures_report_whether_the_index_needs_recovery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = _client(_Gateway([]))
+    application = client.app.state.application  # type: ignore[attr-defined]
+
+    def fail(_: object) -> None:
+        raise SourceCatalogError("store: write failed. Restart/recover.", requires_recovery=True)
+
+    monkeypatch.setattr(application, "ingest_uploads", fail)
+    response = _upload(client, ("a.md", b"# A\n\nalpha"))
+
+    assert response.status_code == 422  # type: ignore[attr-defined]
+    error = response.json()["error"]  # type: ignore[attr-defined]
+    assert error["code"] == "source_rejected"
+    assert error["details"] == {"requires_recovery": True}
+
+
+def test_validation_rejections_do_not_require_recovery() -> None:
+    client = _client(_Gateway([]))
+
+    response = _upload(client, ("bad.exe", b"MZ"))
+
+    assert response.json()["error"]["details"] == {"requires_recovery": False}  # type: ignore[attr-defined]
 
 
 def test_deleting_unknown_or_preloaded_source_is_rejected() -> None:

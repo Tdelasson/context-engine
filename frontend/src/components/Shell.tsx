@@ -4,7 +4,7 @@ import ui from '../styles/ui.module.css'
 import styles from './Shell.module.css'
 import { Tag } from './Tag'
 
-const PLANNED = ['Knowledge', 'Activities', 'Saved decisions', 'Plugins', 'Search', 'History']
+const PLANNED = ['Activities', 'Saved decisions', 'Plugins', 'Search', 'History']
 
 const READY_STATES = new Set(['ready', 'configured', 'connected'])
 
@@ -24,6 +24,11 @@ export function Shell() {
           <li>
             <NavLink to="/runs" className={({ isActive }) => (isActive ? styles.active : '')}>
               Runs
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/knowledge" className={({ isActive }) => (isActive ? styles.active : '')}>
+              Knowledge
             </NavLink>
           </li>
         </ul>

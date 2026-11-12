@@ -109,6 +109,17 @@ describe('App', () => {
     expect(await screen.findByText('The architecture guide explains it.')).toBeInTheDocument()
   })
 
+  it('routes /knowledge to the Knowledge sources screen from the sidebar', async () => {
+    const run = makeRun()
+    mockApi(() => run)
+    vi.spyOn(api, 'listSources').mockResolvedValue({ preloaded: [], uploaded: [] })
+
+    renderAt('/knowledge')
+
+    expect(await screen.findByRole('heading', { name: 'Knowledge sources' })).toBeInTheDocument()
+    expect(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', { name: 'Knowledge' })).toBeInTheDocument()
+  })
+
   it('reports an unreachable API instead of an empty success', async () => {
     vi.spyOn(api, 'listRuns').mockRejectedValue(new Error('Failed to fetch'))
     vi.spyOn(api, 'getSystem').mockRejectedValue(new Error('Failed to fetch'))

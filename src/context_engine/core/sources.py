@@ -32,7 +32,15 @@ _SUPPORTED_SUFFIXES = frozenset({".md", ".txt", ".pdf"})
 
 
 class SourceCatalogError(ValueError):
-    """Raised when a source cannot be safely constructed or managed."""
+    """Raised when a source cannot be safely constructed or managed.
+
+    ``requires_recovery`` is true when a failed index write left the index needing recovery
+    before it can be searched or written again.
+    """
+
+    def __init__(self, message: str = "", *, requires_recovery: bool = False) -> None:
+        super().__init__(message)
+        self.requires_recovery = requires_recovery
 
 
 @dataclass(frozen=True, slots=True)
@@ -287,4 +295,7 @@ class DocumentCatalog:
                 if failed.requires_recovery
                 else ""
             )
-            raise SourceCatalogError(f"{failed.error_phase}: {failed.error_message}.{suffix}")
+            raise SourceCatalogError(
+                f"{failed.error_phase}: {failed.error_message}.{suffix}",
+                requires_recovery=failed.requires_recovery,
+            )

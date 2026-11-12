@@ -1,5 +1,15 @@
 import { isRecord, asString } from './json'
-import type { ApprovalDecision, RunDetail, RunSummary, SystemInfo } from './types'
+import type {
+  ApprovalDecision,
+  ClearUploadsReport,
+  DeleteSourceReport,
+  IngestionReport,
+  RecoveryReport,
+  RunDetail,
+  RunSummary,
+  SourceListing,
+  SystemInfo,
+} from './types'
 
 const BASE = '/api/v1'
 
@@ -20,7 +30,8 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
-  if (init.body !== undefined) headers['Content-Type'] = 'application/json'
+  // A string body is JSON; a FormData body sets its own multipart boundary.
+  if (typeof init.body === 'string') headers['Content-Type'] = 'application/json'
   const response = await fetch(`${BASE}${path}`, { ...init, headers })
   if (!response.ok) throw await toApiError(response)
   return (await response.json()) as T
@@ -65,5 +76,22 @@ export const api = {
   },
   getSystem(): Promise<SystemInfo> {
     return request<SystemInfo>('/system')
+  },
+  listSources(): Promise<SourceListing> {
+    return request<SourceListing>('/sources')
+  },
+  uploadSources(files: readonly File[]): Promise<IngestionReport> {
+    const body = new FormData()
+    for (const file of files) body.append('files', file, file.name)
+    return request<IngestionReport>('/sources', { method: 'POST', body })
+  },
+  deleteSource(sourceId: string): Promise<DeleteSourceReport> {
+    return request<DeleteSourceReport>(`/sources/${encodeURIComponent(sourceId)}`, { method: 'DELETE' })
+  },
+  clearUploads(): Promise<ClearUploadsReport> {
+    return request<ClearUploadsReport>('/sources', { method: 'DELETE' })
+  },
+  recoverSources(): Promise<RecoveryReport> {
+    return request<RecoveryReport>('/sources/recover', { method: 'POST' })
   },
 }

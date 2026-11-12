@@ -59,6 +59,35 @@ describe('api client', () => {
     await expect(api.getSystem()).rejects.toMatchObject({ status: 502, code: 'http_error', message: 'Bad Gateway' })
   })
 
+  it('uploads files as multipart form data without forcing a JSON content type', async () => {
+    const fetchMock = respond(200, { outcomes: [] })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await api.uploadSources([new File(['alpha'], 'a.md'), new File(['beta'], 'b.txt')])
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/v1/sources')
+    expect(init.method).toBe('POST')
+    expect(init.body).toBeInstanceOf(FormData)
+    expect((init.body as FormData).getAll('files').map((item) => (item as File).name)).toEqual(['a.md', 'b.txt'])
+    expect(init.headers).not.toHaveProperty('Content-Type')
+  })
+
+  it('calls the delete, clear and recover endpoints', async () => {
+    const fetchMock = respond(200, {})
+    vi.stubGlobal('fetch', fetchMock)
+
+    await api.deleteSource('uploaded-a b')
+    await api.clearUploads()
+    await api.recoverSources()
+
+    expect(fetchMock.mock.calls.map(([url, init]) => [url, (init as RequestInit).method])).toEqual([
+      ['/api/v1/sources/uploaded-a%20b', 'DELETE'],
+      ['/api/v1/sources', 'DELETE'],
+      ['/api/v1/sources/recover', 'POST'],
+    ])
+  })
+
   it('unwraps the run list', async () => {
     vi.stubGlobal('fetch', respond(200, { runs: [{ run_id: 'a' }] }))
 

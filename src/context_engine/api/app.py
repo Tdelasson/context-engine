@@ -191,7 +191,12 @@ def _sources_router() -> APIRouter:
         try:
             outcomes = _application(request).recover_source_index()
         except SourceCatalogError as exc:
-            raise ApiError(500, "source_recovery_failed", str(exc)) from exc
+            raise ApiError(
+                500,
+                "source_recovery_failed",
+                str(exc),
+                {"requires_recovery": exc.requires_recovery},
+            ) from exc
         return RecoverSourcesResponse(
             outcomes=[IngestionOutcomeModel.from_core(item) for item in outcomes]
         )
@@ -207,7 +212,12 @@ def _sources_router() -> APIRouter:
         try:
             outcome = application.delete_upload(source_id)
         except SourceCatalogError as exc:
-            raise ApiError(500, "source_operation_failed", str(exc)) from exc
+            raise ApiError(
+                500,
+                "source_operation_failed",
+                str(exc),
+                {"requires_recovery": exc.requires_recovery},
+            ) from exc
         return DeleteSourceResponse(outcome=IngestionOutcomeModel.from_core(outcome))
 
     @router.delete("", response_model=ClearUploadsResponse)
@@ -215,7 +225,12 @@ def _sources_router() -> APIRouter:
         try:
             deleted = _application(request).clear_uploads()
         except SourceCatalogError as exc:
-            raise ApiError(500, "source_operation_failed", str(exc)) from exc
+            raise ApiError(
+                500,
+                "source_operation_failed",
+                str(exc),
+                {"requires_recovery": exc.requires_recovery},
+            ) from exc
         return ClearUploadsResponse(deleted_source_ids=list(deleted))
 
     return router
@@ -227,7 +242,12 @@ def _ingest(
     try:
         report = application.ingest_uploads(candidates)
     except SourceCatalogError as exc:
-        raise ApiError(422, "source_rejected", str(exc)) from exc
+        raise ApiError(
+            422,
+            "source_rejected",
+            str(exc),
+            {"requires_recovery": exc.requires_recovery},
+        ) from exc
     return IngestionReportResponse.from_core(report)
 
 
