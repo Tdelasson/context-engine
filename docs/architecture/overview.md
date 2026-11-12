@@ -187,6 +187,42 @@ Embedded and HTTP interfaces must expose the same underlying semantics.
 
 The adapters must not implement independent business logic.
 
+## 4.4 Implemented core application facade
+
+The domain API exists as `ContextEngineApplication` in `context_engine.core`. It is the
+embedded Python API and the object future HTTP adapters call.
+
+```text
+context_engine.core
+├── application   ContextEngineApplication: runs, sources, system description
+├── composition   build_live_application: wires local embeddings, Qdrant, retrieval, tools, Ollama
+├── runs          RunRecord, RunStatus, RunRegistry
+├── settings      ApplicationSettings (environment-backed)
+├── sources       DocumentCatalog, upload validation and limits
+└── prompts       system prompt and prompt presets
+```
+
+- **Runs.** `start_run(prompt)` starts a run on a worker thread and returns a `RunRecord`;
+  `run_prompt(prompt)` starts one and waits. A record is a structured snapshot: status,
+  runtime result, tool results, tool traces and the run events recorded so far
+  (section 11.1). It carries no display text.
+- **One active run.** Runs are held in memory for the life of the process, and only one run
+  may be active; a second start raises `RunAlreadyActiveError`. There is no persistence and
+  no cross-process coordination.
+- **Live events.** `wait_for_run_events(run_id, after_sequence=...)` returns events newer
+  than a sequence number and whether the run has finished, so a consumer can replay and then
+  follow a run.
+- **Status.** A run that produced a response after any tool error is reported as failed,
+  never as successful.
+- **Sources and system.** The facade prepares the corpus, lists, ingests, deletes and clears
+  sources, recovers the source index, and describes the effective settings, registered tools,
+  prompt presets and composition-time dependency states.
+
+The facade imports no web framework and no Streamlit. The Streamlit workbench is now a thin
+adapter (`context_engine.workbench`) that calls the facade and maps run records to its
+display models. The HTTP adapter is not implemented yet. See
+[ADR-016](decisions/ADR-016-http-api-and-react-frontend.md).
+
 The initial service API will use HTTP and JSON with versioned endpoints:
 
 ```text
@@ -894,7 +930,8 @@ Each started run ends with exactly one `run_finished` event, including runs that
 raise. Events hold primitive values only and are provider-independent. The emitter contains
 sink failures, so telemetry cannot change a run. Events are held in memory by whichever sink
 the application supplies; persistence, OpenTelemetry export and retrieval-stage events are
-not implemented. The current workbench does not supply an emitter. See
+not implemented. The core application facade (section 4.4) creates an emitter for every run
+and keeps the events on the run record. See
 [ADR-015](decisions/ADR-015-runtime-run-events.md).
 
 ---

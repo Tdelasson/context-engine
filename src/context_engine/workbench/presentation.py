@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from context_engine.agent import AgentRuntimeExecutionOutcome, AgentRuntimeExecutionResult
+from context_engine.core.runs import derive_run_status
 from context_engine.tools import (
     ToolExecutionTrace,
     ToolResult,
@@ -128,15 +129,7 @@ def _run_status(
     result: AgentRuntimeExecutionResult,
     traces: tuple[ToolExecutionTrace, ...],
 ) -> WorkbenchRunStatus:
-    if result.outcome is AgentRuntimeExecutionOutcome.LIMIT_REACHED:
-        return WorkbenchRunStatus.LIMIT_REACHED
-    if result.outcome is AgentRuntimeExecutionOutcome.FAILED:
-        return WorkbenchRunStatus.FAILED
-    if result.outcome is AgentRuntimeExecutionOutcome.RESPONDED:
-        if any(trace.status is ToolResultStatus.ERROR for trace in traces):
-            return WorkbenchRunStatus.FAILED
-        return WorkbenchRunStatus.SUCCESS
-    return WorkbenchRunStatus.FAILED
+    return WorkbenchRunStatus(derive_run_status(result, traces).value)
 
 
 def _build_lifecycle(

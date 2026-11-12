@@ -130,6 +130,15 @@ interrupted writes. A pending index blocks search; use Recover source index or r
 Run one writer process per collection. No cross-process transaction or atomic visibility is claimed.
 
 
+## Code ownership
+
+Application composition, settings, the source catalog, prompt presets and the preloaded demo
+documents live in `context_engine.core`. The `context_engine.workbench` package is the
+Streamlit adapter: it calls the core facade and maps structured run records to the display
+models rendered here. `workbench.config`, `workbench.documents` and
+`workbench.application` re-export the core names under their previous workbench names.
+Environment variable names are unchanged.
+
 ## Reusable source processing
 
 Uploads and preloaded documents use `context_engine.knowledge.processing`.

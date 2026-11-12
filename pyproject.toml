@@ -38,7 +38,7 @@ workbench = [
 ]
 
 [tool.setuptools.package-data]
-"context_engine.workbench.demo_documents" = ["*.md", "*.txt"]
+"context_engine.core.demo_documents" = ["*.md", "*.txt"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

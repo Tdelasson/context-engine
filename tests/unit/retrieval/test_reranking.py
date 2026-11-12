@@ -302,7 +302,7 @@ def test_workbench_configuration_disabled_and_enabled(monkeypatch: Any) -> None:
     assert configure_reranking(upstream, WorkbenchSettings()) is upstream
     scorer = Scorer([RerankingScore(r.document.document_id, 1) for r in results()])
     monkeypatch.setattr(
-        "context_engine.workbench.application.LocalCrossEncoderReranker", lambda _: scorer
+        "context_engine.core.composition.LocalCrossEncoderReranker", lambda _: scorer
     )
     enabled = configure_reranking(upstream, WorkbenchSettings(reranking_enabled=True))
     assert isinstance(enabled, RerankingRetriever)

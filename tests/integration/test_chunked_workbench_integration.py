@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from context_engine.core import composition as composition_module
 from context_engine.models import ModelFinishReason, ModelRequest, ModelResponse, ModelToolCall
 from context_engine.retrieval import MetadataFilter, QdrantVectorStore
 from context_engine.workbench import application as application_module
@@ -52,7 +53,7 @@ def test_real_chunked_workbench_replacement_catalog_restart_and_cleanup(
         collection_name=f"context-engine-chunk-workbench-it-{uuid4().hex}",
     )
     monkeypatch.setattr(
-        application_module, "OllamaModelGateway", lambda **kwargs: ControlledGateway()
+        composition_module, "OllamaModelGateway", lambda **kwargs: ControlledGateway()
     )
     app = application_module.build_live_workbench(settings)
     try:
