@@ -294,27 +294,27 @@ def test_tool_boundary_diagnostics_and_policy() -> None:
     assert failed.error.error_type == "RerankerInferenceError"
 
 
-def test_workbench_configuration_disabled_and_enabled(monkeypatch: Any) -> None:
-    from context_engine.workbench.application import configure_reranking
-    from context_engine.workbench.config import WorkbenchConfigurationError, WorkbenchSettings
+def test_application_configuration_disabled_and_enabled(monkeypatch: Any) -> None:
+    from context_engine.core.composition import configure_reranking
+    from context_engine.core.settings import ApplicationConfigurationError, ApplicationSettings
 
     upstream = Upstream(results())
-    assert configure_reranking(upstream, WorkbenchSettings()) is upstream
+    assert configure_reranking(upstream, ApplicationSettings()) is upstream
     scorer = Scorer([RerankingScore(r.document.document_id, 1) for r in results()])
     monkeypatch.setattr(
         "context_engine.core.composition.LocalCrossEncoderReranker", lambda _: scorer
     )
-    enabled = configure_reranking(upstream, WorkbenchSettings(reranking_enabled=True))
+    enabled = configure_reranking(upstream, ApplicationSettings(reranking_enabled=True))
     assert isinstance(enabled, RerankingRetriever)
     assert (
         enabled.retrieve(RetrievalRequest("q"))[0].document is results()[0].document
         or enabled.retrieve(RetrievalRequest("q"))[0].document == results()[0].document
     )
     monkeypatch.setenv("CONTEXT_ENGINE_RERANKING_ENABLED", "true")
-    assert WorkbenchSettings.from_environment().reranking_enabled
+    assert ApplicationSettings.from_environment().reranking_enabled
     monkeypatch.setenv("CONTEXT_ENGINE_RERANKING_ENABLED", "maybe")
-    with pytest.raises(WorkbenchConfigurationError):
-        WorkbenchSettings.from_environment()
+    with pytest.raises(ApplicationConfigurationError):
+        ApplicationSettings.from_environment()
 
 
 def test_library_path_disables_truncation_and_preserves_exact_text() -> None:
@@ -423,19 +423,19 @@ def test_hybrid_composition_preserves_fusion_and_native_scores() -> None:
         assert stages["reranking"].candidate_count == 3
 
 
-def test_workbench_rejects_incompatible_hybrid_reranking_budgets() -> None:
-    from context_engine.workbench.config import WorkbenchConfigurationError, WorkbenchSettings
+def test_application_rejects_incompatible_hybrid_reranking_budgets() -> None:
+    from context_engine.core.settings import ApplicationConfigurationError, ApplicationSettings
 
-    with pytest.raises(WorkbenchConfigurationError, match="hybrid final result ceiling"):
-        WorkbenchSettings(
+    with pytest.raises(ApplicationConfigurationError, match="hybrid final result ceiling"):
+        ApplicationSettings(
             retrieval_strategy="hybrid", reranking_enabled=True, hybrid_final_results=10
         )
     assert (
-        WorkbenchSettings(
+        ApplicationSettings(
             retrieval_strategy="hybrid", reranking_enabled=False, hybrid_final_results=10
         ).hybrid_final_results
         == 10
     )
-    assert WorkbenchSettings(
+    assert ApplicationSettings(
         retrieval_strategy="hybrid", reranking_enabled=True, hybrid_final_results=20
     ).reranking_enabled

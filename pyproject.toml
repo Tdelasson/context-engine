@@ -42,11 +42,6 @@ api = [
     "qdrant-client>=1.16",
     "sentence-transformers>=5.0",
 ]
-workbench = [
-    "qdrant-client>=1.16",
-    "sentence-transformers>=5.0",
-    "streamlit>=1.50",
-]
 
 [tool.setuptools.package-data]
 "context_engine.core.demo_documents" = ["*.md", "*.txt"]

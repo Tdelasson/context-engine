@@ -218,10 +218,11 @@ context_engine.core
   sources, recovers the source index, and describes the effective settings, registered tools,
   prompt presets and composition-time dependency states.
 
-The facade imports no web framework and no Streamlit. The Streamlit workbench is now a thin
-adapter (`context_engine.workbench`) that calls the facade and maps run records to its
-display models. The FastAPI adapter (`context_engine.api`) is a second thin adapter over the
-same facade and serves HTTP and JSON under `/api/v1`, with run events as server-sent events.
+The facade imports no web framework. The FastAPI adapter (`context_engine.api`) is a thin
+adapter over the facade and serves HTTP and JSON under `/api/v1`, with run events as
+server-sent events. The React app (`frontend/`) is its client and derives lifecycle and
+evidence views from the structured run data. The earlier Streamlit workbench was removed once
+the React app reached parity (#93).
 See [the HTTP API reference](../api/http-api.md) and
 [ADR-016](decisions/ADR-016-http-api-and-react-frontend.md).
 

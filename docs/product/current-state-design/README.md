@@ -5,8 +5,8 @@ These mockups show what Context Engine can do today, in the visual style of the
 **technical view** that exposes the agent run and the retrieval pipeline, in the spirit
 of the [Agent Workbench](../agent-workbench.md).
 
-They are static design mockups, not an implemented interface. The Streamlit workbench
-remains the only running UI; the screens also describe the interactive UI planned in
+They are static design mockups, not an implemented interface. The React app in `frontend/`
+implements them; the screens also describe the interactive UI planned in
 [ADR-015](../../architecture/decisions/ADR-015-runtime-run-events.md) and
 [ADR-016](../../architecture/decisions/ADR-016-http-api-and-react-frontend.md). All prompts, answers, scores, counts and durations in the
 screens are illustrative examples, not measurements.

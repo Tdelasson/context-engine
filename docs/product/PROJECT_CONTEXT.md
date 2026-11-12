@@ -99,7 +99,7 @@ M4 delivered embedding contracts, direct local inference, Qdrant-backed storage 
 simple ingestion, retrieval, the model-independent benchmark, and the `search_documents` tool.
 
 The integrated Agent Workbench (#53, PR #57) is merged. It supports live local model proposals,
-deterministic document search/calculation, uploads, evidence, and execution traces through Streamlit.
+deterministic document search/calculation, uploads, evidence, and execution traces, first through a Streamlit workbench and now through the React app (the Streamlit workbench was removed in #93).
 See `docs/product/agent-workbench.md` for setup, behavior, failure guidance, and live verification.
 
 M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62) are implemented.
