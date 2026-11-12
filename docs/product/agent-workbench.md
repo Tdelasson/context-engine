@@ -54,11 +54,15 @@ Optional environment variables:
 - `CONTEXT_ENGINE_WORKBENCH_MAX_PDF_BYTES`
 - `CONTEXT_ENGINE_WORKBENCH_MAX_PDF_PAGES`
 - `CONTEXT_ENGINE_WORKBENCH_MAX_PDF_TEXT_CHARACTERS`
+- `CONTEXT_ENGINE_APPROVAL_TOOLS` (comma-separated tool names that require approval; empty by
+  default)
+- `CONTEXT_ENGINE_APPROVAL_TIMEOUT_SECONDS` (default 120; an unanswered request is rejected)
 
 Timeouts must be finite and positive. Each prompt starts a fresh run, with at most four
 model iterations and 256 output tokens per model invocation. The workbench allows its two
-registered tools through the existing policy boundary. Interactive approval is not implemented in
-the workbench.
+registered tools through the existing policy boundary. The Streamlit workbench has no approval UI: if
+`CONTEXT_ENGINE_APPROVAL_TOOLS` names a tool, its run waits for the timeout and the call is
+rejected. Use the HTTP API to answer approval requests.
 
 ## Behavior
 

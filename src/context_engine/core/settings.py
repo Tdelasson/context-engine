@@ -52,6 +52,8 @@ class ApplicationSettings:
     reranking_final_limit: int = 5
     reranking_batch_size: int = 8
     reranking_input_tokens: int = 512
+    approval_required_tools: tuple[str, ...] = ()
+    approval_timeout_seconds: float = 120.0
 
     def __post_init__(self) -> None:
         from context_engine.retrieval.evidence_selection import EvidenceSelectionConfig
@@ -116,6 +118,17 @@ class ApplicationSettings:
             raise ApplicationConfigurationError(
                 "Reranking candidate limit cannot exceed the hybrid final result ceiling."
             )
+        if (
+            not isinstance(self.approval_required_tools, tuple)
+            or any(
+                not isinstance(name, str) or not name.strip() or name != name.strip()
+                for name in self.approval_required_tools
+            )
+            or len(set(self.approval_required_tools)) != len(self.approval_required_tools)
+        ):
+            raise ApplicationConfigurationError(
+                "approval_required_tools must be unique, nonblank tool names."
+            )
         string_fields = {
             "lexical_collection_name": self.lexical_collection_name,
             "model_id": self.model_id,
@@ -141,6 +154,7 @@ class ApplicationSettings:
             "max_output_tokens": self.max_output_tokens,
             "max_model_iterations": self.max_model_iterations,
             "chunk_max_input_tokens": self.chunk_max_input_tokens,
+            "approval_timeout_seconds": self.approval_timeout_seconds,
         }
         invalid = tuple(
             name for name, value in positive_numbers.items() if not isfinite(value) or value <= 0
@@ -256,6 +270,14 @@ class ApplicationSettings:
             ),
             max_upload_bytes=_read_int(
                 "CONTEXT_ENGINE_WORKBENCH_MAX_UPLOAD_BYTES", defaults.max_upload_bytes
+            ),
+            approval_required_tools=tuple(
+                name.strip()
+                for name in os.getenv("CONTEXT_ENGINE_APPROVAL_TOOLS", "").split(",")
+                if name.strip()
+            ),
+            approval_timeout_seconds=_read_float(
+                "CONTEXT_ENGINE_APPROVAL_TIMEOUT_SECONDS", defaults.approval_timeout_seconds
             ),
         )
 

@@ -25,6 +25,7 @@ the directory exists. The OpenAPI document is at `/openapi.json` for client type
 | `GET /runs` | List run summaries (no events or traces). |
 | `GET /runs/{id}` | Full structured run: tool results, traces, events. |
 | `GET /runs/{id}/events` | Server-sent event stream (below). |
+| `POST /runs/{id}/approval` | Answer the run's pending tool approval (below). |
 | `GET /sources` | Indexed `preloaded` and `uploaded` sources. |
 | `POST /sources` | Multipart upload, repeated `files` field. |
 | `DELETE /sources/{id}` | Delete one uploaded source. |
@@ -42,6 +43,23 @@ events first, then follows live, and closes after `run_finished`. To resume, rec
 the `Last-Event-ID` header or `?after=<sequence>`. Idle periods emit `: keep-alive` comments.
 Retrieval stages do not emit live events.
 
+## Tool approval
+
+Tools named in `CONTEXT_ENGINE_APPROVAL_TOOLS` (empty by default) pause the run before they
+execute. The run reports status `awaiting_approval` with `pending_approval`
+(`tool_name`, `arguments`, `invocation_id`, `reason`), and a `tool_approval_requested` event is
+streamed. Answer with:
+
+```json
+POST /api/v1/runs/{id}/approval
+{"decision": "approved", "reason": "optional"}
+```
+
+`decision` is `approved` or `rejected`. Returns the run summary. An unanswered request is
+rejected after `CONTEXT_ENGINE_APPROVAL_TIMEOUT_SECONDS` (default 120). Rejection and timeout
+mark the run `failed`; the trace records the policy and approval decisions. A run keeps the
+single active-run slot while it waits. There is no cancel endpoint.
+
 ## Errors
 
 Every non-2xx response is `{"error": {"code", "message", "details"}}`.
@@ -49,7 +67,7 @@ Every non-2xx response is `{"error": {"code", "message", "details"}}`.
 | Status | Codes |
 | --- | --- |
 | `404` | `unknown_run`, `unknown_source`, `http_error` |
-| `409` | `run_already_active` (`details.active_run_id`), `source_not_deletable` |
+| `409` | `run_already_active` (`details.active_run_id`), `no_pending_approval`, `source_not_deletable` |
 | `422` | `invalid_prompt`, `invalid_request`, `invalid_upload`, `source_rejected` |
 | `500` | `source_operation_failed`, `source_recovery_failed` |
 

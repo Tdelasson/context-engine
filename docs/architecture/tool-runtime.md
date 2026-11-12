@@ -101,7 +101,29 @@ The approval request contains the proposed invocation and relevant policy evalua
 - If approval is required but no resolver exists, execution fails explicitly and the tool is not executed.
 - The original tool-call identity and invocation arguments are preserved.
 
-Interactive UI, asynchronous suspension/resumption, persistence, and external approval services are intentionally out of scope for the current runtime foundation.
+The runtime itself stays synchronous. Persistence and external approval services are out of scope.
+
+### Interactive approval in the core application
+
+`ContextEngineApplication` composes a `ToolNamePolicy` from the read-only
+`approval_required_tools` setting (empty by default, which keeps `AllowAllToolPolicy`) and a
+`RunApprovalResolver` that blocks the run's worker thread until a person decides:
+
+```text
+tool_approval_requested event  -> run status awaiting_approval, pending_approval set
+resolve_approval(run_id, approved | rejected, reason)
+tool_approval_resolved event   -> run status running (or the tool call fails if rejected)
+no decision within approval_timeout_seconds -> resolved as rejected ("timed out")
+```
+
+- The registry publishes the pending request in the same step that records the event, so a
+  client that sees the event can always answer it.
+- One decision is accepted per request; a decision for a run that is not awaiting approval, or
+  a second decision, raises `NoPendingApprovalError`.
+- Rejection and timeout follow the existing `ToolApprovalRejectedError` path, so the trace
+  records the policy and approval decisions and the run is reported as failed.
+- Configured names must be registered tools; the model cannot change the set or the timeout.
+- A run holds the single active-run slot while it awaits approval.
 
 ## 6. Tool Errors
 

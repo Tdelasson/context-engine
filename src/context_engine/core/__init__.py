@@ -11,6 +11,8 @@ from context_engine.core.composition import ApplicationDependencyError, build_li
 from context_engine.core.prompts import PROMPT_PRESETS, SYSTEM_PROMPT
 from context_engine.core.runs import (
     InvalidPromptError,
+    NoPendingApprovalError,
+    PendingApproval,
     RunAlreadyActiveError,
     RunRecord,
     RunRegistry,
@@ -37,6 +39,8 @@ __all__ = [
     "DocumentCatalog",
     "IngestionReport",
     "InvalidPromptError",
+    "NoPendingApprovalError",
+    "PendingApproval",
     "RunAlreadyActiveError",
     "RunRecord",
     "RunRegistry",
