@@ -1,4 +1,4 @@
-import type { PendingApproval, RunDetail, RunEvent, RunSummary, SystemInfo } from '../api/types'
+import type { PendingApproval, RunDetail, RunEvent, RunSummary, SystemInfo, ToolTrace } from '../api/types'
 
 type Payload = RunEvent['payload']
 
@@ -167,6 +167,22 @@ export const SELECTION_DIAGNOSTICS = {
   ],
 }
 
+/** A successful `search_documents` trace. Override any field, such as `diagnostics`. */
+export function searchTrace(overrides: Partial<ToolTrace> = {}): ToolTrace {
+  return {
+    tool_name: 'search_documents',
+    invocation_id: 'call-1',
+    arguments: { query: 'tool policy' },
+    policy_decision: 'allow',
+    approval_decision: null,
+    status: 'success',
+    output: SEARCH_OUTPUT_DENSE,
+    error: null,
+    diagnostics: null,
+    ...overrides,
+  }
+}
+
 export function makeRun(overrides: Partial<RunDetail> = {}): RunDetail {
   return {
     run_id: 'run-1',
@@ -193,19 +209,7 @@ export function makeRun(overrides: Partial<RunDetail> = {}): RunDetail {
         error: null,
       },
     ],
-    traces: [
-      {
-        tool_name: 'search_documents',
-        invocation_id: 'call-1',
-        arguments: { query: 'tool policy' },
-        policy_decision: 'allow',
-        approval_decision: null,
-        status: 'success',
-        output: SEARCH_OUTPUT_DENSE,
-        error: null,
-        diagnostics: null,
-      },
-    ],
+    traces: [searchTrace()],
     ...overrides,
   }
 }

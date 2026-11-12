@@ -10,6 +10,7 @@ import {
   awaitingApprovalRun,
   makeRun,
   makeSystem,
+  searchTrace,
   summaryOf,
 } from '../test/fixtures'
 import { ApprovalCard } from './ApprovalCard'
@@ -188,17 +189,11 @@ describe('Inspector', () => {
         { tool_name: 'search_documents', invocation_id: 'call-1', arguments: {}, status: 'success', output: SEARCH_OUTPUT_FULL as never, error: null },
       ],
       traces: [
-        {
-          tool_name: 'search_documents',
-          invocation_id: 'call-1',
+        searchTrace({
           arguments: {},
-          policy_decision: 'allow',
-          approval_decision: null,
-          status: 'success',
           output: SEARCH_OUTPUT_FULL as never,
-          error: null,
           diagnostics: { selection: SELECTION_DIAGNOSTICS },
-        },
+        }),
       ],
     })
     renderInspector(run, makeSystem({ retrieval_strategy: 'hybrid' }))

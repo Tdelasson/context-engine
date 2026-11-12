@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SEARCH_OUTPUT_FULL, SELECTION_DIAGNOSTICS, awaitingApprovalRun, makeRun } from '../test/fixtures'
+import { SEARCH_OUTPUT_FULL, SELECTION_DIAGNOSTICS, awaitingApprovalRun, makeRun, searchTrace } from '../test/fixtures'
 import { deriveRetrieval } from './retrieval'
 
 const stage = (view: NonNullable<ReturnType<typeof deriveRetrieval>>, id: string) =>
@@ -10,19 +10,7 @@ function runWithOutput(output: unknown, diagnostics: Record<string, unknown> | n
     tool_results: [
       { tool_name: 'search_documents', invocation_id: 'call-1', arguments: {}, status: 'success', output: output as never, error: null },
     ],
-    traces: [
-      {
-        tool_name: 'search_documents',
-        invocation_id: 'call-1',
-        arguments: {},
-        policy_decision: 'allow',
-        approval_decision: null,
-        status: 'success',
-        output: output as never,
-        error: null,
-        diagnostics: diagnostics as never,
-      },
-    ],
+    traces: [searchTrace({ arguments: {}, output: output as never, diagnostics: diagnostics as never })],
   })
 }
 
