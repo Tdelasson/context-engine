@@ -10,11 +10,13 @@ import dataclasses
 from collections.abc import Mapping
 from typing import Literal
 
-from pydantic import BaseModel, JsonValue
+from pydantic import BaseModel, Field, JsonValue
 
 from context_engine.core import (
     IngestionReport,
+    PendingApproval,
     RunRecord,
+    RunStatus,
     SourceListing,
     SystemDescription,
 )
@@ -60,6 +62,29 @@ class ErrorResponse(BaseModel):
 
 class StartRunRequest(BaseModel):
     prompt: str
+
+
+class ApprovalDecisionRequest(BaseModel):
+    """A person's explicit decision on the run's pending tool approval request."""
+
+    decision: Literal["approved", "rejected"]
+    reason: str | None = Field(default=None, max_length=1000)
+
+
+class PendingApprovalModel(BaseModel):
+    tool_name: str
+    arguments: dict[str, JsonValue]
+    invocation_id: str | None
+    reason: str | None
+
+    @classmethod
+    def from_core(cls, pending: PendingApproval) -> PendingApprovalModel:
+        return cls(
+            tool_name=pending.tool_name,
+            arguments=_pairs(pending.arguments),
+            invocation_id=pending.invocation_id,
+            reason=pending.reason,
+        )
 
 
 class ToolErrorModel(BaseModel):
@@ -146,9 +171,10 @@ class RunSummaryModel(BaseModel):
     prompt: str
     model_id: str
     max_model_iterations: int
-    status: Literal["running", "success", "failed", "limit_reached"]
+    status: RunStatus
     started_at: float
     finished_at: float | None
+    pending_approval: PendingApprovalModel | None
     model_iterations: int
     final_response: str | None
     outcome: str | None
@@ -162,9 +188,14 @@ class RunSummaryModel(BaseModel):
             prompt=record.prompt,
             model_id=record.model_id,
             max_model_iterations=record.max_model_iterations,
-            status=record.status.value,
+            status=record.status,
             started_at=record.started_at,
             finished_at=record.finished_at,
+            pending_approval=(
+                None
+                if record.pending_approval is None
+                else PendingApprovalModel.from_core(record.pending_approval)
+            ),
             model_iterations=record.model_iterations,
             final_response=record.final_response,
             outcome=None if record.result is None else str(record.result.outcome),

@@ -9,6 +9,7 @@ from dataclasses import dataclass, replace
 from uuid import uuid4
 
 from context_engine.agent import AgentRuntime
+from context_engine.core.approvals import RunApprovalResolver
 from context_engine.core.prompts import PROMPT_PRESETS, SYSTEM_PROMPT
 from context_engine.core.runs import (
     InvalidPromptError,
@@ -18,13 +19,22 @@ from context_engine.core.runs import (
     derive_error,
     derive_run_status,
 )
-from context_engine.core.settings import ApplicationSettings
+from context_engine.core.settings import ApplicationConfigurationError, ApplicationSettings
 from context_engine.core.sources import DocumentCatalog, IngestionReport, UploadCandidate
 from context_engine.knowledge.ingestion import IngestionOutcome
 from context_engine.models import ModelGateway
 from context_engine.observability import RunEvent, RunEventEmitter
 from context_engine.retrieval.source_store import SourceIndexRevision
-from context_engine.tools import AllowAllToolPolicy, ToolRegistry, ToolRuntime
+from context_engine.tools import (
+    AllowAllToolPolicy,
+    ToolApprovalDecision,
+    ToolApprovalResolution,
+    ToolNamePolicy,
+    ToolPolicy,
+    ToolPolicyDecision,
+    ToolRegistry,
+    ToolRuntime,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +99,12 @@ class ContextEngineApplication:
         tool_registry: ToolRegistry,
         wall_clock: Callable[[], float] = time.time,
     ) -> None:
+        registered = {tool.name for tool in tool_registry.list_tools()}
+        unregistered = sorted(set(settings.approval_required_tools) - registered)
+        if unregistered:
+            raise ApplicationConfigurationError(
+                f"approval_required_tools names unregistered tools: {', '.join(unregistered)}."
+            )
         self.settings = settings
         self.documents = document_catalog
         self._model_gateway = model_gateway
@@ -178,6 +194,21 @@ class ContextEngineApplication:
         record = self.start_run(prompt)
         return self._runs.wait_until_finished(record.run_id, timeout=timeout)
 
+    def wait_for_run(self, run_id: str, *, timeout: float | None = None) -> RunRecord:
+        """Block until a run finishes or ``timeout`` elapses and return its snapshot."""
+        return self._runs.wait_until_finished(run_id, timeout=timeout)
+
+    def resolve_approval(
+        self, run_id: str, decision: ToolApprovalDecision, reason: str | None = None
+    ) -> RunRecord:
+        """Answer the run's pending approval request.
+
+        Raises ``UnknownRunError`` for an unknown run and ``NoPendingApprovalError`` when
+        the run is not awaiting approval or the request was already answered.
+        """
+        self._runs.decide(run_id, ToolApprovalResolution(decision=decision, reason=reason))
+        return self._runs.get(run_id)
+
     def get_run(self, run_id: str) -> RunRecord:
         """Return the current snapshot of one run."""
         return self._runs.get(run_id)
@@ -192,11 +223,26 @@ class ContextEngineApplication:
         """Return events newer than ``after_sequence`` and whether the run has finished."""
         return self._runs.wait_for_events(run_id, after_sequence=after_sequence, timeout=timeout)
 
+    def _tool_policy(self) -> ToolPolicy:
+        required = self.settings.approval_required_tools
+        if not required:
+            return AllowAllToolPolicy()
+        return ToolNamePolicy.from_mapping(
+            {name: ToolPolicyDecision.REQUIRE_APPROVAL for name in required}
+        )
+
     def _execute(self, run_id: str, prompt: str) -> None:
         emitter = RunEventEmitter(
             _RegistrySink(self._runs), run_id=run_id, wall_clock=self._wall_clock
         )
-        tool_runtime = ToolRuntime(self._tool_registry, policy=AllowAllToolPolicy(), events=emitter)
+        tool_runtime = ToolRuntime(
+            self._tool_registry,
+            policy=self._tool_policy(),
+            approval_resolver=RunApprovalResolver(
+                self._runs, run_id, timeout_seconds=self.settings.approval_timeout_seconds
+            ),
+            events=emitter,
+        )
         runtime = AgentRuntime(
             model_gateway=self._model_gateway, tool_runtime=tool_runtime, events=emitter
         )

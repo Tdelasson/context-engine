@@ -8,14 +8,21 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 
 from context_engine.agent import AgentRuntimeExecutionOutcome, AgentRuntimeExecutionResult
-from context_engine.observability import RunEvent
-from context_engine.tools import ToolExecutionTrace, ToolResult, ToolResultStatus
+from context_engine.observability import RunEvent, ToolApprovalRequested, ToolApprovalResolved
+from context_engine.tools import (
+    ToolApprovalDecision,
+    ToolApprovalResolution,
+    ToolExecutionTrace,
+    ToolResult,
+    ToolResultStatus,
+)
 
 
 class RunStatus(StrEnum):
     """Application-level status of one run."""
 
     RUNNING = "running"
+    AWAITING_APPROVAL = "awaiting_approval"
     SUCCESS = "success"
     FAILED = "failed"
     LIMIT_REACHED = "limit_reached"
@@ -23,7 +30,7 @@ class RunStatus(StrEnum):
     @property
     def is_finished(self) -> bool:
         """Return whether the run has ended."""
-        return self is not RunStatus.RUNNING
+        return self not in (RunStatus.RUNNING, RunStatus.AWAITING_APPROVAL)
 
 
 class RunAlreadyActiveError(RuntimeError):
@@ -46,6 +53,24 @@ class InvalidPromptError(ValueError):
     """Raised when a prompt cannot start a run."""
 
 
+class NoPendingApprovalError(RuntimeError):
+    """Raised when an approval decision targets a run with no unanswered approval request."""
+
+    def __init__(self, run_id: str) -> None:
+        super().__init__(f"Run {run_id} has no pending approval request.")
+        self.run_id = run_id
+
+
+@dataclass(frozen=True, slots=True)
+class PendingApproval:
+    """The tool invocation a run is waiting for a person to approve or reject."""
+
+    tool_name: str
+    arguments: tuple[tuple[str, object], ...]
+    invocation_id: str | None = None
+    reason: str | None = None
+
+
 @dataclass(frozen=True, slots=True)
 class RunRecord:
     """Immutable structured snapshot of one run.
@@ -65,6 +90,7 @@ class RunRecord:
     tool_results: tuple[ToolResult, ...] = ()
     traces: tuple[ToolExecutionTrace, ...] = ()
     events: tuple[RunEvent, ...] = ()
+    pending_approval: PendingApproval | None = None
     error_phase: str | None = None
     error_message: str | None = None
 
@@ -121,6 +147,7 @@ class RunRegistry:
         self._records: dict[str, RunRecord] = {}
         self._order: list[str] = []
         self._active_run_id: str | None = None
+        self._decisions: dict[str, ToolApprovalResolution] = {}
 
     @property
     def active_run_id(self) -> str | None:
@@ -146,14 +173,52 @@ class RunRegistry:
             record = self._records.get(event.run_id)
             if record is None:
                 return
-            self._records[event.run_id] = replace(record, events=(*record.events, event))
+            updated = replace(record, events=(*record.events, event))
+            payload = event.payload
+            if isinstance(payload, ToolApprovalRequested) and not record.status.is_finished:
+                self._decisions.pop(event.run_id, None)
+                updated = replace(
+                    updated,
+                    status=RunStatus.AWAITING_APPROVAL,
+                    pending_approval=PendingApproval(
+                        tool_name=payload.tool_name,
+                        arguments=payload.arguments,
+                        invocation_id=payload.invocation_id,
+                        reason=payload.reason,
+                    ),
+                )
+            elif isinstance(payload, ToolApprovalResolved) and not record.status.is_finished:
+                self._decisions.pop(event.run_id, None)
+                updated = replace(updated, status=RunStatus.RUNNING, pending_approval=None)
+            self._records[event.run_id] = updated
             self._condition.notify_all()
+
+    def decide(self, run_id: str, resolution: ToolApprovalResolution) -> None:
+        """Record the one decision for the run's pending approval request."""
+        with self._condition:
+            record = self._require(run_id)
+            if record.pending_approval is None or run_id in self._decisions:
+                raise NoPendingApprovalError(run_id)
+            self._decisions[run_id] = resolution
+            self._condition.notify_all()
+
+    def await_decision(self, run_id: str, *, timeout: float) -> ToolApprovalResolution:
+        """Block until a decision arrives; resolve as rejected when ``timeout`` elapses."""
+        with self._condition:
+            self._condition.wait_for(lambda: run_id in self._decisions, timeout=timeout)
+            if run_id not in self._decisions:
+                self._decisions[run_id] = ToolApprovalResolution(
+                    decision=ToolApprovalDecision.REJECTED,
+                    reason=f"Approval timed out after {timeout:g} seconds.",
+                )
+            return self._decisions[run_id]
 
     def finish(self, run_id: str, update: Callable[[RunRecord], RunRecord]) -> RunRecord:
         """Replace an active run with its finished record and free the run slot."""
         with self._condition:
             record = self._require(run_id)
-            finished = update(record)
+            finished = replace(update(record), pending_approval=None)
+            self._decisions.pop(run_id, None)
             if not finished.status.is_finished:
                 raise ValueError("A finished run record must have a finished status.")
             self._records[run_id] = finished

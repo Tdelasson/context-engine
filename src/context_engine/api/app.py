@@ -19,6 +19,7 @@ from pydantic import JsonValue
 from starlette.exceptions import HTTPException
 
 from context_engine.api.schemas import (
+    ApprovalDecisionRequest,
     ClearUploadsResponse,
     DeleteSourceResponse,
     ErrorBody,
@@ -37,11 +38,13 @@ from context_engine.api.schemas import (
 from context_engine.core import (
     ContextEngineApplication,
     InvalidPromptError,
+    NoPendingApprovalError,
     RunAlreadyActiveError,
     SourceCatalogError,
     UnknownRunError,
     UploadCandidate,
 )
+from context_engine.tools import ToolApprovalDecision
 
 API_PREFIX = "/api/v1"
 DEFAULT_KEEPALIVE_SECONDS = 15.0
@@ -117,6 +120,15 @@ def _runs_router() -> APIRouter:
     @router.get("/{run_id}", response_model=RunDetailModel)
     def get_run(run_id: str, request: Request) -> RunDetailModel:
         return RunDetailModel.from_core(_application(request).get_run(run_id))
+
+    @router.post("/{run_id}/approval", response_model=RunSummaryModel)
+    def decide_approval(
+        run_id: str, body: ApprovalDecisionRequest, request: Request
+    ) -> RunSummaryModel:
+        record = _application(request).resolve_approval(
+            run_id, ToolApprovalDecision(body.decision), body.reason
+        )
+        return RunSummaryModel.from_core(record)
 
     @router.get(
         "/{run_id}/events",
@@ -259,6 +271,10 @@ def create_app(
     @app.exception_handler(UnknownRunError)
     def _unknown_run(_: Request, exc: UnknownRunError) -> JSONResponse:
         return _error_response(404, ErrorBody(code="unknown_run", message=str(exc)))
+
+    @app.exception_handler(NoPendingApprovalError)
+    def _no_pending_approval(_: Request, exc: NoPendingApprovalError) -> JSONResponse:
+        return _error_response(409, ErrorBody(code="no_pending_approval", message=str(exc)))
 
     @app.exception_handler(InvalidPromptError)
     def _invalid_prompt(_: Request, exc: InvalidPromptError) -> JSONResponse:

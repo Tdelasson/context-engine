@@ -107,9 +107,11 @@ def _finished(client: TestClient, run_id: str) -> dict[str, object]:
     return body
 
 
-def _read_stream(client: TestClient, url: str, **kwargs: object) -> list[dict[str, object]]:
+def _read_stream(
+    client: TestClient, url: str, headers: dict[str, str] | None = None
+) -> list[dict[str, object]]:
     events: list[dict[str, object]] = []
-    with client.stream("GET", url, **kwargs) as response:  # type: ignore[arg-type]
+    with client.stream("GET", url, headers=headers) as response:
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("text/event-stream")
         for line in response.iter_lines():
