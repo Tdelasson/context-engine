@@ -367,9 +367,7 @@ class ToolRuntime:
                 status=result.status,
                 output=result.output,
                 error=result.error,
-                diagnostics=None
-                if diagnostics is None
-                else normalize_tool_arguments(diagnostics),
+                diagnostics=None if diagnostics is None else normalize_tool_arguments(diagnostics),
             )
         )
         self._emit(
