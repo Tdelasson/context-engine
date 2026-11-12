@@ -134,6 +134,25 @@ A trace preserves relevant information such as:
 
 The trace is currently in-memory runtime state. It is not yet a persistent telemetry system or external observability backend.
 
+### Run events
+
+`ToolRuntime` accepts an optional `RunEventEmitter` (`context_engine.observability`). When one
+is supplied, each invocation also emits ordered events as it passes through the boundary:
+
+| Event | Emitted when |
+| --- | --- |
+| `tool_validated` | Registry lookup and schema validation finish, accepted or rejected |
+| `tool_policy_decided` | The policy returns `allow`, `deny` or `require_approval` |
+| `tool_approval_requested` | The approval resolver is about to be called |
+| `tool_approval_resolved` | The approval resolver returned `approved` or `rejected` |
+| `tool_call_finished` | The invocation ends, with status, `executed` and the execution duration |
+
+`tool_call_finished` is emitted exactly once per invocation. `executed` is false when
+validation, policy or approval stopped the invocation before tool code ran. Events are
+additive: the trace and `ToolResult` are unchanged, and with no emitter the runtime behaves as
+before. A failing sink never changes a result. See
+[ADR-015](decisions/ADR-015-runtime-run-events.md).
+
 ## 8. Agent Runtime Integration
 
 The Agent Runtime owns the overall model/tool loop:

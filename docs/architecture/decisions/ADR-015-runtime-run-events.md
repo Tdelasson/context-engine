@@ -1,6 +1,6 @@
 # ADR-015: Typed run events from the Agent and Tool runtimes
 
-- **Status:** Proposed
+- **Status:** Accepted; implemented in #86
 - **Date:** 2026-11-12
 - **Related issues:** #86, #89
 
@@ -25,11 +25,14 @@ overview already describes an append-oriented event log (section 11) and run tra
 
 ## Decision
 
-Add typed, immutable run events, emitted by the runtimes through an injected sink.
+Add typed, immutable run events, emitted by the runtimes through an injected emitter that
+delivers them to a sink.
 
-**Contracts.** Event types and the sink protocol live in `context_engine.observability`,
-which is currently an empty package. Every event carries a run id, a sequence number that
-increases by one per event within a run, and a timestamp. The initial event set is:
+**Contracts.** Event types, the `RunEventSink` protocol and the `RunEventEmitter` live in
+`context_engine.observability`. An event is an envelope (`RunEvent`) around a typed payload.
+The envelope carries a run id, a sequence number that increases by one per event within a
+run, and a timestamp. Payloads hold primitive values only, so the package imports nothing
+from the agent, tool or model packages. The initial event set is:
 
 | Event | Payload |
 | --- | --- |
@@ -40,17 +43,28 @@ increases by one per event within a run, and a timestamp. The initial event set 
 | Tool validated | accepted, or the validation error |
 | Policy decided | decision, reason |
 | Approval requested / resolved | invocation, decision, reason |
-| Tool executed | status, duration, error |
+| Tool call finished | status, whether tool code executed, duration, error |
 | Run finished | outcome, terminal status, iterations |
 
-**Emission.** `AgentRuntime` and `ToolRuntime` accept an optional `RunEventSink`. They emit
-at the points where transitions are applied and tools are executed today. The runtimes own
+**Emission.** `AgentRuntime` and `ToolRuntime` each accept an optional `RunEventEmitter`.
+The emitter wraps a `RunEventSink` and owns the run id, the sequence counter and the clocks.
+The application creates one emitter per run and passes the same instance to both runtimes.
+The Tool Runtime is constructed separately from the Agent Runtime, so a shared emitter is
+what gives a run a single ordered sequence; two runtimes holding a bare sink could not
+number their events consistently. They emit at the points where transitions are applied and
+tools are executed today.
+
+The terminal tool event is "tool call finished", emitted exactly once per invocation. It
+carries an `executed` flag because validation, policy or approval can end an invocation
+before any tool code runs; in that case there is no duration. Each started run ends with
+exactly one "run finished" event, including a run that raises; the exception is then
+re-raised unchanged. The runtimes own
 event creation; applications and models cannot inject events. Durations use an injectable
 monotonic clock so tests are deterministic.
 
-**Isolation.** Telemetry must not determine runtime behavior. Exceptions raised by a sink are
-contained and do not change transitions, tool execution or the run outcome. With no sink
-configured, behavior is unchanged.
+**Isolation.** Telemetry must not determine runtime behavior. The emitter contains and counts
+exceptions raised by a sink, so they do not change transitions, tool execution or the run
+outcome. With no emitter configured, behavior is unchanged.
 
 **Compatibility.** Events are additive. `AgentRuntimeExecutionResult`, `ToolResult` and
 `ToolExecutionTrace` keep their current shape, so existing callers and tests are unaffected.

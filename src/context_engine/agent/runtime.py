@@ -25,6 +25,16 @@ from context_engine.models import (
     normalize_model_tools,
 )
 from context_engine.models.tool_serialization import model_visible_tool_output
+from context_engine.observability import (
+    ModelCallCompleted,
+    ModelCallStarted,
+    RunEventEmitter,
+    RunEventPayload,
+    RunFinished,
+    RunStarted,
+    StateTransitioned,
+    ToolProposed,
+)
 from context_engine.tools import (
     Tool,
     ToolExecutionTrace,
@@ -76,11 +86,14 @@ class AgentRuntime:
         initial_state: AgentExecutionState | None = None,
         model_gateway: ModelGateway | None = None,
         tool_runtime: AgentToolRuntime | None = None,
+        events: RunEventEmitter | None = None,
     ) -> None:
         self._state = initial_state or AgentExecutionState(status=AgentExecutionStatus.START)
         self._model_gateway = model_gateway
         self._tool_runtime = tool_runtime
         self._tool_results: list[ToolResult] = []
+        self._events = events
+        self._model_calls = 0
 
     @property
     def state(self) -> AgentExecutionState:
@@ -120,7 +133,9 @@ class AgentRuntime:
 
     def transition_to(self, status: AgentExecutionStatus) -> AgentExecutionState:
         """Advance execution by applying one validated transition."""
+        previous = self._state
         self._state = transition_agent_state(self._state, status)
+        self._emit_transition(previous, self._state)
         return self._state
 
     def complete(self) -> AgentExecutionState:
@@ -144,6 +159,8 @@ class AgentRuntime:
         )
         target_status = self._target_status_for_decision(decision)
         self._state = transition_agent_state(runtime_validated_state, target_status)
+        self._emit_transition(decision_state, runtime_validated_state)
+        self._emit_transition(runtime_validated_state, self._state)
         return self._state
 
     def propose_action(
@@ -175,14 +192,38 @@ class AgentRuntime:
             messages=messages,
         )
 
+        self._model_calls += 1
+        iteration = self._model_calls
+        self._emit(ModelCallStarted(iteration=iteration))
+        started = self._monotonic()
         try:
             response = self._model_gateway.generate(request)
-        except ModelGatewayError as exc:
-            raise AgentRuntimeModelInteractionError(
-                "Model gateway failed during runtime model interaction."
-            ) from exc
+        except Exception as exc:
+            self._emit(
+                ModelCallCompleted(
+                    iteration=iteration,
+                    duration_seconds=self._elapsed_since(started),
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+            )
+            if isinstance(exc, ModelGatewayError):
+                raise AgentRuntimeModelInteractionError(
+                    "Model gateway failed during runtime model interaction."
+                ) from exc
+            raise
+        usage = response.usage
+        self._emit(
+            ModelCallCompleted(
+                iteration=iteration,
+                duration_seconds=self._elapsed_since(started),
+                finish_reason=str(response.finish_reason),
+                input_tokens=None if usage is None else usage.input_tokens,
+                output_tokens=None if usage is None else usage.output_tokens,
+            )
+        )
 
         decision = interpret_model_response(response)
+        self._emit_transition(self._state, action_proposed_state)
         self.apply_model_decision(decision, from_state=action_proposed_state)
         return decision
 
@@ -200,6 +241,46 @@ class AgentRuntime:
         if max_model_iterations < 1:
             raise ValueError("max_model_iterations must be >= 1.")
 
+        self._emit(RunStarted(model_id=model_id, max_model_iterations=max_model_iterations))
+        try:
+            result = self._run_loop(
+                model_id=model_id,
+                user_prompt=user_prompt,
+                system_prompt=system_prompt,
+                max_output_tokens=max_output_tokens,
+                temperature=temperature,
+                max_model_iterations=max_model_iterations,
+            )
+        except Exception as exc:
+            self._emit(
+                RunFinished(
+                    outcome=AgentRuntimeExecutionOutcome.FAILED.value,
+                    terminal_status=self._state.status.value,
+                    model_iterations=self._model_calls,
+                    error_message=f"{type(exc).__name__}: {exc}",
+                )
+            )
+            raise
+        self._emit(
+            RunFinished(
+                outcome=result.outcome.value,
+                terminal_status=result.terminal_state.status.value,
+                model_iterations=result.model_iterations,
+                error_message=result.error_message,
+            )
+        )
+        return result
+
+    def _run_loop(
+        self,
+        *,
+        model_id: str,
+        user_prompt: str,
+        system_prompt: str | None,
+        max_output_tokens: int | None,
+        temperature: float | None,
+        max_model_iterations: int,
+    ) -> AgentRuntimeExecutionResult:
         model_iterations = 0
         conversation_history = self._build_initial_conversation_history(
             system_prompt=system_prompt,
@@ -282,6 +363,13 @@ class AgentRuntime:
                             tool_call=tool_call,
                         )
                     )
+                    self._emit(
+                        ToolProposed(
+                            tool_name=tool_call.tool_name,
+                            arguments=decision.tool_arguments or (),
+                            invocation_id=decision.tool_call_id,
+                        )
+                    )
                     try:
                         tool_result = self._execute_tool_call(decision)
                     except AgentRuntimeModelInteractionError as exc:
@@ -353,6 +441,23 @@ class AgentRuntime:
             terminal_state=self._state,
             model_iterations=model_iterations,
         )
+
+    def _emit(self, payload: RunEventPayload) -> None:
+        if self._events is not None:
+            self._events.emit(payload)
+
+    def _emit_transition(
+        self, from_state: AgentExecutionState, to_state: AgentExecutionState
+    ) -> None:
+        self._emit(
+            StateTransitioned(from_status=from_state.status.value, to_status=to_state.status.value)
+        )
+
+    def _monotonic(self) -> float:
+        return 0.0 if self._events is None else self._events.monotonic()
+
+    def _elapsed_since(self, started: float) -> float:
+        return max(0.0, self._monotonic() - started)
 
     def _target_status_for_decision(self, decision: ModelDecision) -> AgentExecutionStatus:
         if decision.kind is ModelDecisionKind.RESPOND:

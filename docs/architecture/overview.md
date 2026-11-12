@@ -870,6 +870,33 @@ The event log supports:
 
 An agent execution should be reconstructable from its recorded runtime events and associated telemetry.
 
+## 11.1 Implemented run events
+
+The Agent and Tool runtimes emit typed run events through an optional `RunEventEmitter`
+from `context_engine.observability`. One emitter is created per run and shared by both
+runtimes, so every event carries the same run id and one increasing sequence number.
+
+```text
+run_started
+state_transitioned        (every applied transition, start → terminal)
+model_call_started
+model_call_completed      (duration, finish reason, token usage when reported, error)
+tool_proposed
+tool_validated
+tool_policy_decided
+tool_approval_requested
+tool_approval_resolved
+tool_call_finished        (status, executed, duration)
+run_finished              (outcome, terminal status, iterations)
+```
+
+Each started run ends with exactly one `run_finished` event, including runs that fail or
+raise. Events hold primitive values only and are provider-independent. The emitter contains
+sink failures, so telemetry cannot change a run. Events are held in memory by whichever sink
+the application supplies; persistence, OpenTelemetry export and retrieval-stage events are
+not implemented. The current workbench does not supply an emitter. See
+[ADR-015](decisions/ADR-015-runtime-run-events.md).
+
 ---
 
 # 12. Observability

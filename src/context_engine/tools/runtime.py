@@ -5,6 +5,15 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
+from context_engine.observability import (
+    RunEventEmitter,
+    RunEventPayload,
+    ToolApprovalRequested,
+    ToolApprovalResolved,
+    ToolCallFinished,
+    ToolPolicyDecided,
+    ToolValidated,
+)
 from context_engine.tools.approval import (
     ToolApprovalDecision,
     ToolApprovalRequest,
@@ -16,7 +25,6 @@ from context_engine.tools.errors import (
     ToolApprovalRequiredError,
     ToolInputValidationError,
     ToolPolicyDeniedError,
-    ToolRuntimeError,
     UnknownToolError,
 )
 from context_engine.tools.policy import (
@@ -197,10 +205,12 @@ class ToolRuntime:
         registry: ToolRegistry,
         policy: ToolPolicy | None = None,
         approval_resolver: ToolApprovalResolver | None = None,
+        events: RunEventEmitter | None = None,
     ) -> None:
         self._registry = registry
         self._policy = policy or AllowAllToolPolicy()
         self._approval_resolver = approval_resolver
+        self._events = events
         self._execution_traces: list[ToolExecutionTrace] = []
 
     def list_tools(self) -> tuple[Tool, ...]:
@@ -216,12 +226,30 @@ class ToolRuntime:
         """Resolve, validate, and execute one invocation deterministically."""
         policy_decision: ToolPolicyDecision | None = None
         approval_decision: ToolApprovalDecision | None = None
+        validated = False
+        started: float | None = None
         try:
             tool = self._registry.get(invocation.tool_name)
             arguments = invocation.arguments_as_mapping()
             tool.input_schema.validate(arguments)
+            validated = True
+            self._emit(
+                ToolValidated(
+                    tool_name=invocation.tool_name,
+                    accepted=True,
+                    invocation_id=invocation.invocation_id,
+                )
+            )
             policy_evaluation = self._policy.evaluate(invocation)
             policy_decision = policy_evaluation.decision
+            self._emit(
+                ToolPolicyDecided(
+                    tool_name=invocation.tool_name,
+                    decision=policy_decision.value,
+                    invocation_id=invocation.invocation_id,
+                    reason=policy_evaluation.reason,
+                )
+            )
             if policy_evaluation.decision is ToolPolicyDecision.DENY:
                 raise ToolPolicyDeniedError(
                     policy_evaluation.reason
@@ -233,6 +261,14 @@ class ToolRuntime:
                         "Tool invocation requires explicit human approval, "
                         "but no approval resolver is configured."
                     )
+                self._emit(
+                    ToolApprovalRequested(
+                        tool_name=invocation.tool_name,
+                        arguments=invocation.arguments,
+                        invocation_id=invocation.invocation_id,
+                        reason=policy_evaluation.reason,
+                    )
+                )
                 approval_resolution = self._approval_resolver.resolve(
                     ToolApprovalRequest(
                         invocation=invocation,
@@ -240,61 +276,64 @@ class ToolRuntime:
                     )
                 )
                 approval_decision = approval_resolution.decision
+                self._emit(
+                    ToolApprovalResolved(
+                        tool_name=invocation.tool_name,
+                        decision=approval_decision.value,
+                        invocation_id=invocation.invocation_id,
+                        reason=approval_resolution.reason,
+                    )
+                )
                 if approval_resolution.decision is ToolApprovalDecision.REJECTED:
                     raise ToolApprovalRejectedError(
                         approval_resolution.reason
                         or f"Tool invocation rejected by human approval: {invocation.tool_name}"
                     )
+            started = self._monotonic()
             output = tool.execute(invocation)
-        except ToolRuntimeError as exc:
-            result = ToolResult(
-                invocation=invocation,
-                status=ToolResultStatus.ERROR,
-                error=ToolExecutionErrorDetails(
-                    error_type=type(exc).__name__,
-                    message=str(exc),
-                ),
-            )
-            self._execution_traces.append(
-                ToolExecutionTrace(
-                    invocation=invocation,
-                    policy_decision=policy_decision,
-                    approval_decision=approval_decision,
-                    status=result.status,
-                    output=result.output,
-                    error=result.error,
-                )
-            )
-            return result
         except Exception as exc:
-            result = ToolResult(
-                invocation=invocation,
-                status=ToolResultStatus.ERROR,
-                error=ToolExecutionErrorDetails(
-                    error_type=type(exc).__name__,
-                    message=str(exc),
-                ),
-            )
-            self._execution_traces.append(
-                ToolExecutionTrace(
-                    invocation=invocation,
-                    policy_decision=policy_decision,
-                    approval_decision=approval_decision,
-                    status=result.status,
-                    output=result.output,
-                    error=result.error,
+            error = ToolExecutionErrorDetails(error_type=type(exc).__name__, message=str(exc))
+            if not validated:
+                self._emit(
+                    ToolValidated(
+                        tool_name=invocation.tool_name,
+                        accepted=False,
+                        invocation_id=invocation.invocation_id,
+                        error_type=error.error_type,
+                        error_message=error.message,
+                    )
                 )
+            return self._finish(
+                ToolResult(invocation=invocation, status=ToolResultStatus.ERROR, error=error),
+                policy_decision=policy_decision,
+                approval_decision=approval_decision,
+                started=started,
             )
-            return result
 
-        result = ToolResult(
-            invocation=invocation,
-            status=ToolResultStatus.SUCCESS,
-            output=normalize_tool_arguments(output),
+        return self._finish(
+            ToolResult(
+                invocation=invocation,
+                status=ToolResultStatus.SUCCESS,
+                output=normalize_tool_arguments(output),
+            ),
+            policy_decision=policy_decision,
+            approval_decision=approval_decision,
+            started=started,
         )
+
+    def _finish(
+        self,
+        result: ToolResult,
+        *,
+        policy_decision: ToolPolicyDecision | None,
+        approval_decision: ToolApprovalDecision | None,
+        started: float | None,
+    ) -> ToolResult:
+        """Record the trace and the terminal event for one invocation."""
+        duration = None if started is None else max(0.0, self._monotonic() - started)
         self._execution_traces.append(
             ToolExecutionTrace(
-                invocation=invocation,
+                invocation=result.invocation,
                 policy_decision=policy_decision,
                 approval_decision=approval_decision,
                 status=result.status,
@@ -302,4 +341,22 @@ class ToolRuntime:
                 error=result.error,
             )
         )
+        self._emit(
+            ToolCallFinished(
+                tool_name=result.invocation.tool_name,
+                status=result.status.value,
+                executed=started is not None,
+                invocation_id=result.invocation.invocation_id,
+                duration_seconds=duration,
+                error_type=None if result.error is None else result.error.error_type,
+                error_message=None if result.error is None else result.error.message,
+            )
+        )
         return result
+
+    def _emit(self, payload: RunEventPayload) -> None:
+        if self._events is not None:
+            self._events.emit(payload)
+
+    def _monotonic(self) -> float:
+        return 0.0 if self._events is None else self._events.monotonic()
