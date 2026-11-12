@@ -506,12 +506,14 @@ class _MalformedOutputTool:
     input_schema = ToolInputSchema(fields=(ToolInputField(name="part", value_type=str),))
 
     def execute(self, invocation: ToolInvocation) -> object:
+        if invocation.arguments_as_mapping()["part"] == "plain":
+            return [("value", 1)]
         if invocation.arguments_as_mapping()["part"] == "diagnostics":
             return ToolOutput(model={"value": 1}, diagnostics=[("cache", "miss")])  # type: ignore[arg-type]
         return ToolOutput(model=[("value", 1)])  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("part", ["diagnostics", "model"])
+@pytest.mark.parametrize("part", ["plain", "diagnostics", "model"])
 def test_tool_runtime_traces_malformed_tool_output_as_an_error_result(part: str) -> None:
     registry = ToolRegistry()
     registry.register(_MalformedOutputTool())  # type: ignore[arg-type]
