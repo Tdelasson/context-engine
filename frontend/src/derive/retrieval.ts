@@ -151,8 +151,14 @@ export function deriveRetrieval(
   const evidence = asList(output.results)
     .map(parseEvidence)
     .filter((item): item is EvidenceItem => item !== null)
+  // Live calls often carry no invocation id, so the id alone cannot pair them. Each call has
+  // one result and one trace, so the latest successful search result pairs with the latest
+  // successful search trace.
   const trace = run.traces.findLast(
-    (item) => item.tool_name === 'search_documents' && item.invocation_id === result?.invocation_id,
+    (item) =>
+      item.tool_name === 'search_documents' &&
+      item.status === 'success' &&
+      item.invocation_id === result?.invocation_id,
   )
   const selection = parseSelection(trace?.diagnostics?.selection)
   const strategies = new Set(evidence.flatMap((item) => item.stages.map((stage) => stage.strategy)))

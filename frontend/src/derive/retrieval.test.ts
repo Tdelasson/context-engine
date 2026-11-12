@@ -72,6 +72,25 @@ describe('deriveRetrieval', () => {
     expect(stage(view!, 'selection')).toMatchObject({ enabled: true, summary: 'selected · 812 tokens' })
   })
 
+  it('keeps the selection report when a later search call fails and calls carry no ids', () => {
+    const run = runWithOutput(SEARCH_OUTPUT_FULL, { selection: SELECTION_DIAGNOSTICS })
+    const succeeded = { ...run.traces[0]!, invocation_id: null }
+    const failed = { ...succeeded, status: 'error', output: null, diagnostics: null, error: { error_type: 'ToolInputValidationError', message: 'm' } }
+    const view = deriveRetrieval(
+      {
+        ...run,
+        tool_results: [
+          { ...run.tool_results[0]!, invocation_id: null },
+          { ...run.tool_results[0]!, invocation_id: null, status: 'error', output: null, error: failed.error },
+        ],
+        traces: [succeeded, failed],
+      },
+      null,
+    )
+
+    expect(stage(view!, 'selection')).toMatchObject({ enabled: true, summary: 'selected · 812 tokens' })
+  })
+
   it('returns null while the run has no successful search result', () => {
     expect(deriveRetrieval(awaitingApprovalRun(), null)).toBeNull()
     expect(
