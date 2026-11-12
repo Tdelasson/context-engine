@@ -24,6 +24,29 @@ Optional extras, defined in `pyproject.toml`:
 | `benchmark` | Local embedding inference for the benchmark runners |
 | `workbench` | Streamlit workbench with Qdrant and local embeddings |
 
+### Frontend
+
+The React app in `frontend/` needs [Node.js](https://nodejs.org) LTS (24 or newer). It is not
+needed for the Python checks.
+
+```bash
+cd frontend
+npm ci              # install exactly what package-lock.json pins
+npm run dev         # Vite dev server; proxies /api to http://127.0.0.1:8000
+npm run build       # type-check, then build to frontend/dist
+```
+
+Run the API next to the dev server with `python -m context_engine.api`. To serve the built
+bundle from the API on one port, pass `--static-dir frontend/dist`.
+
+The TypeScript API types in `frontend/src/api/schema.d.ts` are generated from the API's
+OpenAPI document. After changing an API schema, regenerate and commit both files:
+
+```bash
+python scripts/export_openapi.py   # writes frontend/openapi.json
+cd frontend && npm run gen:api     # writes src/api/schema.d.ts
+```
+
 ## Workflow
 
 Issue → feature branch → implementation and tests → pull request → CI → review → merge.
@@ -39,6 +62,15 @@ ruff check .
 ruff format --check .
 mypy src/
 pre-commit run --all-files
+```
+
+When you change `frontend/` or an API schema, also run, from `frontend/`:
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
 ```
 
 The default test run needs no models or services. Tests that depend on an optional extra

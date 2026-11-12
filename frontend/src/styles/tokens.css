@@ -1,0 +1,21 @@
+/* Design tokens carried over from docs/product/current-state-design. */
+
+:root {
+  --paper: #f7f4ed;
+  --paper-raised: #fbf9f4;
+  --sidebar: #ebe6da;
+  --line: #dcd6c8;
+  --line-soft: #e7e2d6;
+  --ink: #1c1d1a;
+  --ink-soft: #55534c;
+  --muted: #7a766c;
+  --green: #24492f;
+  --green-soft: #e3ebdf;
+  --amber: #c7802f;
+  --amber-soft: #f6ead8;
+  --red: #9a3b2c;
+  --red-soft: #f5e2dc;
+  --serif: 'Source Serif 4', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --sans: 'Source Sans 3', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'Cascadia Mono', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+}

@@ -15,7 +15,8 @@ python -m context_engine.api [--host 127.0.0.1] [--port 8000] [--static-dir DIR]
 
 The launcher composes the live application (Ollama, Qdrant, local embeddings), prepares the
 index, then serves. `--static-dir` serves a built frontend at `/` after the API routes when
-the directory exists. The OpenAPI document is at `/openapi.json` for client type generation.
+the directory exists; client-side routes such as `/runs/{id}` fall back to `index.html`, while
+unknown `/api/...` paths and missing files stay `404`. The OpenAPI document is at `/openapi.json` for client type generation.
 
 ## Endpoints
 
