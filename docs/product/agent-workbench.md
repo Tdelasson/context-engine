@@ -295,8 +295,8 @@ Reranking/hybrid ceilings can reduce the available candidates before selection.
 The evidence panel identifies selected whole passages. The search tool's trace carries the
 selection report as `diagnostics.selection`: original ranks/scores, exclusions, comparable
 overlap, status, final tokenizer count and effective configuration identity. These selection
-reports are runtime-only tool diagnostics and never part of the model output (ADR-017); original retrieval diagnostics remain counted
-and model-visible. Empty/no-fit outcomes do not assert that the question is answerable.
+reports are runtime-only tool diagnostics and never part of the model output (ADR-017);
+original retrieval diagnostics remain counted and model-visible. Empty/no-fit outcomes do not assert that the question is answerable.
 
 The hard limit applies to the pinned tokenizer's raw evidence encoding. Ollama/GGUF parity
 is not verified. The provider tool wrapper/chat template, instructions, conversation history,
