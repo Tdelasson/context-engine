@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Engine — Run thread, full retrieval pipeline (mockup)</title>
+<style>
+/* Current-state design mockups. Static, no build step, no external assets. */
+
+:root {
+  --paper: #f7f4ed;
+  --paper-raised: #fbf9f4;
+  --sidebar: #ebe6da;
+  --line: #dcd6c8;
+  --line-soft: #e7e2d6;
+  --ink: #1c1d1a;
+  --ink-soft: #55534c;
+  --muted: #7a766c;
+  --green: #24492f;
+  --green-soft: #e3ebdf;
+  --amber: #c7802f;
+  --amber-soft: #f6ead8;
+  --red: #9a3b2c;
+  --red-soft: #f5e2dc;
+  --serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --sans: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "Cascadia Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+a {
+  color: var(--green);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+/* ---------- App frame ---------- */
+
+.app {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  height: 100vh;
+  min-width: 1180px;
+}
+
+.app.with-inspector {
+  grid-template-columns: 264px minmax(0, 1fr) 500px;
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  background: var(--sidebar);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 16px 16px;
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 0 6px 18px;
+}
+
+.brand .mark {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.btn.quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--green);
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.btn.danger {
+  color: var(--red);
+}
+
+.btn.block {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 11px 14px;
+}
+
+.nav {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.nav li a,
+.nav li span.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--ink);
+  border-left: 3px solid transparent;
+}
+
+.nav li a:hover {
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.nav li.active a {
+  background: #dfd9cb;
+  border-left-color: var(--green);
+  font-weight: 600;
+}
+
+.nav li.planned span.item {
+  color: var(--muted);
+  cursor: default;
+}
+
+.nav .sub {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.nav .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.side-section {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.eyebrow {
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.side-section > .eyebrow {
+  padding: 0 10px 4px;
+  display: block;
+}
+
+.side-foot {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  padding: 12px 10px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.side-foot div {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 7px;
+}
+
+.dot.amber {
+  background: var(--amber);
+}
+
+.dot.red {
+  background: var(--red);
+}
+
+.dot.off {
+  background: transparent;
+  border: 1px solid var(--muted);
+}
+
+/* ---------- Tags ---------- */
+
+.tag {
+  display: inline-block;
+  font-size: 11.5px;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  background: var(--paper-raised);
+  white-space: nowrap;
+}
+
+.tag.ok {
+  background: var(--green-soft);
+  border-color: #c9d6c3;
+  color: var(--green);
+}
+
+.tag.warn {
+  background: var(--amber-soft);
+  border-color: #e6d2b3;
+  color: #7c4d17;
+}
+
+.tag.bad {
+  background: var(--red-soft);
+  border-color: #e3c3ba;
+  color: var(--red);
+}
+
+.tag.planned {
+  border-style: dashed;
+  border-color: #b9b3a4;
+  background: transparent;
+  color: var(--muted);
+}
+
+.tag.off {
+  color: var(--muted);
+  background: transparent;
+}
+
+/* ---------- Main column ---------- */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.topbar strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 26px 32px 20px;
+}
+
+.notice {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  margin-bottom: 22px;
+}
+
+/* ---------- Run thread ---------- */
+
+.run {
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 22px 18px;
+  margin-bottom: 24px;
+  border-left: 3px solid transparent;
+}
+
+.run.selected {
+  border-left-color: var(--green);
+}
+
+.run .who {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.run .prompt {
+  font-size: 19px;
+  margin-bottom: 18px;
+}
+
+.run .answer {
+  font-size: 17px;
+  max-width: 68ch;
+}
+
+.run .answer + .answer {
+  margin-top: 10px;
+}
+
+.agent-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.cites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.runbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.runbar .spacer {
+  flex: 1;
+}
+
+.failure {
+  border: 1px solid #e3c3ba;
+  background: var(--red-soft);
+  border-radius: 6px;
+  padding: 12px 14px;
+  max-width: 68ch;
+  margin-bottom: 12px;
+}
+
+.failure strong {
+  color: var(--red);
+}
+
+/* ---------- Composer ---------- */
+
+.composer {
+  margin: 0 32px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-raised);
+  padding: 12px 14px;
+}
+
+.composer .field {
+  color: var(--muted);
+  font-size: 16px;
+  padding: 4px 2px 12px;
+}
+
+.composer .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer .row .spacer {
+  flex: 1;
+}
+
+.hint {
+  margin: 0 32px 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 11px;
+  background: var(--paper);
+  font-size: 13.5px;
+}
+
+.select.readonly {
+  border-style: dashed;
+  color: var(--ink-soft);
+}
+
+/* ---------- Inspector ---------- */
+
+.inspector {
+  border-left: 1px solid var(--line);
+  background: var(--paper-raised);
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.insp-head {
+  position: sticky;
+  top: 0;
+  background: var(--paper-raised);
+  border-bottom: 1px solid var(--line);
+  padding: 16px 20px 12px;
+  z-index: 1;
+}
+
+.insp-head .title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.insp-head h2 {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.insp-head .sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insp-tabs {
+  display: flex;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.insp-tabs a {
+  color: var(--ink-soft);
+  padding-bottom: 4px;
+}
+
+.insp-tabs a.on {
+  color: var(--green);
+  font-weight: 600;
+  border-bottom: 2px solid var(--green);
+}
+
+.sect {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.sect > .eyebrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.fact {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--paper);
+}
+
+.fact b {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fact span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* lifecycle */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 4px 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line-soft);
+  align-items: baseline;
+}
+
+.steps li:first-child {
+  border-top: 0;
+}
+
+.steps li::before {
+  content: counter(step);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.steps .detail {
+  grid-column: 2 / 4;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* retrieval pipeline */
+
+.pipe {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stage {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 9px 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+}
+
+.stage .name {
+  font-weight: 600;
+}
+
+.stage .meta {
+  grid-column: 1 / 3;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.stage .num {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.stage.off {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+}
+
+.stage.off .name {
+  font-weight: 400;
+}
+
+.stage.off .meta {
+  color: var(--muted);
+}
+
+.stage.end {
+  background: var(--green-soft);
+  border-color: #c9d6c3;
+}
+
+.join {
+  width: 1px;
+  height: 12px;
+  background: #b9b3a4;
+  margin-left: 22px;
+}
+
+.branches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* evidence */
+
+.ev {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 11px 12px;
+  margin-top: 8px;
+}
+
+.ev-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ev-head .src {
+  font-weight: 600;
+}
+
+.ev-head .spacer {
+  flex: 1;
+}
+
+.ev .id {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  margin-top: 2px;
+}
+
+.ev .content {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--ink);
+  border-left: 2px solid var(--line);
+  padding-left: 10px;
+  margin: 9px 0;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 3px 14px;
+  font-size: 12.5px;
+  margin: 0;
+}
+
+.kv dt {
+  color: var(--muted);
+}
+
+.kv dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+table.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-top: 8px;
+}
+
+table.grid th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+table.grid td {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+
+table.grid td.n,
+table.grid th.n {
+  text-align: right;
+  font-family: var(--mono);
+}
+
+pre.json {
+  margin: 8px 0 0;
+  background: #f0ece2;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* not-yet-recorded sections */
+
+.gap {
+  border: 1px dashed #b9b3a4;
+  border-radius: 6px;
+  padding: 11px 12px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.gap .gap-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.gap p {
+  font-size: 12.5px;
+}
+
+.states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin: 8px 0;
+  align-items: center;
+}
+
+.states span.s {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  border: 1px dashed #b9b3a4;
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+.states span.arrow {
+  font-size: 11px;
+}
+
+.placeholder-bars {
+  display: grid;
+  grid-template-columns: max-content 1fr max-content;
+  gap: 5px 10px;
+  font-size: 12.5px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.placeholder-bars i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(90deg, #d5cfc0 0 6px, transparent 6px 10px);
+}
+
+/* ---------- Knowledge page ---------- */
+
+.page-title {
+  font-family: var(--serif);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.page-sub {
+  font-size: 18px;
+  color: var(--ink-soft);
+  margin: 6px 0 24px;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-raised);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.panel > .eyebrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.panel table.grid {
+  font-size: 14px;
+}
+
+.panel table.grid td {
+  padding: 10px 10px 10px 0;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.dropzone {
+  border: 1px dashed #b9b3a4;
+  border-radius: 6px;
+  padding: 16px;
+  text-align: center;
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+
+.rowmsg {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.rowmsg.warn {
+  color: #7c4d17;
+}
+
+.rowmsg.bad {
+  color: var(--red);
+}
+</style>
+</head>
+<body>
+<div class="app with-inspector">
+
+  <nav class="sidebar">
+    <div class="brand"><span class="mark">[ ]</span> Context Engine</div>
+    <a class="btn primary block" href="01-run-default.html">+&nbsp; New run</a>
+    <ul class="nav">
+      <li class="active"><a href="01-run-default.html"><span class="grow">Runs</span></a></li>
+      <li><a href="04-knowledge-sources.html"><span class="grow">Knowledge</span></a></li>
+    </ul>
+    <div class="side-section"><span class="eyebrow">Runs this session</span>
+    <ul class="nav">
+      <li><a href="01-run-default.html"><span class="grow">Model proposals vs. execution<span class="sub">search_documents · success</span></span></a></li>
+      <li class="active"><a href="02-run-full-pipeline.html"><span class="grow">M4, M5 and M6 scope<span class="sub">search_documents · success</span></span></a></li>
+      <li><a href="03-failed-run.html"><span class="grow">Divide 10 by 0<span class="sub">calculator · failed</span></span></a></li>
+    </ul></div>
+    <div class="side-section"><span class="eyebrow">Not built yet</span>
+    <ul class="nav">
+      <li class="planned"><span class="item"><span class="grow">Activities</span><span class="tag planned">Planned</span></span></li>
+      <li class="planned"><span class="item"><span class="grow">Saved decisions</span><span class="tag planned">Planned</span></span></li>
+      <li class="planned"><span class="item"><span class="grow">Plugins</span><span class="tag planned">Planned</span></span></li>
+      <li class="planned"><span class="item"><span class="grow">Search</span><span class="tag planned">Planned</span></span></li>
+      <li class="planned"><span class="item"><span class="grow">History</span><span class="tag planned">Planned</span></span></li>
+    </ul></div>
+    <div class="side-foot">
+      <div><span><span class="dot"></span>Model</span><span>connected</span></div>
+      <div><span><span class="dot"></span>Embeddings</span><span>connected</span></div>
+      <div><span><span class="dot"></span>Qdrant</span><span>connected</span></div>
+      <div><span><span class="dot"></span>Runtime</span><span>ready</span></div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="topbar">
+      <div>Runs / <strong>This session</strong></div>
+      <div>
+        <span class="tag">qwen2.5:0.5b</span>
+        <span class="tag">hybrid retrieval</span>
+        <span class="tag">reranking on</span>
+        <span class="tag">evidence selection on</span>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="notice">
+        <strong>Each prompt is a fresh run.</strong>
+        <span>Nothing is carried over from earlier prompts, and runs are kept for this browser session only.</span>
+      </div>
+
+      <section class="run selected">
+        <div class="who"><span class="eyebrow">You</span><span class="eyebrow">Run 1</span></div>
+        <p class="prompt">What did M4 and M5 deliver, and what remains future M6 work?</p>
+        <div class="who"><span class="agent-name">[ ] Context Engine</span></div>
+        <p class="answer">M4 delivered local embeddings, Qdrant vector search, a retriever, simple ingestion and a retrieval benchmark. M5 added document processing, PDF extraction, chunking, durable ingestion, lexical and hybrid retrieval, reranking and evidence selection.</p>
+        <p class="answer">Automatic context assembly and the context lifecycle remain M6 work.</p>
+        <div class="cites">
+          <span class="tag">roadmap.md · M5 — Modern RAG</span>
+          <span class="tag">roadmap.md · M4 — Embeddings &amp; Vector Search</span>
+          <span class="tag">roadmap.md · M6 — Context Engine</span>
+        </div>
+        <div class="runbar">
+          <span class="tag ok">Success</span>
+          <span class="tag">search_documents</span>
+          <span class="tag">policy: allow</span>
+          <span>3 passages selected from 20 candidates · 2 model iterations</span>
+          <span class="spacer"></span>
+          <strong>Technical view open</strong>
+        </div>
+      </section>
+    </div>
+
+    <div class="composer">
+      <div class="field">Ask about the indexed documents, or give the calculator something to compute…</div>
+      <div class="row">
+        <span class="select">Preset: Project roadmap ▾</span>
+        <span class="select readonly">Sources: all indexed</span>
+        <span class="select readonly">Model: qwen2.5:0.5b</span>
+        <span class="spacer"></span>
+        <span class="btn primary">Run agent &uarr;</span>
+      </div>
+    </div>
+    <p class="hint">Dashed controls are read-only: sources, model and retrieval settings are set by the application before launch.</p>
+  </main>
+
+  <aside class="inspector">
+    <div class="insp-head">
+      <div class="title">
+        <h2>Technical view · Run 1</h2>
+        <span><span class="tag ok">Success</span> &nbsp;<a href="#">Close ✕</a></span>
+      </div>
+      <div class="sub">What did M4 and M5 deliver, and what remains future M6 work?</div>
+      <div class="insp-tabs">
+        <a href="#lifecycle">Lifecycle</a>
+        <a class="on" href="#retrieval">Retrieval</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#selection">Selection</a>
+        <a href="#config">Configuration</a>
+        <a href="#states">Runtime states</a>
+      </div>
+    </div>
+
+    <div class="sect">
+      <div class="facts">
+        <div class="fact"><b>responded</b><span>Outcome</span></div>
+        <div class="fact"><b>2 of 4</b><span>Model iterations</span></div>
+        <div class="fact"><b>1</b><span>Tool calls</span></div>
+        <div class="fact"><b>completed</b><span>Terminal state</span></div>
+      </div>
+    </div>
+
+    <div class="sect" id="lifecycle">
+      <div class="eyebrow"><span>Execution lifecycle</span></div>
+      <ol class="steps">
+        <li><span>User prompt</span><span class="tag ok">complete</span><span class="detail">Submitted to runtime</span></li>
+        <li><span>Model tool proposal</span><span class="tag ok">complete</span><span class="detail mono">search_documents {"query": "M4 M5 deliverables and future M6 work"}</span></li>
+        <li><span>Registry + schema validation</span><span class="tag ok">complete</span><span class="detail">Registered tool and typed arguments accepted</span></li>
+        <li><span>Policy decision</span><span class="tag ok">allow</span><span class="detail">No approval required</span></li>
+        <li><span>Tool execution</span><span class="tag ok">success</span><span class="detail">Deterministic execution completed</span></li>
+        <li><span>Structured ToolResult</span><span class="tag ok">success</span><span class="detail">3 selected passages returned to the model</span></li>
+        <li><span>Final model response</span><span class="tag ok">complete</span><span class="detail">Answer generated from the structured result</span></li>
+      </ol>
+    </div>
+
+    <div class="sect" id="retrieval">
+      <div class="eyebrow"><span>Retrieval pipeline</span><span class="tag">strategy: hybrid</span></div>
+      <div class="pipe">
+        <div class="stage">
+          <span class="name">Query</span><span class="num">1 query</span>
+          <span class="meta mono">"M4 M5 deliverables and future M6 work"</span>
+        </div>
+        <div class="join"></div>
+        <div class="branches">
+          <div class="stage">
+            <span class="name">Dense search</span><span class="num">20</span>
+            <span class="meta">all-MiniLM-L6-v2 · cosine<br><span class="mono">14.2 ms</span></span>
+          </div>
+          <div class="stage">
+            <span class="name">Lexical BM25</span><span class="num">20</span>
+            <span class="meta">Qdrant native BM25<br><span class="mono">6.8 ms</span></span>
+          </div>
+        </div>
+        <div class="join"></div>
+        <div class="stage">
+          <span class="name">Reciprocal rank fusion</span><span class="num">20 of 31</span>
+          <span class="meta">Smoothing 60 · 31 unique candidates · <span class="mono">0.3 ms</span></span>
+        </div>
+        <div class="join"></div>
+        <div class="stage">
+          <span class="name">Cross-encoder reranking</span><span class="num">20 → 5</span>
+          <span class="meta">ms-marco-MiniLM-L6-v2 · logits · CPU · <span class="mono">912 ms</span></span>
+        </div>
+        <div class="join"></div>
+        <div class="stage">
+          <span class="name">Evidence selection</span><span class="num">5 → 3</span>
+          <span class="meta">Whole passages · 1,187 of 4,096 tokens · overlap threshold 0.8</span>
+        </div>
+        <div class="join"></div>
+        <div class="stage end">
+          <span class="name">Evidence returned to the model</span><span class="num">3 passages</span>
+          <span class="meta">Selection report is shown here only; it is excluded from model history</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sect" id="evidence">
+      <div class="eyebrow"><span>Retrieved evidence</span><span>3 selected passages</span></div>
+
+      <div class="ev">
+        <div class="ev-head">
+          <span class="src">roadmap.md</span>
+          <span class="tag">preloaded</span>
+          <span class="tag ok">selected</span>
+          <span class="spacer"></span>
+          <span class="mono">logit 6.41</span>
+        </div>
+        <div class="id mono">roadmap.md#chunk-0012</div>
+        <p class="content">M5 — Modern RAG. Build a production-oriented retrieval pipeline: document processing, chunking, dense, sparse and hybrid retrieval, reranking and context selection.</p>
+        <dl class="kv">
+          <dt>heading</dt><dd>M5 — Modern RAG</dd>
+          <dt>content_truncated</dt><dd>false</dd>
+        </dl>
+        <table class="grid">
+          <thead><tr><th>Stage</th><th>Score kind</th><th class="n">Score</th><th class="n">Rank</th></tr></thead>
+          <tbody>
+            <tr><td>hybrid_dense</td><td>cosine</td><td class="n">0.7034</td><td class="n">2</td></tr>
+            <tr><td>hybrid_lexical</td><td>bm25</td><td class="n">11.82</td><td class="n">1</td></tr>
+            <tr><td>hybrid</td><td>rrf</td><td class="n">0.0325</td><td class="n">1</td></tr>
+            <tr><td>upstream</td><td>native</td><td class="n">0.0325</td><td class="n">1</td></tr>
+            <tr><td>reranking</td><td>logit</td><td class="n">6.41</td><td class="n">1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ev">
+        <div class="ev-head">
+          <span class="src">roadmap.md</span>
+          <span class="tag">preloaded</span>
+          <span class="tag ok">selected</span>
+          <span class="spacer"></span>
+          <span class="mono">logit 5.02</span>
+        </div>
+        <div class="id mono">roadmap.md#chunk-0009</div>
+        <p class="content">M4 — Embeddings &amp; Vector Search. Build the provider-independent foundation for dense semantic retrieval: embedding provider, Qdrant vector store, retriever, simple ingestion and an initial benchmark.</p>
+        <dl class="kv">
+          <dt>heading</dt><dd>M4 — Embeddings &amp; Vector Search</dd>
+          <dt>content_truncated</dt><dd>false</dd>
+        </dl>
+        <table class="grid">
+          <thead><tr><th>Stage</th><th>Score kind</th><th class="n">Score</th><th class="n">Rank</th></tr></thead>
+          <tbody>
+            <tr><td>hybrid_dense</td><td>cosine</td><td class="n">0.7190</td><td class="n">1</td></tr>
+            <tr><td>hybrid_lexical</td><td>bm25</td><td class="n">9.47</td><td class="n">3</td></tr>
+            <tr><td>hybrid</td><td>rrf</td><td class="n">0.0323</td><td class="n">2</td></tr>
+            <tr><td>upstream</td><td>native</td><td class="n">0.0323</td><td class="n">2</td></tr>
+            <tr><td>reranking</td><td>logit</td><td class="n">5.02</td><td class="n">2</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ev">
+        <div class="ev-head">
+          <span class="src">roadmap.md</span>
+          <span class="tag">preloaded</span>
+          <span class="tag ok">selected</span>
+          <span class="spacer"></span>
+          <span class="mono">logit 3.77</span>
+        </div>
+        <div class="id mono">roadmap.md#chunk-0015</div>
+        <p class="content">M6 — Context Engine. Combine context, knowledge, retrieval, agents and tools into the first actual Context Engine runtime: context model, assembly, prioritization and lifecycle.</p>
+        <dl class="kv">
+          <dt>heading</dt><dd>M6 — Context Engine</dd>
+          <dt>content_truncated</dt><dd>false</dd>
+        </dl>
+        <table class="grid">
+          <thead><tr><th>Stage</th><th>Score kind</th><th class="n">Score</th><th class="n">Rank</th></tr></thead>
+          <tbody>
+            <tr><td>hybrid_dense</td><td>cosine</td><td class="n">0.6412</td><td class="n">5</td></tr>
+            <tr><td>hybrid_lexical</td><td>bm25</td><td class="n">10.05</td><td class="n">2</td></tr>
+            <tr><td>hybrid</td><td>rrf</td><td class="n">0.0315</td><td class="n">3</td></tr>
+            <tr><td>upstream</td><td>native</td><td class="n">0.0315</td><td class="n">3</td></tr>
+            <tr><td>reranking</td><td>logit</td><td class="n">3.77</td><td class="n">4</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sect" id="selection">
+      <div class="eyebrow"><span>Selection diagnostics</span><span class="tag ok">status: selected</span></div>
+      <dl class="kv">
+        <dt>token_count</dt><dd>1,187 of 4,096 (pinned Qwen2.5 tokenizer, raw evidence JSON)</dd>
+        <dt>answering_model</dt><dd class="mono">qwen2.5:0.5b</dd>
+      </dl>
+      <table class="grid">
+        <thead><tr><th>Candidate</th><th class="n">Rank</th><th class="n">Score</th><th>Reason</th><th class="n">Overlap</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">roadmap.md#chunk-0012</td><td class="n">1</td><td class="n">6.41</td><td><span class="tag ok">selected</span></td><td class="n">—</td></tr>
+          <tr><td class="mono">roadmap.md#chunk-0009</td><td class="n">2</td><td class="n">5.02</td><td><span class="tag ok">selected</span></td><td class="n">0.00</td></tr>
+          <tr><td class="mono">roadmap.md#chunk-0013</td><td class="n">3</td><td class="n">4.36</td><td><span class="tag warn">source_overlap</span></td><td class="n">0.86</td></tr>
+          <tr><td class="mono">roadmap.md#chunk-0015</td><td class="n">4</td><td class="n">3.77</td><td><span class="tag ok">selected</span></td><td class="n">0.00</td></tr>
+          <tr><td class="mono">architecture.md#chunk-0021</td><td class="n">5</td><td class="n">1.94</td><td><span class="tag">result_limit</span></td><td class="n">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sect" id="config">
+      <div class="eyebrow"><span>Run configuration</span><span class="tag">read-only</span></div>
+      <dl class="kv">
+        <dt>model</dt><dd class="mono">qwen2.5:0.5b (Ollama)</dd>
+        <dt>limits</dt><dd>4 model iterations · 256 output tokens per call</dd>
+        <dt>registered tools</dt><dd class="mono">search_documents, calculator</dd>
+        <dt>retrieval strategy</dt><dd class="mono">hybrid</dd>
+        <dt>collection</dt><dd class="mono">context-engine-workbench-m5-bm25-v1</dd>
+        <dt>embedding model</dt><dd class="mono">sentence-transformers/all-MiniLM-L6-v2</dd>
+        <dt>hybrid</dt><dd>20 dense + 20 lexical candidates · 20 final · smoothing 60</dd>
+        <dt>reranking</dt><dd class="mono">cross-encoder/ms-marco-MiniLM-L6-v2 · 20 candidates · final 5 · cpu</dd>
+        <dt>evidence selection</dt><dd>4,096 token budget · overlap 0.8 · 20 candidates · 3 results (search tool top_k)</dd>
+      </dl>
+    </div>
+
+    <div class="sect" id="states">
+      <div class="eyebrow"><span>Runtime states</span><span class="tag planned">Not yet recorded</span></div>
+
+      <div class="gap">
+        <div class="gap-head"><span>State-machine timeline</span><span class="tag planned">needs instrumentation</span></div>
+        <p>The runtime result returns only the terminal state and the iteration count. The path below is the one the transition map implies for a run with one tool call; it is not recorded per run.</p>
+        <div class="states">
+          <span class="s">start</span><span class="arrow">→</span>
+          <span class="s">context</span><span class="arrow">→</span>
+          <span class="s">think</span><span class="arrow">→</span>
+          <span class="s">action_proposed</span><span class="arrow">→</span>
+          <span class="s">runtime_validate</span><span class="arrow">→</span>
+          <span class="s">tool_call</span><span class="arrow">→</span>
+          <span class="s">think</span><span class="arrow">→</span>
+          <span class="s">action_proposed</span><span class="arrow">→</span>
+          <span class="s">runtime_validate</span><span class="arrow">→</span>
+          <span class="s">respond</span><span class="arrow">→</span>
+          <span class="s">completed</span>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="gap-head"><span>Step timings</span><span class="tag planned">partly recorded</span></div>
+        <p>Hybrid branches, fusion and reranking record a duration (shown in the pipeline above). Model calls, tool execution as a whole and evidence selection are not timed.</p>
+        <div class="placeholder-bars">
+          <span>Model call 1</span><i></i><span>— ms</span>
+          <span>Tool execution</span><i></i><span>— ms</span>
+          <span>Model call 2</span><i></i><span>— ms</span>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="gap-head"><span>Token usage</span><span class="tag planned">needs instrumentation</span></div>
+        <p>The model gateway can carry input and output token counts, but the runtime result does not expose them. The evidence token count above covers the evidence JSON only, not the full request.</p>
+        <div class="placeholder-bars">
+          <span>Input tokens</span><i></i><span>—</span>
+          <span>Output tokens</span><i></i><span>—</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

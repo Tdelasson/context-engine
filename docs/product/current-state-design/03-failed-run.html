@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Engine — Failed run (mockup)</title>
+<style>
+/* Current-state design mockups. Static, no build step, no external assets. */
+
+:root {
+  --paper: #f7f4ed;
+  --paper-raised: #fbf9f4;
+  --sidebar: #ebe6da;
+  --line: #dcd6c8;
+  --line-soft: #e7e2d6;
+  --ink: #1c1d1a;
+  --ink-soft: #55534c;
+  --muted: #7a766c;
+  --green: #24492f;
+  --green-soft: #e3ebdf;
+  --amber: #c7802f;
+  --amber-soft: #f6ead8;
+  --red: #9a3b2c;
+  --red-soft: #f5e2dc;
+  --serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --sans: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "Cascadia Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+a {
+  color: var(--green);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+/* ---------- App frame ---------- */
+
+.app {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  height: 100vh;
+  min-width: 1180px;
+}
+
+.app.with-inspector {
+  grid-template-columns: 264px minmax(0, 1fr) 500px;
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  background: var(--sidebar);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 16px 16px;
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 0 6px 18px;
+}
+
+.brand .mark {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.btn.quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--green);
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.btn.danger {
+  color: var(--red);
+}
+
+.btn.block {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 11px 14px;
+}
+
+.nav {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.nav li a,
+.nav li span.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--ink);
+  border-left: 3px solid transparent;
+}
+
+.nav li a:hover {
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.nav li.active a {
+  background: #dfd9cb;
+  border-left-color: var(--green);
+  font-weight: 600;
+}
+
+.nav li.planned span.item {
+  color: var(--muted);
+  cursor: default;
+}
+
+.nav .sub {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.nav .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.side-section {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.eyebrow {
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.side-section > .eyebrow {
+  padding: 0 10px 4px;
+  display: block;
+}
+
+.side-foot {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  padding: 12px 10px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.side-foot div {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 7px;
+}
+
+.dot.amber {
+  background: var(--amber);
+}
+
+.dot.red {
+  background: var(--red);
+}
+
+.dot.off {
+  background: transparent;
+  border: 1px solid var(--muted);
+}
+
+/* ---------- Tags ---------- */
+
+.tag {
+  display: inline-block;
+  font-size: 11.5px;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  background: var(--paper-raised);
+  white-space: nowrap;
+}
+
+.tag.ok {
+  background: var(--green-soft);
+  border-color: #c9d6c3;
+  color: var(--green);
+}
+
+.tag.warn {
+  background: var(--amber-soft);
+  border-color: #e6d2b3;
+  color: #7c4d17;
+}
+
+.tag.bad {
+  background: var(--red-soft);
+  border-color: #e3c3ba;
+  color: var(--red);
+}
+
+.tag.planned {
+  border-style: dashed;
+  border-color: #b9b3a4;
+  background: transparent;
+  color: var(--muted);
+}
+
+.tag.off {
+  color: var(--muted);
+  background: transparent;
+}
+
+/* ---------- Main column ---------- */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.topbar strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 26px 32px 20px;
+}
+
+.notice {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  margin-bottom: 22px;
+}
+
+/* ---------- Run thread ---------- */
+
+.run {
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 22px 18px;
+  margin-bottom: 24px;
+  border-left: 3px solid transparent;
+}
+
+.run.selected {
+  border-left-color: var(--green);
+}
+
+.run .who {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.run .prompt {
+  font-size: 19px;
+  margin-bottom: 18px;
+}
+
+.run .answer {
+  font-size: 17px;
+  max-width: 68ch;
+}
+
+.run .answer + .answer {
+  margin-top: 10px;
+}
+
+.agent-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.cites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.runbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.runbar .spacer {
+  flex: 1;
+}
+
+.failure {
+  border: 1px solid #e3c3ba;
+  background: var(--red-soft);
+  border-radius: 6px;
+  padding: 12px 14px;
+  max-width: 68ch;
+  margin-bottom: 12px;
+}
+
+.failure strong {
+  color: var(--red);
+}
+
+/* ---------- Composer ---------- */
+
+.composer {
+  margin: 0 32px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-raised);
+  padding: 12px 14px;
+}
+
+.composer .field {
+  color: var(--muted);
+  font-size: 16px;
+  padding: 4px 2px 12px;
+}
+
+.composer .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer .row .spacer {
+  flex: 1;
+}
+
+.hint {
+  margin: 0 32px 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 11px;
+  background: var(--paper);
+  font-size: 13.5px;
+}
+
+.select.readonly {
+  border-style: dashed;
+  color: var(--ink-soft);
+}
+
+/* ---------- Inspector ---------- */
+
+.inspector {
+  border-left: 1px solid var(--line);
+  background: var(--paper-raised);
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.insp-head {
+  position: sticky;
+  top: 0;
+  background: var(--paper-raised);
+  border-bottom: 1px solid var(--line);
+  padding: 16px 20px 12px;
+  z-index: 1;
+}
+
+.insp-head .title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.insp-head h2 {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.insp-head .sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insp-tabs {
+  display: flex;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.insp-tabs a {
+  color: var(--ink-soft);
+  padding-bottom: 4px;
+}
+
+.insp-tabs a.on {
+  color: var(--green);
+  font-weight: 600;
+  border-bottom: 2px solid var(--green);
+}
+
+.sect {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.sect > .eyebrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.fact {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--paper);
+}
+
+.fact b {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fact span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* lifecycle */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 4px 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line-soft);
+  align-items: baseline;
+}
+
+.steps li:first-child {
+  border-top: 0;
+}
+
+.steps li::before {
+  content: counter(step);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.steps .detail {
+  grid-column: 2 / 4;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* retrieval pipeline */
+
+.pipe {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stage {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 9px 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+}
+
+.stage .name {
+  font-weight: 600;
+}
+
+.stage .meta {
+  grid-column: 1 / 3;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.stage .num {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.stage.off {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+}
+
+.stage.off .name {
+  font-weight: 400;
+}
+
+.stage.off .meta {
+  color: var(--muted);
+}
+
+.stage.end {
+  background: var(--green-soft);
+  border-color: #c9d6c3;
+}
+
+.join {
+  width: 1px;
+  height: 12px;
+  background: #b9b3a4;
+  margin-left: 22px;
+}
+
+.branches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* evidence */
+
+.ev {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 11px 12px;
+  margin-top: 8px;
+}
+
+.ev-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ev-head .src {
+  font-weight: 600;
+}
+
+.ev-head .spacer {
+  flex: 1;
+}
+
+.ev .id {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  margin-top: 2px;
+}
+
+.ev .content {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--ink);
+  border-left: 2px solid var(--line);
+  padding-left: 10px;
+  margin: 9px 0;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 3px 14px;
+  font-size: 12.5px;
+  margin: 0;
+}
+
+.kv dt {
+  color: var(--muted);
+}
+
+.kv dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+table.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-top: 8px;
+}
+
+table.grid th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+table.grid td {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+
+table.grid td.n,
+table.grid th.n {
+  text-align: right;
+  font-family: var(--mono);
+}
+
+pre.json {
+  margin: 8px 0 0;
+  background: #f0ece2;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* not-yet-recorded sections */
+
+.gap {
+  border: 1px dashed #b9b3a4;
+  border-radius: 6px;
+  padding: 11px 12px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.gap .gap-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.gap p {
+  font-size: 12.5px;
+}
+
+.states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin: 8px 0;
+  align-items: center;
+}
+
+.states span.s {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  border: 1px dashed #b9b3a4;
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+.states span.arrow {
+  font-size: 11px;
+}
+
+.placeholder-bars {
+  display: grid;
+  grid-template-columns: max-content 1fr max-content;
+  gap: 5px 10px;
+  font-size: 12.5px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.placeholder-bars i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(90deg, #d5cfc0 0 6px, transparent 6px 10px);
+}
+
+/* ---------- Knowledge page ---------- */
+
+.page-title {
+  font-family: var(--serif);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.page-sub {
+  font-size: 18px;
+  color: var(--ink-soft);
+  margin: 6px 0 24px;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-raised);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.panel > .eyebrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.panel table.grid {
+  font-size: 14px;
+}
+
+.panel table.grid td {
+  padding: 10px 10px 10px 0;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.dropzone {
+  border: 1px dashed #b9b3a4;
+  border-radius: 6px;
+  padding: 16px;
+  text-align: center;
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+
+.rowmsg {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.rowmsg.warn {
+  color: #7c4d17;
+}
+
+.rowmsg.bad {
+  color: var(--red);
+}
+</style>
+</head>
+<body>
+<div class="app with-inspector">
+
+  <nav class="sidebar">
+    <div class="brand"><span class="mark">[ ]</span> Context Engine</div>
+    <a class="btn primary block" href="01-run-default.html">+&nbsp; New run</a>
+    <ul class="nav">
+      <li class="active"><a href="01-run-default.html"><span class="grow">Runs</span></a></li>
+      <li><a href="04-knowledge-sources.html"><span class="grow">Knowledge</span></a></li>
+    </ul>
+    <div class="side-section"><span class="eyebrow">Runs this session</span>
+    <ul class="nav">
+      <li><a href="01-run-default.html"><span class="grow">Model proposals vs. execution<span class="sub">search_documents · success</span></span></a></li>
+      <li><a href="02-run-full-pipeline.html"><span class="grow">M4, M5 and M6 scope<span class="sub">search_documents · success</span></span></a></li>
+      <li class="active"><a href="03-failed-run.html"><span class="grow">Divide 10 by 0<span class="sub">calculator · failed</span></span></a></li>
+    </ul></div>
+    <div class="side-section"><span class="eyebrow">Not built yet</span>
+    <ul class="nav">
+      <li class="planned"><span class="item"><span class="grow">Activities</span><span class="tag planned">Planned</span></span></li>
+      <li class="planned"><span class="item"><span class="grow">Saved decisions</span><span class="tag planned">Planned</span></span></li>
+      <li class="planned"><span class="item"><span class="grow">Plugins</span><span class="tag planned">Planned</span></span></li>
+      <li class="planned"><span class="item"><span class="grow">Search</span><span class="tag planned">Planned</span></span></li>
+      <li class="planned"><span class="item"><span class="grow">History</span><span class="tag planned">Planned</span></span></li>
+    </ul></div>
+    <div class="side-foot">
+      <div><span><span class="dot"></span>Model</span><span>connected</span></div>
+      <div><span><span class="dot"></span>Embeddings</span><span>connected</span></div>
+      <div><span><span class="dot"></span>Qdrant</span><span>connected</span></div>
+      <div><span><span class="dot"></span>Runtime</span><span>ready</span></div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="topbar">
+      <div>Runs / <strong>This session</strong></div>
+      <div><span class="tag">llama3.2:1b</span> <span class="tag">dense retrieval</span></div>
+    </div>
+
+    <div class="scroll">
+      <div class="notice">
+        <strong>Each prompt is a fresh run.</strong>
+        <span>Nothing is carried over from earlier prompts, and runs are kept for this browser session only.</span>
+      </div>
+
+      <section class="run selected">
+        <div class="who"><span class="eyebrow">You</span><span class="eyebrow">Run 3</span></div>
+        <p class="prompt">Use the calculator to divide 10 by 0.</p>
+        <div class="who"><span class="agent-name">[ ] Context Engine</span></div>
+        <div class="failure">
+          <strong>Run failed in tool execution.</strong>
+          <div class="mono">CalculatorEvaluationError: Division by zero</div>
+        </div>
+        <p class="answer">Model text after the failed tool call (not shown as a successful answer): “Division by zero is undefined, so I cannot compute 10 / 0.”</p>
+        <div class="runbar">
+          <span class="tag bad">Failed</span>
+          <span class="tag">calculator</span>
+          <span class="tag">policy: allow</span>
+          <span>2 model iterations</span>
+          <span class="spacer"></span>
+          <strong>Technical view open</strong>
+        </div>
+      </section>
+
+      <section class="run">
+        <div class="who"><span class="eyebrow">You</span><span class="eyebrow">Run 4</span></div>
+        <p class="prompt">Search every document for every mention of retrieval and list them all, then search again to double-check each one.</p>
+        <div class="who"><span class="agent-name">[ ] Context Engine</span></div>
+        <div class="failure">
+          <strong>Iteration limit reached.</strong>
+          <div>The model proposed a tool call in all 4 allowed iterations and never produced a final answer. Try a shorter, more specific request.</div>
+        </div>
+        <div class="runbar">
+          <span class="tag warn">Limit reached</span>
+          <span class="tag">search_documents × 4</span>
+          <span>4 of 4 model iterations</span>
+          <span class="spacer"></span>
+          <a href="#">Technical view &rarr;</a>
+        </div>
+      </section>
+    </div>
+
+    <div class="composer">
+      <div class="field">Ask about the indexed documents, or give the calculator something to compute…</div>
+      <div class="row">
+        <span class="select">Preset: Calculator ▾</span>
+        <span class="select readonly">Sources: all indexed</span>
+        <span class="select readonly">Model: llama3.2:1b</span>
+        <span class="spacer"></span>
+        <span class="btn primary">Run agent &uarr;</span>
+      </div>
+    </div>
+    <p class="hint">Dashed controls are read-only: sources, model and retrieval settings are set by the application before launch.</p>
+  </main>
+
+  <aside class="inspector">
+    <div class="insp-head">
+      <div class="title">
+        <h2>Technical view · Run 3</h2>
+        <span><span class="tag bad">Failed</span> &nbsp;<a href="#">Close ✕</a></span>
+      </div>
+      <div class="sub">Use the calculator to divide 10 by 0.</div>
+      <div class="insp-tabs">
+        <a class="on" href="#lifecycle">Lifecycle</a>
+        <a href="#trace">Trace</a>
+        <a href="#config">Configuration</a>
+        <a href="#states">Runtime states</a>
+      </div>
+    </div>
+
+    <div class="sect">
+      <div class="failure" style="max-width:none;margin-bottom:12px">
+        <strong>Failing phase: tool_execution</strong>
+        <div class="mono">CalculatorEvaluationError: Division by zero</div>
+      </div>
+      <div class="facts">
+        <div class="fact"><b>responded</b><span>Runtime outcome</span></div>
+        <div class="fact"><b>2 of 4</b><span>Model iterations</span></div>
+        <div class="fact"><b>1 error</b><span>Tool calls</span></div>
+        <div class="fact"><b>failed</b><span>Shown status</span></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">The runtime finished with a model response, but a tool trace ended in an error, so the run is reported as failed and never as a success.</p>
+    </div>
+
+    <div class="sect" id="lifecycle">
+      <div class="eyebrow"><span>Execution lifecycle</span></div>
+      <ol class="steps">
+        <li><span>User prompt</span><span class="tag ok">complete</span><span class="detail">Submitted to runtime</span></li>
+        <li><span>Model tool proposal</span><span class="tag ok">complete</span><span class="detail mono">calculator {"expression": "10 / 0"}</span></li>
+        <li><span>Registry + schema validation</span><span class="tag ok">complete</span><span class="detail">Registered tool and typed arguments accepted</span></li>
+        <li><span>Policy decision</span><span class="tag ok">allow</span><span class="detail">No approval required</span></li>
+        <li><span>Tool execution</span><span class="tag bad">error</span><span class="detail mono">CalculatorEvaluationError: Division by zero</span></li>
+        <li><span>Structured ToolResult</span><span class="tag bad">error</span><span class="detail">Structured error returned to the model; no output payload</span></li>
+        <li><span>Final model response</span><span class="tag ok">complete</span><span class="detail">Model text produced after the error result</span></li>
+      </ol>
+    </div>
+
+    <div class="sect" id="trace">
+      <div class="eyebrow"><span>Tool execution trace</span><span>1 invocation</span></div>
+      <dl class="kv">
+        <dt>tool</dt><dd class="mono">calculator</dd>
+        <dt>arguments</dt><dd class="mono">{"expression": "10 / 0"}</dd>
+        <dt>policy</dt><dd><span class="tag ok">allow</span></dd>
+        <dt>approval</dt><dd>not required</dd>
+        <dt>status</dt><dd><span class="tag bad">error</span></dd>
+        <dt>error_type</dt><dd class="mono">CalculatorEvaluationError</dd>
+        <dt>error_message</dt><dd class="mono">Division by zero</dd>
+      </dl>
+      <pre class="json">{
+  "status": "error",
+  "output": null,
+  "error": {
+    "error_type": "CalculatorEvaluationError",
+    "message": "Division by zero"
+  }
+}</pre>
+    </div>
+
+    <div class="sect">
+      <div class="eyebrow"><span>Other failures use the same view</span></div>
+      <table class="grid">
+        <thead><tr><th>Failure</th><th>Stops at</th><th>Reported as</th></tr></thead>
+        <tbody>
+          <tr><td>Unknown tool or invalid arguments</td><td>Registry + schema validation</td><td>Policy shown as not reached</td></tr>
+          <tr><td>Policy denial or rejected approval</td><td>Policy decision</td><td>Tool never executes</td></tr>
+          <tr><td>Retrieval or tool error</td><td>Tool execution</td><td>Structured error, as on this screen</td></tr>
+          <tr><td>Model, timeout or runtime error</td><td>Model proposal</td><td>Phase agent_runtime, no trace</td></tr>
+          <tr><td>Iteration limit</td><td>After 4 model iterations</td><td>Limit reached, no final answer</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">The workbench policy allows both registered tools and does not implement interactive approval, so denials and approvals do not occur in it today. The policy and approval layer exists in the Tool Runtime.</p>
+    </div>
+
+    <div class="sect" id="config">
+      <div class="eyebrow"><span>Run configuration</span><span class="tag">read-only</span></div>
+      <dl class="kv">
+        <dt>model</dt><dd class="mono">llama3.2:1b (Ollama)</dd>
+        <dt>limits</dt><dd>4 model iterations · 256 output tokens per call</dd>
+        <dt>registered tools</dt><dd class="mono">search_documents, calculator</dd>
+        <dt>retrieval</dt><dd>Not used in this run</dd>
+      </dl>
+    </div>
+
+    <div class="sect" id="states">
+      <div class="eyebrow"><span>Runtime states</span><span class="tag planned">Not yet recorded</span></div>
+      <div class="gap">
+        <div class="gap-head"><span>State-machine timeline</span><span class="tag planned">needs instrumentation</span></div>
+        <p>Only the terminal state and iteration count are returned. A recorded timeline would show where in the state machine the error result was observed.</p>
+      </div>
+      <div class="gap">
+        <div class="gap-head"><span>Step timings and token usage</span><span class="tag planned">needs instrumentation</span></div>
+        <p>Not recorded for model calls or tool execution.</p>
+      </div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>
