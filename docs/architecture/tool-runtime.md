@@ -137,6 +137,7 @@ Examples include:
 - approval rejection
 - approval required but unresolved
 - tool execution failure
+- tool output or diagnostics that are not a mapping (`ToolOutputValidationError`)
 
 This allows the Agent Runtime to feed tool outcomes back into the model loop without coupling the model to Python exceptions or provider-specific behavior.
 
