@@ -27,6 +27,7 @@ from context_engine.tools import (
     ToolInputField,
     ToolInputSchema,
     ToolInvocation,
+    ToolOutput,
     ToolRegistry,
 )
 from context_engine.tools.calculator.tool import Calculator
@@ -57,8 +58,11 @@ class _SearchTool:
     description = "Search deterministic fixture documents."
     input_schema = ToolInputSchema(fields=(ToolInputField(name="query", value_type=str),))
 
-    def execute(self, invocation: ToolInvocation) -> Mapping[str, object]:
-        return {"query": invocation.arguments_as_mapping()["query"], "result_count": 0}
+    def execute(self, invocation: ToolInvocation) -> ToolOutput:
+        return ToolOutput(
+            model={"query": invocation.arguments_as_mapping()["query"], "result_count": 0},
+            diagnostics={"selection": {"status": "selected", "token_count": 12}},
+        )
 
 
 def _tool_call(name: str, arguments: Mapping[str, object]) -> ModelResponse:
@@ -144,6 +148,20 @@ def test_start_run_returns_accepted_summary_and_run_detail_is_structured() -> No
     assert run["traces"][0]["policy_decision"] == "allow"  # type: ignore[index]
     sequences = [event["sequence"] for event in run["events"]]  # type: ignore[attr-defined]
     assert sequences == list(range(1, len(sequences) + 1))
+
+
+def test_run_detail_carries_tool_diagnostics_on_the_trace_only() -> None:
+    client = _client(
+        _Gateway([_tool_call("search_documents", {"query": "bridge"}), _final("Done.")])
+    )
+
+    run = _finished(client, client.post("/api/v1/runs", json={"prompt": "find"}).json()["run_id"])
+
+    trace = run["traces"][0]  # type: ignore[index]
+    assert trace.get("diagnostics") == {"selection": {"status": "selected", "token_count": 12}}
+    assert trace["output"] == {"query": "bridge", "result_count": 0}
+    assert "diagnostics" not in run["tool_results"][0]  # type: ignore[index]
+    assert run["tool_results"][0]["output"] == {"query": "bridge", "result_count": 0}  # type: ignore[index]
 
 
 def test_runs_are_listed_without_events() -> None:

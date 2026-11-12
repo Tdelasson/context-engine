@@ -141,28 +141,30 @@ export const SEARCH_OUTPUT_FULL = {
       ],
     },
   ],
-  selection_diagnostics: {
-    status: 'selected',
-    token_count: 812,
-    candidates: [
-      {
-        candidate_id: 'architecture.md#chunk-0007',
-        original_rank: 1,
-        original_score: 0.91,
-        reason: 'selected',
-        overlap_fraction: null,
-        provenance_status: 'verified',
-      },
-      {
-        candidate_id: 'architecture.md#chunk-0008',
-        original_rank: 2,
-        original_score: 0.88,
-        reason: 'excluded_overlap',
-        overlap_fraction: 0.9,
-        provenance_status: 'verified',
-      },
-    ],
-  },
+}
+
+/** Runtime-only selection report that the search tool records on its trace. */
+export const SELECTION_DIAGNOSTICS = {
+  status: 'selected',
+  token_count: 812,
+  candidates: [
+    {
+      candidate_id: 'architecture.md#chunk-0007',
+      original_rank: 1,
+      original_score: 0.91,
+      reason: 'selected',
+      overlap_fraction: null,
+      provenance_status: 'verified',
+    },
+    {
+      candidate_id: 'architecture.md#chunk-0008',
+      original_rank: 2,
+      original_score: 0.88,
+      reason: 'excluded_overlap',
+      overlap_fraction: 0.9,
+      provenance_status: 'verified',
+    },
+  ],
 }
 
 export function makeRun(overrides: Partial<RunDetail> = {}): RunDetail {
@@ -201,6 +203,7 @@ export function makeRun(overrides: Partial<RunDetail> = {}): RunDetail {
         status: 'success',
         output: SEARCH_OUTPUT_DENSE,
         error: null,
+        diagnostics: null,
       },
     ],
     ...overrides,
