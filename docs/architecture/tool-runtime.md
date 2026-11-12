@@ -151,7 +151,8 @@ A trace preserves relevant information such as:
 - policy decision
 - approval decision when applicable
 - result status
-- output
+- output: the model output, identical to `ToolResult.output`
+- diagnostics: runtime-only tool diagnostics, when the tool returned any
 - error information
 
 The trace is currently in-memory runtime state. It is not yet a persistent telemetry system or external observability backend.
@@ -309,10 +310,19 @@ These are later concerns and should not be conflated with the deterministic runt
 ## Search evidence accounting and UI diagnostics
 
 Optional search_documents selection preserves the normal runtime policy/execution boundary.
-The reserved `selection_diagnostics` output field is retained in ToolResult/traces for UI
-inspection and removed before model history via `model_visible_tool_output`. Ollama applies
-that projection to direct ModelToolResults too. All other evidence fields and original
-ranking diagnostics are model-visible. `render_tool_output` defines the sorted JSON output
-object counted by selection, matching the object's serialization inside Ollama's envelope.
-The surrounding provider tool wrapper and chat template are outside the evidence budget.
-See ADR-014; this does not impose a full request or global conversation budget.
+
+A tool's output has two parts (ADR-017):
+
+- **Model output** is what the model sees. A tool returns it as a plain mapping, or as
+  `ToolOutput.model`. It becomes `ToolResult.output` and the tool result in model history.
+- **Tool diagnostics** are runtime-only. A tool returns them as `ToolOutput.diagnostics`, and
+  `ToolRuntime` keeps them on `ToolExecutionTrace.diagnostics` only, so they never reach the
+  model. The HTTP API exposes them as `traces[].diagnostics`.
+
+search_documents records its selection report as `diagnostics["selection"]`. All evidence
+fields and original ranking diagnostics are model output. `render_tool_output` is the one
+JSON rendering of tool output: selection counts tokens on it, and the Ollama gateway renders
+its tool-message envelope with it, so the counted output text is byte-identical to what is
+sent. The surrounding provider tool wrapper and chat template are outside the evidence
+budget. See ADR-014 and ADR-017; this does not impose a full request or global conversation
+budget.

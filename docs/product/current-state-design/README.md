@@ -86,7 +86,7 @@ spent waiting. The tool has not executed.
 | Retrieved evidence: score, source, metadata, truncation | `search_documents` structured result | Recorded |
 | Per-stage scores, ranks and candidate counts | `RetrievalStageDiagnostic` | Recorded for hybrid and reranking |
 | Hybrid branch, fusion and reranking durations | `RetrievalStageDiagnostic.duration_seconds` | Recorded for hybrid and reranking |
-| Selection diagnostics | `selection_diagnostics` in the tool result | Recorded when selection is enabled |
+| Selection diagnostics | `diagnostics.selection` on the search tool's trace | Recorded when selection is enabled |
 | Run configuration | Workbench configuration | Recorded |
 | State-machine timeline | `state_transitioned` events | Recorded, live |
 | Model-call timings and token usage | `model_call_completed` events (tokens only when the model reports them) | Recorded, live |
