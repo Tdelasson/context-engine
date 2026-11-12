@@ -22,6 +22,7 @@ from context_engine.tools.runtime import (
     ToolInputField,
     ToolInputSchema,
     ToolInvocation,
+    ToolOutput,
 )
 
 JsonValue: TypeAlias = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
@@ -89,7 +90,7 @@ class SearchDocumentsTool:
             else None
         )
 
-    def execute(self, invocation: ToolInvocation) -> Mapping[str, object]:
+    def execute(self, invocation: ToolInvocation) -> Mapping[str, object] | ToolOutput:
         """Retrieve and serialize bounded model-visible search results."""
         raw_query = invocation.arguments_as_mapping().get("query")
         if not isinstance(raw_query, str):
@@ -112,19 +113,21 @@ class SearchDocumentsTool:
             selection = self._selector.select(
                 query, tuple(islice(raw_results, self._config.candidate_limit))
             )
-            return {
-                **selection.output,
-                "selection_diagnostics": {
-                    "status": selection.status,
-                    "token_count": selection.token_count,
-                    "configuration_id": selection.configuration_id,
-                    "configuration": asdict(self._selector.config),
-                    "counter_id": self._selector.counter.configuration_id,
-                    "counting_method": self._selector.counter.method,
-                    "answering_model": self._selector.counter.model_id,
-                    "candidates": [asdict(item) for item in selection.diagnostics],
+            return ToolOutput(
+                model=selection.output,
+                diagnostics={
+                    "selection": {
+                        "status": selection.status,
+                        "token_count": selection.token_count,
+                        "configuration_id": selection.configuration_id,
+                        "configuration": asdict(self._selector.config),
+                        "counter_id": self._selector.counter.configuration_id,
+                        "counting_method": self._selector.counter.method,
+                        "answering_model": self._selector.counter.model_id,
+                        "candidates": [asdict(item) for item in selection.diagnostics],
+                    },
                 },
-            }
+            )
         bounded_results = tuple(raw_results)[: self._config.top_k]
         results = [self._serialize_result(result) for result in bounded_results]
 

@@ -59,9 +59,13 @@ def test_policy_failure_accounted_history_and_selected_evidence() -> None:
     model_result = gateway.requests[1].messages[-1].tool_result
     assert model_result is not None
     output = model_result.output_as_mapping()
-    assert "selection_diagnostics" not in output
+    assert "selection_diagnostics" not in output and "selection" not in output
     runtime_output = runtime.tool_results[0].output_as_mapping()
-    diagnostic = runtime_output["selection_diagnostics"]
+    assert runtime_output == output
+    trace = runtime.tool_execution_traces[0]
+    trace_diagnostics = trace.diagnostics_as_mapping()
+    assert set(trace_diagnostics) == {"selection"}
+    diagnostic = trace_diagnostics["selection"]
     assert isinstance(diagnostic, dict)
     assert diagnostic["token_count"] == Counter().count_tokens(render_tool_output(output))
     # The provider's JSON envelope contains the exact counted output serialization.

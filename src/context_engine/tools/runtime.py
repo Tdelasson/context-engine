@@ -116,6 +116,18 @@ class ToolInvocation:
         return dict(self.arguments)
 
 
+@dataclass(frozen=True, slots=True)
+class ToolOutput:
+    """Tool output split into what the model sees and what only the runtime records.
+
+    ``model`` becomes the tool result sent to the model. ``diagnostics`` is kept on the
+    execution trace for observability and is never sent to the model.
+    """
+
+    model: Mapping[str, object]
+    diagnostics: Mapping[str, object] | None = None
+
+
 @runtime_checkable
 class Tool(Protocol):
     """Provider-independent typed tool contract."""
@@ -124,8 +136,12 @@ class Tool(Protocol):
     description: str
     input_schema: ToolInputSchema
 
-    def execute(self, invocation: ToolInvocation) -> Mapping[str, object]:
-        """Execute a tool invocation and return structured output."""
+    def execute(self, invocation: ToolInvocation) -> Mapping[str, object] | ToolOutput:
+        """Execute a tool invocation.
+
+        Return a mapping when every output field is for the model, or a ``ToolOutput``
+        to keep runtime-only diagnostics out of the model's view.
+        """
 
 
 class ToolResultStatus(StrEnum):
@@ -167,10 +183,15 @@ class ToolExecutionTrace:
     status: ToolResultStatus
     output: tuple[tuple[str, object], ...] | None = None
     error: ToolExecutionErrorDetails | None = None
+    diagnostics: tuple[tuple[str, object], ...] | None = None
 
     def output_as_mapping(self) -> dict[str, object]:
         """Return traced output payload as a dictionary."""
         return {} if self.output is None else dict(self.output)
+
+    def diagnostics_as_mapping(self) -> dict[str, object]:
+        """Return runtime-only tool diagnostics as a dictionary."""
+        return {} if self.diagnostics is None else dict(self.diagnostics)
 
 
 class ToolRegistry:
@@ -226,6 +247,7 @@ class ToolRuntime:
         """Resolve, validate, and execute one invocation deterministically."""
         policy_decision: ToolPolicyDecision | None = None
         approval_decision: ToolApprovalDecision | None = None
+        diagnostics: Mapping[str, object] | None = None
         validated = False
         started: float | None = None
         try:
@@ -290,7 +312,11 @@ class ToolRuntime:
                         or f"Tool invocation rejected by human approval: {invocation.tool_name}"
                     )
             started = self._monotonic()
-            output = tool.execute(invocation)
+            returned = tool.execute(invocation)
+            if isinstance(returned, ToolOutput):
+                output, diagnostics = returned.model, returned.diagnostics
+            else:
+                output, diagnostics = returned, None
         except Exception as exc:
             error = ToolExecutionErrorDetails(error_type=type(exc).__name__, message=str(exc))
             if not validated:
@@ -319,6 +345,7 @@ class ToolRuntime:
             policy_decision=policy_decision,
             approval_decision=approval_decision,
             started=started,
+            diagnostics=diagnostics,
         )
 
     def _finish(
@@ -328,6 +355,7 @@ class ToolRuntime:
         policy_decision: ToolPolicyDecision | None,
         approval_decision: ToolApprovalDecision | None,
         started: float | None,
+        diagnostics: Mapping[str, object] | None = None,
     ) -> ToolResult:
         """Record the trace and the terminal event for one invocation."""
         duration = None if started is None else max(0.0, self._monotonic() - started)
@@ -339,6 +367,9 @@ class ToolRuntime:
                 status=result.status,
                 output=result.output,
                 error=result.error,
+                diagnostics=None
+                if diagnostics is None
+                else normalize_tool_arguments(diagnostics),
             )
         )
         self._emit(
