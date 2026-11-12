@@ -878,6 +878,173 @@ pre.json {
 .rowmsg.bad {
   color: var(--red);
 }
+
+/* ---------- Live run and approval states ---------- */
+
+.timeline {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 2px 10px;
+  padding: 5px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 12.5px;
+  align-items: baseline;
+}
+
+.timeline li:first-child {
+  border-top: 0;
+}
+
+.timeline .t {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+.timeline li.current {
+  background: var(--green-soft);
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 4px;
+}
+
+.timeline li.pending {
+  color: var(--muted);
+  border-top-style: dashed;
+}
+
+.rec {
+  margin-top: 14px;
+}
+
+.rec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.timing {
+  display: grid;
+  grid-template-columns: max-content 1fr max-content;
+  gap: 6px 10px;
+  font-size: 12.5px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.timing i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--green);
+  opacity: 0.8;
+}
+
+.timing i.pend {
+  background: repeating-linear-gradient(90deg, #d5cfc0 0 6px, transparent 6px 10px);
+  opacity: 1;
+}
+
+.timing i.hold {
+  background: var(--amber);
+}
+
+.steps li.pending {
+  color: var(--muted);
+}
+
+.steps li.pending .detail {
+  color: var(--muted);
+}
+
+.steps li.active {
+  background: var(--amber-soft);
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 4px;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn.disabled,
+.select.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.composer.locked .field {
+  color: var(--muted);
+}
+
+.waiting {
+  max-width: 68ch;
+  color: var(--ink-soft);
+  font-size: 16px;
+  border-left: 2px dashed #b9b3a4;
+  padding-left: 12px;
+}
+
+.approval {
+  border: 1px solid #e6d2b3;
+  background: var(--amber-soft);
+  border-radius: 8px;
+  padding: 14px 16px;
+  max-width: 68ch;
+  margin-bottom: 12px;
+}
+
+.approval h3 {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.approval .args {
+  margin: 10px 0;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.approval .actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.approval .reason {
+  flex: 1;
+  min-width: 180px;
+  border: 1px dashed #b9b3a4;
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: var(--muted);
+  font-size: 13.5px;
+  background: var(--paper-raised);
+}
+
+.approval .timeout {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #7c4d17;
+}
 </style>
 </head>
 <body>
@@ -1063,14 +1230,25 @@ pre.json {
     </div>
 
     <div class="sect" id="states">
-      <div class="eyebrow"><span>Runtime states</span><span class="tag planned">Not yet recorded</span></div>
-      <div class="gap">
-        <div class="gap-head"><span>State-machine timeline</span><span class="tag planned">needs instrumentation</span></div>
-        <p>Only the terminal state and iteration count are returned. A recorded timeline would show where in the state machine the error result was observed.</p>
+      <div class="eyebrow"><span>Runtime states</span><span class="tag ok">Recorded from run events</span></div>
+      <p style="font-size:12.5px;color:var(--ink-soft)">Built from the run's events (state transitions, model calls, tool calls). Times, durations and token counts are illustrative examples. The tool call ended in an error, so the run is shown as failed even though the runtime reached its completed state.</p>
+
+      <div class="rec">
+        <div class="rec-head"><span>State-machine timeline</span><span class="tag">10 transitions</span></div>
+        <ol class="timeline"><li><span class="t">+0.00 s</span><span class="mono">start &rarr; context</span></li><li><span class="t">+0.01 s</span><span class="mono">context &rarr; think</span></li><li><span class="t">+0.72 s</span><span class="mono">think &rarr; action_proposed</span></li><li><span class="t">+0.72 s</span><span class="mono">action_proposed &rarr; runtime_validate</span></li><li><span class="t">+0.73 s</span><span class="mono">runtime_validate &rarr; tool_call</span></li><li><span class="t">+0.73 s</span><span class="mono">tool_call &rarr; think</span></li><li><span class="t">+1.30 s</span><span class="mono">think &rarr; action_proposed</span></li><li><span class="t">+1.30 s</span><span class="mono">action_proposed &rarr; runtime_validate</span></li><li><span class="t">+1.30 s</span><span class="mono">runtime_validate &rarr; respond</span></li><li><span class="t">+1.31 s</span><span class="mono">respond &rarr; completed</span></li></ol>
       </div>
-      <div class="gap">
-        <div class="gap-head"><span>Step timings and token usage</span><span class="tag planned">needs instrumentation</span></div>
-        <p>Not recorded for model calls or tool execution.</p>
+
+      <div class="rec">
+        <div class="rec-head"><span>Step timings</span><span class="tag">1.31 s total</span></div>
+        <div class="timing"><span>Model call 1</span><i style="width:100%"></i><span class="mono">703 ms</span><span>Tool execution</span><i style="width:4%"></i><span class="mono">4 ms</span><span>Model call 2</span><i style="width:81%"></i><span class="mono">566 ms</span></div>
+      </div>
+
+      <div class="rec">
+        <div class="rec-head"><span>Token usage</span><span class="tag">as reported by the model</span></div>
+        <table class="grid">
+          <thead><tr><th>Model call</th><th class="n">Input</th><th class="n">Output</th></tr></thead>
+          <tbody><tr><td>Model call 1</td><td class="n">388</td><td class="n">29</td></tr><tr><td>Model call 2</td><td class="n">441</td><td class="n">33</td></tr><tr><td><strong>Total</strong></td><td class="n"><strong>829</strong></td><td class="n"><strong>62</strong></td></tr></tbody>
+        </table>
       </div>
     </div>
   </aside>

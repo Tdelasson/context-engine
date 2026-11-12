@@ -97,7 +97,7 @@ def _application(
                 SourceInput("preloaded", "demo.txt", b"demo", SourceFormat.TEXT, "preloaded"),
             ),
         ),
-        model_gateway=_Gateway([_search_call(), _final("Done.")]),  # type: ignore[arg-type]
+        model_gateway=_Gateway([_search_call(), _final("Done.")]),
         tool_registry=registry,
     )
 

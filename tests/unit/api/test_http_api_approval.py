@@ -64,7 +64,7 @@ def _client(*, timeout: float = 5.0) -> TestClient:
                 SourceInput("preloaded", "demo.txt", b"demo", SourceFormat.TEXT, "preloaded"),
             ),
         ),
-        model_gateway=_Gateway([call, final]),  # type: ignore[arg-type]
+        model_gateway=_Gateway([call, final]),
         tool_registry=registry,
     )
     application.prepare()
