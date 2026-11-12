@@ -40,6 +40,9 @@ Milestones 1–4 are complete and milestone 5 (Modern RAG) is in its final stage
 | Local embeddings, Qdrant vector search, retrieval benchmark | Done |
 | Document processing (text, Markdown, PDF), chunking, durable ingestion | Done |
 | Lexical BM25, hybrid retrieval, cross-encoder reranking, evidence selection | Done, optional (dense retrieval is the default) |
+| Typed run events, core application facade, and `/api/v1` HTTP API with a live event stream | Done |
+| Configurable tool approval with an interactive approve/reject flow | Done |
+| React app: run thread, live technical inspector, and Knowledge sources screen (replaces the Streamlit workbench) | Done |
 | Larger RAG evaluation: dataset, ablations, answer quality | In progress |
 | Context system, inference optimization, Context-Aware DJ | Planned |
 
