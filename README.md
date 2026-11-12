@@ -70,6 +70,16 @@ Open `http://localhost:8501`. The first start downloads a small embedding model.
 Configuration, optional retrieval strategies, and troubleshooting are in the
 [workbench guide](docs/product/agent-workbench.md).
 
+### Local HTTP API
+
+```bash
+python -m pip install -e ".[api,pdf]"
+python -m context_engine.api
+```
+
+Serves `/api/v1` on `127.0.0.1:8000` (OpenAPI at `/openapi.json`). It has no authentication
+and is for local use only. See the [HTTP API reference](docs/api/http-api.md).
+
 ## Documentation
 
 - [Product requirements](docs/product/prd.md) and [roadmap](docs/product/roadmap.md)

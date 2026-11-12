@@ -220,16 +220,10 @@ context_engine.core
 
 The facade imports no web framework and no Streamlit. The Streamlit workbench is now a thin
 adapter (`context_engine.workbench`) that calls the facade and maps run records to its
-display models. The HTTP adapter is not implemented yet. See
+display models. The FastAPI adapter (`context_engine.api`) is a second thin adapter over the
+same facade and serves HTTP and JSON under `/api/v1`, with run events as server-sent events.
+See [the HTTP API reference](../api/http-api.md) and
 [ADR-016](decisions/ADR-016-http-api-and-react-frontend.md).
-
-The initial service API will use HTTP and JSON with versioned endpoints:
-
-```text
-/api/v1/...
-```
-
-Streaming support may be added later.
 
 ---
 
@@ -1337,7 +1331,7 @@ Default LLM
 Default retrieval strategy (dense today; lexical and hybrid are optional)
 Reranker adoption (an optional local cross-encoder exists; disabled by default)
 Local inference runtime beyond the current Ollama adapter
-HTTP framework
+HTTP framework (FastAPI selected, ADR-016)
 Sandbox implementation
 Production database
 Production object storage

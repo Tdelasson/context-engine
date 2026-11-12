@@ -17,6 +17,9 @@ dev = [
     "mypy>=2.0",
     "pre-commit>=4.0",
     "pypdf>=6.0,<7",
+    "fastapi>=0.162,<1",
+    "httpx>=0.28",
+    "python-multipart>=0.0.32",
 ]
 pdf = [
     "pypdf>=6.0,<7",
@@ -30,6 +33,13 @@ reranking = [
 ]
 qdrant = [
     "qdrant-client>=1.16",
+]
+api = [
+    "fastapi>=0.162,<1",
+    "uvicorn>=0.52",
+    "python-multipart>=0.0.32",
+    "qdrant-client>=1.16",
+    "sentence-transformers>=5.0",
 ]
 workbench = [
     "qdrant-client>=1.16",
