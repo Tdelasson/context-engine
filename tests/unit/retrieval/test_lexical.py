@@ -14,7 +14,7 @@ from context_engine.retrieval.lexical import (
 )
 from context_engine.retrieval.retriever import RetrievalRequest
 from context_engine.retrieval.vector_store import MetadataFilter, SearchResult
-from context_engine.tools import ToolInvocation
+from context_engine.tools import ToolInvocation, ToolOutput
 from context_engine.tools.retrieval.tool import SearchDocumentsTool
 
 
@@ -133,6 +133,7 @@ def test_lexical_search_tool_boundary() -> None:
             tool_name="search_documents", arguments={"query": "search_documents"}
         )
     )
+    assert not isinstance(output, ToolOutput)
     rows = cast(list[dict[str, Any]], output["results"])
     assert rows[0]["document_id"] == "a"
     assert rows[0]["diagnostics"][0]["score_kind"] == "bm25"
