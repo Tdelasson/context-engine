@@ -36,6 +36,11 @@ unknown `/api/...` paths and missing files stay `404`. The OpenAPI document is a
 
 All paths are under `/api/v1`. Responses are structured data; clients derive display views.
 
+In a run, `tool_results[].output` is the model output: exactly what the model saw.
+`traces[].diagnostics` holds runtime-only tool diagnostics, which were never sent to the model,
+or `null`. `search_documents` records its evidence-selection report there as
+`diagnostics.selection` (ADR-017).
+
 ## Event stream
 
 Each frame carries `id` (event sequence), `event` (event kind) and `data` (a JSON event

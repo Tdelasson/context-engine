@@ -11,6 +11,7 @@ from context_engine.tools import (
     ToolInputSchema,
     ToolInvocation,
     ToolNamePolicy,
+    ToolOutput,
     ToolPolicyDecision,
     ToolPolicyEvaluation,
     ToolRegistry,
@@ -463,3 +464,63 @@ def test_tool_runtime_records_distinct_traces_in_deterministic_execution_order()
     assert traces[1].invocation.invocation_id == "call-b"
     assert traces[1].approval_decision is None
     assert traces[1].output_as_mapping() == {"value": 12}
+
+
+class _DiagnosedTool:
+    name = "lookup"
+    description = "Return an answer and runtime-only diagnostics."
+    input_schema = ToolInputSchema(fields=(ToolInputField(name="key", value_type=str),))
+
+    def execute(self, invocation: ToolInvocation) -> ToolOutput:
+        key = invocation.arguments_as_mapping()["key"]
+        return ToolOutput(model={"value": f"answer-{key}"}, diagnostics={"cache": "miss"})
+
+
+def test_tool_runtime_keeps_tool_diagnostics_on_the_trace_only() -> None:
+    registry = ToolRegistry()
+    registry.register(_DiagnosedTool())
+    runtime = ToolRuntime(registry)
+
+    result = runtime.execute(ToolInvocation.from_mapping("lookup", {"key": "k"}))
+
+    assert result.status is ToolResultStatus.SUCCESS
+    assert result.output_as_mapping() == {"value": "answer-k"}
+    trace = runtime.execution_traces[0]
+    assert trace.output_as_mapping() == {"value": "answer-k"}
+    assert trace.diagnostics_as_mapping() == {"cache": "miss"}
+
+
+def test_tool_runtime_records_no_diagnostics_for_a_plain_mapping_output() -> None:
+    registry = ToolRegistry()
+    registry.register(_AddTool())
+    runtime = ToolRuntime(registry)
+
+    runtime.execute(ToolInvocation.from_mapping("add", {"a": 1, "b": 2}))
+
+    assert runtime.execution_traces[0].diagnostics is None
+
+
+class _MalformedOutputTool:
+    name = "malformed"
+    description = "Return output that is not a mapping."
+    input_schema = ToolInputSchema(fields=(ToolInputField(name="part", value_type=str),))
+
+    def execute(self, invocation: ToolInvocation) -> object:
+        if invocation.arguments_as_mapping()["part"] == "plain":
+            return [("value", 1)]
+        if invocation.arguments_as_mapping()["part"] == "diagnostics":
+            return ToolOutput(model={"value": 1}, diagnostics=[("cache", "miss")])  # type: ignore[arg-type]
+        return ToolOutput(model=[("value", 1)])  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("part", ["plain", "diagnostics", "model"])
+def test_tool_runtime_traces_malformed_tool_output_as_an_error_result(part: str) -> None:
+    registry = ToolRegistry()
+    registry.register(_MalformedOutputTool())  # type: ignore[arg-type]
+    runtime = ToolRuntime(registry)
+
+    result = runtime.execute(ToolInvocation.from_mapping("malformed", {"part": part}))
+
+    assert result.status is ToolResultStatus.ERROR
+    assert result.error is not None and result.error.error_type == "ToolOutputValidationError"
+    assert [trace.status for trace in runtime.execution_traces] == [ToolResultStatus.ERROR]

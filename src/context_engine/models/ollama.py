@@ -22,7 +22,7 @@ from context_engine.models.gateway import (
     ModelUsage,
     normalize_tool_call_arguments,
 )
-from context_engine.models.tool_serialization import model_visible_tool_output
+from context_engine.models.tool_serialization import render_tool_output
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,15 +108,20 @@ class OllamaModelGateway(ModelGateway):
             if message.tool_result.tool_call_id is not None:
                 tool_content["tool_call_id"] = message.tool_result.tool_call_id
             if message.tool_result.status is ModelToolResultStatus.SUCCESS:
-                tool_content["output"] = model_visible_tool_output(
-                    message.tool_result.tool_name, message.tool_result.output_as_mapping()
-                )
+                tool_content["output"] = message.tool_result.output_as_mapping()
             else:
                 tool_content["error"] = {
                     "error_type": message.tool_result.error_type,
                     "message": message.tool_result.error_message,
                 }
-            translated["content"] = json.dumps(tool_content, sort_keys=True)
+            try:
+                # The shared renderer is what evidence selection counts tokens on, so the
+                # tool output inside this envelope is byte-identical to the counted text.
+                translated["content"] = render_tool_output(tool_content)
+            except ValueError as exc:
+                raise ModelGatewayRequestError(
+                    f"Cannot render tool output for {message.tool_result.tool_name} as JSON."
+                ) from exc
             translated["name"] = message.tool_result.tool_name
         return translated
 

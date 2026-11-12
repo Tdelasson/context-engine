@@ -930,6 +930,21 @@
             "title": "Arguments",
             "type": "object"
           },
+          "diagnostics": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/JsonValue"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Runtime-only tool diagnostics. They were never sent to the model.",
+            "title": "Diagnostics"
+          },
           "error": {
             "anyOf": [
               {
@@ -993,7 +1008,8 @@
           "approval_decision",
           "status",
           "output",
-          "error"
+          "error",
+          "diagnostics"
         ],
         "title": "ToolTraceModel",
         "type": "object"

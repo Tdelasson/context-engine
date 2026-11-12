@@ -134,6 +134,9 @@ function stageCandidates(evidence: EvidenceItem[], match: (strategy: string) => 
  * Derive the retrieval pipeline and evidence from the run's latest successful
  * `search_documents` result. Returns null when the run has no such result (yet): retrieval
  * stages do not emit live events, so they appear once the run has finished.
+ *
+ * The evidence comes from the result's model output. The selection report is runtime-only,
+ * so it comes from the diagnostics on the trace of the same call.
  */
 export function deriveRetrieval(
   run: RunDetail,
@@ -148,7 +151,16 @@ export function deriveRetrieval(
   const evidence = asList(output.results)
     .map(parseEvidence)
     .filter((item): item is EvidenceItem => item !== null)
-  const selection = parseSelection(output.selection_diagnostics)
+  // Match the invocation id, which live calls often leave null. Each call has one result and
+  // one trace in the same order, so requiring a successful trace still pairs the latest
+  // successful search result with its own trace when every id is null.
+  const trace = run.traces.findLast(
+    (item) =>
+      item.tool_name === 'search_documents' &&
+      item.status === 'success' &&
+      item.invocation_id === result?.invocation_id,
+  )
+  const selection = parseSelection(trace?.diagnostics?.selection)
   const strategies = new Set(evidence.flatMap((item) => item.stages.map((stage) => stage.strategy)))
   const hybridActive = [...strategies].some((s) => s === 'hybrid' || s.startsWith('hybrid_') || s === 'lexical')
   const rerankingActive = strategies.has('reranking')

@@ -123,6 +123,9 @@ class ToolTraceModel(BaseModel):
     status: str
     output: dict[str, JsonValue] | None
     error: ToolErrorModel | None
+    diagnostics: dict[str, JsonValue] | None = Field(
+        description="Runtime-only tool diagnostics. They were never sent to the model.",
+    )
 
     @classmethod
     def from_core(cls, trace: ToolExecutionTrace) -> ToolTraceModel:
@@ -139,6 +142,7 @@ class ToolTraceModel(BaseModel):
             error=None
             if trace.error is None
             else ToolErrorModel(**dataclasses.asdict(trace.error)),
+            diagnostics=None if trace.diagnostics is None else _pairs(trace.diagnostics),
         )
 
 

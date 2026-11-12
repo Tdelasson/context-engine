@@ -1,4 +1,4 @@
-import type { PendingApproval, RunDetail, RunEvent, RunSummary, SystemInfo } from '../api/types'
+import type { PendingApproval, RunDetail, RunEvent, RunSummary, SystemInfo, ToolTrace } from '../api/types'
 
 type Payload = RunEvent['payload']
 
@@ -141,28 +141,46 @@ export const SEARCH_OUTPUT_FULL = {
       ],
     },
   ],
-  selection_diagnostics: {
-    status: 'selected',
-    token_count: 812,
-    candidates: [
-      {
-        candidate_id: 'architecture.md#chunk-0007',
-        original_rank: 1,
-        original_score: 0.91,
-        reason: 'selected',
-        overlap_fraction: null,
-        provenance_status: 'verified',
-      },
-      {
-        candidate_id: 'architecture.md#chunk-0008',
-        original_rank: 2,
-        original_score: 0.88,
-        reason: 'excluded_overlap',
-        overlap_fraction: 0.9,
-        provenance_status: 'verified',
-      },
-    ],
-  },
+}
+
+/** Runtime-only selection report that the search tool records on its trace. */
+export const SELECTION_DIAGNOSTICS = {
+  status: 'selected',
+  token_count: 812,
+  candidates: [
+    {
+      candidate_id: 'architecture.md#chunk-0007',
+      original_rank: 1,
+      original_score: 0.91,
+      reason: 'selected',
+      overlap_fraction: null,
+      provenance_status: 'verified',
+    },
+    {
+      candidate_id: 'architecture.md#chunk-0008',
+      original_rank: 2,
+      original_score: 0.88,
+      reason: 'excluded_overlap',
+      overlap_fraction: 0.9,
+      provenance_status: 'verified',
+    },
+  ],
+}
+
+/** A successful `search_documents` trace. Override any field, such as `diagnostics`. */
+export function searchTrace(overrides: Partial<ToolTrace> = {}): ToolTrace {
+  return {
+    tool_name: 'search_documents',
+    invocation_id: 'call-1',
+    arguments: { query: 'tool policy' },
+    policy_decision: 'allow',
+    approval_decision: null,
+    status: 'success',
+    output: SEARCH_OUTPUT_DENSE,
+    error: null,
+    diagnostics: null,
+    ...overrides,
+  }
 }
 
 export function makeRun(overrides: Partial<RunDetail> = {}): RunDetail {
@@ -191,18 +209,7 @@ export function makeRun(overrides: Partial<RunDetail> = {}): RunDetail {
         error: null,
       },
     ],
-    traces: [
-      {
-        tool_name: 'search_documents',
-        invocation_id: 'call-1',
-        arguments: { query: 'tool policy' },
-        policy_decision: 'allow',
-        approval_decision: null,
-        status: 'success',
-        output: SEARCH_OUTPUT_DENSE,
-        error: null,
-      },
-    ],
+    traces: [searchTrace()],
     ...overrides,
   }
 }

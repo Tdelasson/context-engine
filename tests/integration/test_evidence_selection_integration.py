@@ -8,7 +8,7 @@ import pytest
 
 from benchmarks.benchmark_evidence_selection import run_benchmark
 from context_engine.models.evidence_counting import QwenEvidenceTokenCounter
-from context_engine.models.tool_serialization import model_visible_tool_output, render_tool_output
+from context_engine.models.tool_serialization import render_tool_output
 from context_engine.retrieval import Document, SearchResult
 from context_engine.retrieval.diagnostics import RetrievalStageDiagnostic
 from context_engine.retrieval.evidence_selection import EvidenceSelectionConfig
@@ -60,15 +60,16 @@ def test_real_evidence_selection(strategy: str) -> None:
     )
     registry = ToolRegistry()
     registry.register(tool)
-    result = ToolRuntime(registry).execute(
+    runtime = ToolRuntime(registry)
+    result = runtime.execute(
         ToolInvocation.from_mapping(
             "search_documents", {"query": "When do tools require approval?"}
         )
     )
     assert result.status is ToolResultStatus.SUCCESS
-    output = result.output_as_mapping()
-    visible = model_visible_tool_output("search_documents", output)
-    diagnostic = output["selection_diagnostics"]
+    visible = result.output_as_mapping()
+    assert "selection" not in visible
+    diagnostic = runtime.execution_traces[0].diagnostics_as_mapping()["selection"]
     assert isinstance(diagnostic, dict)
     assert counter.count_tokens(render_tool_output(visible)) == diagnostic["token_count"]
     selected_results = visible["results"]

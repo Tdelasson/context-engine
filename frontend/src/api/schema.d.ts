@@ -444,6 +444,13 @@ export interface components {
             arguments: {
                 [key: string]: components["schemas"]["JsonValue"];
             };
+            /**
+             * Diagnostics
+             * @description Runtime-only tool diagnostics. They were never sent to the model.
+             */
+            diagnostics: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
             error: components["schemas"]["ToolErrorModel"] | null;
             /** Invocation Id */
             invocation_id: string | null;

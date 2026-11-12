@@ -17,6 +17,10 @@ class ToolInputValidationError(ToolRuntimeError, ValueError):
     """Raised when tool invocation input fails schema validation."""
 
 
+class ToolOutputValidationError(ToolRuntimeError, TypeError):
+    """Raised when a tool returns model output or diagnostics that are not a mapping."""
+
+
 class ToolPolicyDeniedError(ToolRuntimeError, PermissionError):
     """Raised when tool invocation is denied by deterministic policy."""
 

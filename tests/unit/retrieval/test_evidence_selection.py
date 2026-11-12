@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 
-from context_engine.models.tool_serialization import model_visible_tool_output, render_tool_output
+from context_engine.models.tool_serialization import render_tool_output
 from context_engine.retrieval import Document, SearchResult
 from context_engine.retrieval.evidence_selection import (
     EvidenceSelectionConfig,
@@ -15,7 +15,7 @@ from context_engine.retrieval.evidence_selection import (
     comparable_spans,
 )
 from context_engine.tools.retrieval import SearchDocumentsTool, SearchDocumentsToolConfig
-from context_engine.tools.runtime import ToolInvocation
+from context_engine.tools.runtime import ToolInvocation, ToolOutput
 
 
 class Counter:
@@ -259,13 +259,14 @@ def test_tool_resource_bounds_and_ui_diagnostics() -> None:
         evidence_counter=Counter(),
     )
     output = tool.execute(ToolInvocation.from_mapping("search_documents", {"query": "q"}))
-    visible = model_visible_tool_output("search_documents", output)
+    assert isinstance(output, ToolOutput) and output.diagnostics is not None
+    visible = output.model
     assert visible["results"] == [tool._serialize_result(small, preserve_content=True)]
-    diagnostics = output["selection_diagnostics"]
+    diagnostics = output.diagnostics["selection"]
     assert isinstance(diagnostics, dict)
     assert diagnostics["token_count"] == Counter().count_tokens(render_tool_output(visible))
     assert diagnostics["candidates"][0]["reason"] == "content_resource_limit"
-    assert "selection_diagnostics" not in visible
+    assert "selection" not in visible and "selection_diagnostics" not in visible
 
 
 @pytest.mark.parametrize("score", [True, "1", float("inf"), float("nan")])

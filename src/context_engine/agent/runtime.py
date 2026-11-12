@@ -24,7 +24,6 @@ from context_engine.models import (
     normalize_messages,
     normalize_model_tools,
 )
-from context_engine.models.tool_serialization import model_visible_tool_output
 from context_engine.observability import (
     ModelCallCompleted,
     ModelCallStarted,
@@ -602,9 +601,7 @@ class AgentRuntime:
         if tool_result.status is ToolResultStatus.SUCCESS:
             return ModelToolResult.success(
                 tool_name=tool_result.invocation.tool_name,
-                output=model_visible_tool_output(
-                    tool_result.invocation.tool_name, tool_result.output_as_mapping()
-                ),
+                output=tool_result.output_as_mapping(),
                 tool_call_id=tool_call.tool_call_id,
             )
         if tool_result.error is None:

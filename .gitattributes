@@ -1,0 +1,6 @@
+# Store and check out text files with LF so byte-hashed fixtures match on every platform.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.pdf binary

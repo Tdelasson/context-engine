@@ -82,7 +82,8 @@ resolver, its timeout and its transport belong to the application layer (ADR-016
 - Events for retrieval stages inside `search_documents`. Dense, lexical, fusion, reranking and
   selection diagnostics keep arriving with the tool result through `RetrievalStageDiagnostic`
   and `selection_diagnostics`. Live stage events would require a sink through every retriever,
-  the reranker and the selector.
+  the reranker and the selector. _Since ADR-017 the selection report is tool diagnostics on
+  the trace (`diagnostics.selection`), not part of the tool result._
 - Persisting events. The first consumer keeps them in process memory.
 - OpenTelemetry export. The event contracts are intended to map onto spans later.
 - Run cancellation.

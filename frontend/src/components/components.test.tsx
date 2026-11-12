@@ -3,7 +3,16 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api/client'
-import { PENDING, SEARCH_OUTPUT_FULL, awaitingApprovalRun, makeRun, makeSystem, summaryOf } from '../test/fixtures'
+import {
+  PENDING,
+  SEARCH_OUTPUT_FULL,
+  SELECTION_DIAGNOSTICS,
+  awaitingApprovalRun,
+  makeRun,
+  makeSystem,
+  searchTrace,
+  summaryOf,
+} from '../test/fixtures'
 import { ApprovalCard } from './ApprovalCard'
 import { Composer } from './Composer'
 import { Inspector } from './Inspector'
@@ -179,6 +188,13 @@ describe('Inspector', () => {
       tool_results: [
         { tool_name: 'search_documents', invocation_id: 'call-1', arguments: {}, status: 'success', output: SEARCH_OUTPUT_FULL as never, error: null },
       ],
+      traces: [
+        searchTrace({
+          arguments: {},
+          output: SEARCH_OUTPUT_FULL as never,
+          diagnostics: { selection: SELECTION_DIAGNOSTICS },
+        }),
+      ],
     })
     renderInspector(run, makeSystem({ retrieval_strategy: 'hybrid' }))
 
@@ -206,6 +222,7 @@ describe('Inspector', () => {
             status: 'error',
             output: null,
             error: { error_type: 'CalculatorEvaluationError', message: 'Division by zero' },
+            diagnostics: null,
           },
         ],
       }),
