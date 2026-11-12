@@ -498,3 +498,27 @@ def test_tool_runtime_records_no_diagnostics_for_a_plain_mapping_output() -> Non
     runtime.execute(ToolInvocation.from_mapping("add", {"a": 1, "b": 2}))
 
     assert runtime.execution_traces[0].diagnostics is None
+
+
+class _MalformedOutputTool:
+    name = "malformed"
+    description = "Return output that is not a mapping."
+    input_schema = ToolInputSchema(fields=(ToolInputField(name="part", value_type=str),))
+
+    def execute(self, invocation: ToolInvocation) -> object:
+        if invocation.arguments_as_mapping()["part"] == "diagnostics":
+            return ToolOutput(model={"value": 1}, diagnostics=[("cache", "miss")])  # type: ignore[arg-type]
+        return ToolOutput(model=[("value", 1)])  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("part", ["diagnostics", "model"])
+def test_tool_runtime_traces_malformed_tool_output_as_an_error_result(part: str) -> None:
+    registry = ToolRegistry()
+    registry.register(_MalformedOutputTool())  # type: ignore[arg-type]
+    runtime = ToolRuntime(registry)
+
+    result = runtime.execute(ToolInvocation.from_mapping("malformed", {"part": part}))
+
+    assert result.status is ToolResultStatus.ERROR
+    assert result.error is not None and result.error.error_type == "ToolOutputValidationError"
+    assert [trace.status for trace in runtime.execution_traces] == [ToolResultStatus.ERROR]

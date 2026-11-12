@@ -24,6 +24,7 @@ from context_engine.tools.errors import (
     ToolApprovalRejectedError,
     ToolApprovalRequiredError,
     ToolInputValidationError,
+    ToolOutputValidationError,
     ToolPolicyDeniedError,
     UnknownToolError,
 )
@@ -194,6 +195,36 @@ class ToolExecutionTrace:
         return {} if self.diagnostics is None else dict(self.diagnostics)
 
 
+def _normalize_tool_output(
+    tool_name: str, returned: object
+) -> tuple[tuple[tuple[str, object], ...], tuple[tuple[str, object], ...] | None]:
+    """Split a tool's return value into normalized model output and diagnostics.
+
+    Raises ``ToolOutputValidationError`` when either part is not a mapping, so a malformed
+    return ends as a traced error result instead of escaping the runtime.
+    """
+    # Tools are only structurally typed, so both parts are checked at runtime.
+    model: object
+    diagnostics: object
+    if isinstance(returned, ToolOutput):
+        model, diagnostics = returned.model, returned.diagnostics
+    else:
+        model, diagnostics = returned, None
+    if not isinstance(model, Mapping):
+        raise ToolOutputValidationError(
+            f"Tool {tool_name} returned model output that is not a mapping: {type(model).__name__}."
+        )
+    if diagnostics is not None and not isinstance(diagnostics, Mapping):
+        raise ToolOutputValidationError(
+            f"Tool {tool_name} returned diagnostics that are not a mapping: "
+            f"{type(diagnostics).__name__}."
+        )
+    return (
+        normalize_tool_arguments(model),
+        None if diagnostics is None else normalize_tool_arguments(diagnostics),
+    )
+
+
 class ToolRegistry:
     """Explicit deterministic in-memory tool registration and lookup."""
 
@@ -247,7 +278,8 @@ class ToolRuntime:
         """Resolve, validate, and execute one invocation deterministically."""
         policy_decision: ToolPolicyDecision | None = None
         approval_decision: ToolApprovalDecision | None = None
-        diagnostics: Mapping[str, object] | None = None
+        output: tuple[tuple[str, object], ...] = ()
+        diagnostics: tuple[tuple[str, object], ...] | None = None
         validated = False
         started: float | None = None
         try:
@@ -313,10 +345,7 @@ class ToolRuntime:
                     )
             started = self._monotonic()
             returned = tool.execute(invocation)
-            if isinstance(returned, ToolOutput):
-                output, diagnostics = returned.model, returned.diagnostics
-            else:
-                output, diagnostics = returned, None
+            output, diagnostics = _normalize_tool_output(invocation.tool_name, returned)
         except Exception as exc:
             error = ToolExecutionErrorDetails(error_type=type(exc).__name__, message=str(exc))
             if not validated:
@@ -340,7 +369,7 @@ class ToolRuntime:
             ToolResult(
                 invocation=invocation,
                 status=ToolResultStatus.SUCCESS,
-                output=normalize_tool_arguments(output),
+                output=output,
             ),
             policy_decision=policy_decision,
             approval_decision=approval_decision,
@@ -355,7 +384,7 @@ class ToolRuntime:
         policy_decision: ToolPolicyDecision | None,
         approval_decision: ToolApprovalDecision | None,
         started: float | None,
-        diagnostics: Mapping[str, object] | None = None,
+        diagnostics: tuple[tuple[str, object], ...] | None = None,
     ) -> ToolResult:
         """Record the trace and the terminal event for one invocation."""
         duration = None if started is None else max(0.0, self._monotonic() - started)
@@ -367,7 +396,7 @@ class ToolRuntime:
                 status=result.status,
                 output=result.output,
                 error=result.error,
-                diagnostics=None if diagnostics is None else normalize_tool_arguments(diagnostics),
+                diagnostics=diagnostics,
             )
         )
         self._emit(
