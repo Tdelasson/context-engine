@@ -251,6 +251,7 @@ def test_blank_prompt_fails_before_model_execution() -> None:
 def test_live_hybrid_composition_retains_tool_boundary(monkeypatch: object) -> None:
     import pytest
 
+    from context_engine.core import composition
     from context_engine.retrieval import VectorStoreCollectionConfig
     from context_engine.retrieval.hybrid import HybridRetriever
     from context_engine.retrieval.retriever import RetrievalRequest
@@ -282,12 +283,12 @@ def test_live_hybrid_composition_retains_tool_boundary(monkeypatch: object) -> N
         return SearchDocumentsTool(retriever)  # type: ignore[arg-type]
 
     patch = cast(pytest.MonkeyPatch, monkeypatch)
-    patch.setattr(application, "LocalEmbeddingProvider", lambda _: Provider())
+    patch.setattr(composition, "LocalEmbeddingProvider", lambda _: Provider())
     patch.setattr(
         "context_engine.retrieval.qdrant_lexical_index.QdrantBM25ChunkStore", store_factory
     )
-    patch.setattr(application, "_build_lexical_retriever", lambda _: EmptyLexical())
-    patch.setattr(application, "SearchDocumentsTool", capture_tool)
+    patch.setattr(composition, "_build_lexical_retriever", lambda _: EmptyLexical())
+    patch.setattr(composition, "SearchDocumentsTool", capture_tool)
     built = application.build_live_workbench(
         WorkbenchSettings(retrieval_strategy="hybrid", chunk_overlap_tokens=0)
     )
