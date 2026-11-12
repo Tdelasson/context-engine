@@ -230,6 +230,16 @@ The primary validation tools are:
 - `mypy src/` — static type checking
 - `pre-commit run --all-files` — complete local validation
 
+For changes under `frontend/` or to an HTTP API schema, also run from `frontend/`:
+
+- `npm run typecheck` — TypeScript strict type checking
+- `npm run lint` — ESLint
+- `npm run test` — Vitest and Testing Library
+- `npm run build` — production build
+
+Regenerate the API types (`python scripts/export_openapi.py`, then `npm run gen:api` in
+`frontend/`) when an API schema changes; CI fails when they are out of date.
+
 AI agents should run the relevant validation commands after making changes.
 
 Before considering a task complete, run:

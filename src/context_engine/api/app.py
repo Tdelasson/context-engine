@@ -17,6 +17,8 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import JsonValue
 from starlette.exceptions import HTTPException
+from starlette.responses import Response
+from starlette.types import Scope
 
 from context_engine.api.schemas import (
     ApprovalDecisionRequest,
@@ -140,7 +142,9 @@ def _runs_router() -> APIRouter:
                     "(the event kind) and `data` (a RunEventModel JSON document). Recorded "
                     "events are replayed first; the stream closes after `run_finished`."
                 ),
-                "content": {"text/event-stream": {"schema": RunEventModel.model_json_schema()}},
+                "content": {
+                    "text/event-stream": {"schema": {"$ref": "#/components/schemas/RunEventModel"}}
+                },
             }
         },
     )
@@ -237,6 +241,25 @@ def _system_router() -> APIRouter:
     return router
 
 
+class _SpaStaticFiles(StaticFiles):
+    """Serves the built frontend; client-side routes fall back to ``index.html``.
+
+    Unknown API paths and missing files (anything with an extension) stay 404.
+    """
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            return await super().get_response(path, scope)
+        except HTTPException as exc:
+            normalized = path.replace("\\", "/")
+            is_route = "." not in normalized.rsplit("/", 1)[-1] and not normalized.startswith(
+                "api/"
+            )
+            if exc.status_code == 404 and is_route:
+                return await super().get_response("index.html", scope)
+            raise
+
+
 def create_app(
     application: ContextEngineApplication,
     *,
@@ -300,5 +323,5 @@ def create_app(
         app.include_router(router, prefix=API_PREFIX)
 
     if static_dir is not None and static_dir.is_dir():
-        app.mount("/", StaticFiles(directory=static_dir, html=True), name="frontend")
+        app.mount("/", _SpaStaticFiles(directory=static_dir, html=True), name="frontend")
     return app

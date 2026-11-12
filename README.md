@@ -80,6 +80,22 @@ python -m context_engine.api
 Serves `/api/v1` on `127.0.0.1:8000` (OpenAPI at `/openapi.json`). It has no authentication
 and is for local use only. See the [HTTP API reference](docs/api/http-api.md).
 
+### React app
+
+The React app in [`frontend/`](frontend/) shows the run thread with a live technical
+inspector and an approve/reject flow for tools that need approval. It needs Node.js LTS.
+
+```bash
+cd frontend
+npm ci
+npm run build
+cd ..
+python -m context_engine.api --static-dir frontend/dist
+```
+
+Open `http://127.0.0.1:8000`. For development, run `npm run dev` in `frontend/` next to the
+API; it proxies `/api` to port 8000. The Streamlit workbench remains available.
+
 ## Documentation
 
 - [Product requirements](docs/product/prd.md) and [roadmap](docs/product/roadmap.md)

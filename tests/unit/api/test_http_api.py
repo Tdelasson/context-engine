@@ -393,6 +393,22 @@ def test_static_directory_is_served_when_present_and_absent_otherwise(tmp_path: 
     assert without.get("/").status_code == 404
 
 
+def test_client_routes_fall_back_to_the_frontend_but_api_and_files_stay_404(tmp_path: Path) -> None:
+    (tmp_path / "index.html").write_text("<h1>ui</h1>", encoding="utf-8")
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "assets" / "app.js").write_text("console.log(1)", encoding="utf-8")
+    client = _client(_Gateway([]), static_dir=tmp_path)
+
+    assert client.get("/runs/abc123").text == "<h1>ui</h1>"
+    assert client.get("/runs").text == "<h1>ui</h1>"
+    assert client.get("/assets/app.js").text == "console.log(1)"
+    assert client.get("/assets/missing.js").status_code == 404
+    unknown_api = client.get("/api/v1/nothing")
+    assert unknown_api.status_code == 404
+    assert unknown_api.json()["error"]["code"] == "http_error"
+    assert client.get("/api/v1/system").status_code == 200
+
+
 @pytest.mark.parametrize("path", ["/api/v1/runs/x/unknown", "/api/v2/runs"])
 def test_unknown_routes_return_structured_404(path: str) -> None:
     response = _client(_Gateway([])).get(path)
