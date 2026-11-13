@@ -90,7 +90,7 @@ def test_retriever_with_local_embedding_provider_and_qdrant() -> None:
                 dimensions=embeddings[0].dimensions,
                 distance_metric=VectorDistanceMetric.COSINE,
             ),
-            url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333"),
+            url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333"),
             api_key=os.getenv("CONTEXT_ENGINE_QDRANT_API_KEY"),
             timeout_seconds=float(os.getenv("CONTEXT_ENGINE_QDRANT_TIMEOUT_SECONDS", "5")),
         )

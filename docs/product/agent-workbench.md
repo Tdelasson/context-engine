@@ -7,7 +7,7 @@ locally. It replaced the Streamlit workbench in #93.
 
 1. Activate the project's Python environment and install dependencies with
    `python -m pip install -e ".[api,pdf,dev]"`.
-2. Start Docker Desktop, then local Qdrant on `http://localhost:6333`:
+2. Start Docker Desktop, then local Qdrant on `http://127.0.0.1:6333`:
    `docker run --rm --name context-engine-qdrant -p 6333:6333 qdrant/qdrant`.
 3. Install/start Ollama and pull a small tool-capable model, for example
    `ollama pull llama3.2:3b`. Use a quantization suitable for the local hardware;
@@ -37,7 +37,7 @@ set `CONTEXT_ENGINE_WORKBENCH_MODEL` to `llama3.2:3b` before launching.
 The default configuration uses:
 
 - Ollama: `http://localhost:11434`
-- Qdrant: `http://localhost:6333`
+- Qdrant: `http://127.0.0.1:6333`
 - collection: `context-engine-workbench-m5-v1`
 - embedding model: `sentence-transformers/all-MiniLM-L6-v2`
 - chunk budget: 128 tokens including heading context/special tokens; overlap: up to 16 tokens

@@ -38,7 +38,7 @@ def test_real_evidence_selection(strategy: str) -> None:
         embedding,
         tokenizer,
         strategy=strategy,
-        qdrant_url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333"),
+        qdrant_url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333"),
         reranking_reference=os.getenv("CONTEXT_ENGINE_RERANKING_INTEGRATION_MODEL"),
     )
     assert report["failures"] == []

@@ -96,7 +96,7 @@ def run_benchmark(
     tokenizer_directory: str,
     *,
     strategy: str = "dense-memory",
-    qdrant_url: str = "http://localhost:6333",
+    qdrant_url: str = "http://127.0.0.1:6333",
     reranking_reference: str | None = None,
 ) -> dict[str, Any]:
     dataset = load_evidence_dataset()
@@ -357,7 +357,7 @@ def main() -> None:
     parser.add_argument(
         "--strategy", choices=("dense-memory", "hybrid-reranked-qdrant"), default="dense-memory"
     )
-    parser.add_argument("--qdrant-url", default="http://localhost:6333")
+    parser.add_argument("--qdrant-url", default="http://127.0.0.1:6333")
     parser.add_argument("--reranking-reference")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()

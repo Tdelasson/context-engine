@@ -126,7 +126,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--embedding-reference", required=True)
     parser.add_argument("--reranking-reference", required=True)
-    parser.add_argument("--qdrant-url", default="http://localhost:6333")
+    parser.add_argument("--qdrant-url", default="http://127.0.0.1:6333")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     report = run_comparison(args.embedding_reference, args.reranking_reference, args.qdrant_url)

@@ -29,7 +29,7 @@ def _build_store(
     embedding_model_id: str = "integration-model",
 ) -> QdrantVectorStore:
     resolved_collection_name = collection_name or f"context-engine-it-{uuid.uuid4().hex}"
-    url = os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333")
+    url = os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333")
     api_key = os.getenv("CONTEXT_ENGINE_QDRANT_API_KEY")
     timeout_seconds = float(os.getenv("CONTEXT_ENGINE_QDRANT_TIMEOUT_SECONDS", "5"))
 

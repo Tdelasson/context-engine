@@ -161,7 +161,7 @@ def run_dense_configuration(
     chunk_config: ChunkingConfig,
     query_prefix: str = "",
     backend: str = "in-memory-cosine",
-    qdrant_url: str = "http://localhost:6333",
+    qdrant_url: str = "http://127.0.0.1:6333",
     k_values: Sequence[int] = (1, 5, 10),
 ) -> dict[str, Any]:
     """Exercise processing -> lifecycle chunk ingestion -> Retriever -> evidence metrics."""
@@ -327,7 +327,7 @@ def main() -> None:
     parser.add_argument(
         "--backend", choices=("in-memory-cosine", "qdrant-server"), default="in-memory-cosine"
     )
-    parser.add_argument("--qdrant-url", default="http://localhost:6333")
+    parser.add_argument("--qdrant-url", default="http://127.0.0.1:6333")
     parser.add_argument(
         "--output", type=Path, default=Path("benchmarks/results/m5-dense-results.json")
     )

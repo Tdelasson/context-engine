@@ -82,7 +82,10 @@ Integration tests live in `tests/integration/` and are skipped unless their gate
 is set to `1`. They need real local services:
 
 - **Ollama** with a tool-capable model pulled, for example `ollama pull llama3.2`.
-- **Qdrant** on `http://localhost:6333`: `docker run --rm -p 6333:6333 qdrant/qdrant`.
+- **Qdrant** on `http://127.0.0.1:6333`: `docker run --rm -p 6333:6333 qdrant/qdrant`.
+  The default uses `127.0.0.1` rather than `localhost` because `localhost` can resolve to
+  IPv6 `::1` first, which rootless Podman forwards to a container port Qdrant does not
+  listen on.
 - **A local embedding model**, for example `sentence-transformers/all-MiniLM-L6-v2`
   (install the `benchmark` or `api` extra).
 
@@ -119,7 +122,7 @@ feature they verify: [application](docs/product/agent-workbench.md),
 | --- | --- |
 | `CONTEXT_ENGINE_OLLAMA_BASE_URL` | `http://localhost:11434` |
 | `CONTEXT_ENGINE_OLLAMA_TIMEOUT_SECONDS` | `30` |
-| `CONTEXT_ENGINE_QDRANT_URL` | `http://localhost:6333` |
+| `CONTEXT_ENGINE_QDRANT_URL` | `http://127.0.0.1:6333` |
 | `CONTEXT_ENGINE_QDRANT_API_KEY` | unset |
 | `CONTEXT_ENGINE_QDRANT_TIMEOUT_SECONDS` | `5` |
 | `CONTEXT_ENGINE_EMBEDDING_MODEL_ID` | same as `CONTEXT_ENGINE_EMBEDDING_MODEL` |
