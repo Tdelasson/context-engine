@@ -32,7 +32,7 @@ class ApplicationSettings:
     ollama_timeout_seconds: float = 30.0
     embedding_model_id: str = "sentence-transformers/all-MiniLM-L6-v2"
     embedding_model_reference: str = "sentence-transformers/all-MiniLM-L6-v2"
-    qdrant_url: str = "http://localhost:6333"
+    qdrant_url: str = "http://127.0.0.1:6333"
     qdrant_timeout_seconds: float = 5.0
     collection_name: str = "context-engine-workbench-m5-v1"
     chunk_max_input_tokens: int = 128
