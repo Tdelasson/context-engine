@@ -1,0 +1,1174 @@
+{
+  "review_kind": "ai-self-review",
+  "independent_human_review": false,
+  "reviewer": "Codex",
+  "date": "2026-10-12",
+  "queries": [
+    {
+      "dataset": "main",
+      "query_id": "json-dumps",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Added the worked example that names json.dumps and shows its returned JSON string."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "json-load",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Added the file/read contract needed to explain how the value is read."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "json-JSONDecoder",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "json-JSONEncoder",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "csv-reader",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The old span described the input and reader object but omitted the returned row representation and conversion exception."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "csv-writer",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "csv-DictReader",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Dropped unrelated dictionary-order commentary from the fieldname-selection label."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "csv-DictWriter",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pickle-dump",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pickle-dumps",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pickle-load",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pickle-loads",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "hashlib-new",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "hashlib-update",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "hashlib-digest",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "hashlib-hexdigest",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "base64-b64encode",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "base64-b64decode",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "base64-urlsafe_b64encode",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Scoped the substitution fact to the requested character replacements, not unrelated return type/padding commentary."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "base64-b32encode",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "gzip-open",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "gzip-compress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed unrelated configuration/performance text from a label whose question only asks the data/result behaviour."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "gzip-decompress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed unrelated configuration/performance text from a label whose question only asks the data/result behaviour."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "gzip-GzipFile",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "bz2-open",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The original binary/text description did not enumerate the supported open modes or default."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "bz2-compress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "bz2-decompress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "bz2-BZ2Compressor",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "lzma-open",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The original binary/text description did not enumerate the supported open modes or default."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "lzma-compress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "lzma-decompress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "lzma-LZMACompressor",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "zlib-adler32",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed unrelated running-checksum defaults and security commentary while retaining checksum identity and result type."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "zlib-crc32",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed unrelated running-checksum defaults and security commentary while retaining checksum identity and result type."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "zlib-compress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed unrelated configuration/performance text from a label whose question only asks the data/result behaviour."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "zlib-decompress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed unrelated configuration/performance text from a label whose question only asks the data/result behaviour."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "sqlite3-connect",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Added the explicit return type; opening a connection alone does not label the requested result type.",
+        "Added the independently sufficient tutorial call and return-type explanation."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "sqlite3-complete_statement",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "sqlite3-register_adapter",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "sqlite3-register_converter",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pathlib-PurePath",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The old span described flavour selection, not the reason to use pure paths instead of concrete paths."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pathlib-PurePosixPath",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pathlib-PureWindowsPath",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pathlib-Path",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "shutil-copyfile",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "shutil-copy",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Replaced destination-path behaviour with the missing permission-mode/metadata explanation."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "shutil-copy2",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "shutil-rmtree",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "tempfile-TemporaryFile",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "tempfile-NamedTemporaryFile",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "tempfile-TemporaryDirectory",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "tempfile-mkstemp",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The old label covered secure creation but omitted who must delete the file."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "glob-glob",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "glob-iglob",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "glob-escape",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "glob-translate",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "fnmatch-fnmatch",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "fnmatch-fnmatchcase",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed the handout alternative: its extracted prose does not identify this named API. The handout-only behavioural question remains supported."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "fnmatch-filter",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed the handout alternative: its extracted prose does not identify this named API. The handout-only behavioural question remains supported."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "fnmatch-translate",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "re-search",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Scoped support to the question’s matching-position condition, not unrelated failure and zero-length notes."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "re-match",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Scoped support to the question’s matching-position condition, not unrelated failure and zero-length notes."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "re-fullmatch",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Scoped support to the question’s matching-position condition, not unrelated failure and zero-length notes."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "re-findall",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "collections-Counter",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "collections-deque",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Replaced constructor initialization with the missing optimization and complexity statement."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "collections-defaultdict",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "collections-namedtuple",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "heapq-heappush",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "heapq-heappop",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "heapq-heapify",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "heapq-heappushpop",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "bisect-bisect_left",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "bisect-bisect_right",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "bisect-insort_left",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "bisect-insort_right",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "statistics-mean",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Added the independently sufficient arithmetic-mean definition under the same named API."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "statistics-median",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Added the explicit even-number condition instead of relying on the generic median description."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "statistics-mode",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Added the tie-breaking qualifier to avoid treating all tied modes as an unspecified result."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "statistics-stdev",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "decimal-Decimal",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The original span said only that construction is based on value; it did not list supported input types."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "decimal-getcontext",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "decimal-localcontext",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "decimal-setcontext",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "fractions-Fraction",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "fractions-as_integer_ratio",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "fractions-limit_denominator",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "fractions-from_float",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "itertools-count",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Included the signature so step and its defaults are supported rather than inferred from evenly spaced values.",
+        "Removed map/zip usage examples from the evenly-spaced-sequence requirement."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "itertools-cycle",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "itertools-repeat",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "itertools-chain",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "argparse-ArgumentParser",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The old constructor sentence was circular; replaced it with the explicit role of the parser."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "argparse-parse_args",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "argparse-add_subparsers",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Dropped the motivating svn examples, retaining the returned action and subparser construction behaviour."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "argparse-parse_known_args",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The old motivation paragraph omitted the actual no-error and two-item-return contract."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-json-dumps-pickle-dumps",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Added the worked example that names json.dumps and shows its returned JSON string.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-csv-reader-gzip-decompress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The old span described the input and reader object but omitted the returned row representation and conversion exception.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed unrelated configuration/performance text from a label whose question only asks the data/result behaviour."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-lzma-compress-zlib-compress",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed unrelated configuration/performance text from a label whose question only asks the data/result behaviour."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-pathlib-Path-shutil-copy2",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-re-fullmatch-bisect-bisect_left",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Scoped support to the question’s matching-position condition, not unrelated failure and zero-length notes.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-statistics-mean-itertools-count",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Added the independently sufficient arithmetic-mean definition under the same named API.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Included the signature so step and its defaults are supported rather than inferred from evenly spaced values.",
+        "Removed map/zip usage examples from the evenly-spaced-sequence requirement."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-base64-urlsafe_b64encode-hashlib-hexdigest",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Scoped the substitution fact to the requested character replacements, not unrelated return type/padding commentary.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Restricted the behaviour label to the complete answer-bearing sentences, rather than requiring unrelated surrounding options or examples."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-bz2-BZ2Compressor-sqlite3-register_adapter",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-tempfile-mkstemp-fnmatch-fnmatchcase",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The old label covered secure creation but omitted who must delete the file.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Removed the handout alternative: its extracted prose does not identify this named API. The handout-only behavioural question remains supported."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-collections-Counter-heapq-heappop",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-decimal-localcontext-fractions-limit_denominator",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "compound-glob-escape-argparse-parse_known_args",
+      "decision": "corrected",
+      "notes": [
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "Verified the named API and surrounding pinned documentation; added its identifying declaration to the required evidence.",
+        "The old motivation paragraph omitted the actual no-error and two-item-return contract."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-1",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-2",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-3",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-4",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-5",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-6",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-7",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-8",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-9",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-10",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-11",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "unsupported-12",
+      "decision": "retained",
+      "notes": [
+        "Checked question against the corpus scope: no private organization, secret, ownership, deployment or service telemetry data is supplied. Unsupported only relative to this corpus, not a claim about the outside world."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "stress-revision",
+      "decision": "corrected",
+      "notes": [
+        "Checked the named revision/subsystem and every support alternative against the complete short stress source or extracted handout pages.",
+        "Added revision-2 identity to both alternatives; the retry number alone cannot establish the requested revision."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "stress-old-revision",
+      "decision": "retained",
+      "notes": [
+        "Checked the named revision/subsystem and every support alternative against the complete short stress source or extracted handout pages."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "stress-distractor",
+      "decision": "retained",
+      "notes": [
+        "Checked the named revision/subsystem and every support alternative against the complete short stress source or extracted handout pages."
+      ]
+    },
+    {
+      "dataset": "main",
+      "query_id": "pdf-two-page",
+      "decision": "corrected",
+      "notes": [
+        "Checked the named revision/subsystem and every support alternative against the complete short stress source or extracted handout pages."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-venv-isolation",
+      "decision": "retained",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-venv-module",
+      "decision": "retained",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-venv-activation",
+      "decision": "retained",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-pip-version",
+      "decision": "corrected",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples.",
+        "Included the exact-version installation command as concrete support for the expected installation syntax."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-pip-freeze",
+      "decision": "corrected",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples.",
+        "Included the full install command and requirements filename, not only the abbreviated install -r prose.",
+        "Added the package==version example to establish what requirements-compatible output looks like."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-pip-show-list",
+      "decision": "retained",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-argparse-help",
+      "decision": "retained",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-argparse-positional",
+      "decision": "retained",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-argparse-optional",
+      "decision": "retained",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-argparse-store-true",
+      "decision": "corrected",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples.",
+        "Included the store_true action identity so the True/False explanation is self-contained."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-argparse-count",
+      "decision": "corrected",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples.",
+        "Replaced the unrelated str exponentiation TypeError with the NoneType/integer comparison error, and added the explanation of why default=0 fixes it.",
+        "Removed the incidental count-action definition from the required answer; the question asks about None/default=0, not what count means."
+      ]
+    },
+    {
+      "dataset": "pdf",
+      "query_id": "pdf-argparse-exclusive",
+      "decision": "retained",
+      "notes": [
+        "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+      ]
+    }
+  ],
+  "limitations": [
+    "Self-review by the original AI author is not independent validation.",
+    "Explicit alternatives were checked and additional supports were added where identified; exhaustive semantic enumeration of every possible support is not guaranteed.",
+    "Cross-topic API-template similarity, easy fictional unsupported questions and limited topic count remain representation/split limitations; no split reshuffling or held-out tuning was performed."
+  ]
+}

@@ -157,3 +157,12 @@ M8 Context-Aware DJ
 M9 Evaluation & MLOps
 ↓
 M10 Hardening & v1.0
+
+## Staged technical-workbench evaluation
+
+The #77–#79 follow-up adds a pinned public-document dataset, controlled staged
+retrieval/selection comparisons and an opt-in actual-runtime answer runner. Authored
+labels and generated answers require independent review; provisional evidence
+results are not certified answer accuracy. See
+[the evaluation report](../experiments/english-technical-rag-evaluation.md).
+Runtime latency, memory and load measurements (#80) remain deferred.

@@ -109,6 +109,8 @@ class RankedEvidenceSelector:
         config: EvidenceSelectionConfig,
         counter: EvidenceTokenCounter,
         serializer: ResultSerializer,
+        *,
+        serializer_identity: str | None = None,
     ) -> None:
         self.config, self.counter, self.serializer = config, counter, serializer
         if any(
@@ -116,11 +118,15 @@ class RankedEvidenceSelector:
             for value in (counter.model_id, counter.configuration_id, counter.method)
         ):
             raise EvidenceSelectionError("An identified answering-model counter is required.")
-        self.configuration_id = sha256(
-            render_tool_output(
-                {"selection": asdict(config), "counter": counter.configuration_id}
-            ).encode()
-        ).hexdigest()
+        identity: dict[str, object] = {
+            "selection": asdict(config),
+            "counter": counter.configuration_id,
+        }
+        if serializer_identity is not None:
+            if not isinstance(serializer_identity, str) or not serializer_identity.strip():
+                raise EvidenceSelectionError("Serializer identity must be nonblank.")
+            identity["serializer"] = serializer_identity
+        self.configuration_id = sha256(render_tool_output(identity).encode()).hexdigest()
 
     def _render(
         self, query: str, results: list[dict[str, object]]

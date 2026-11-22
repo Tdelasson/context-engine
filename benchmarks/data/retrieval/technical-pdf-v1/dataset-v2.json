@@ -1,0 +1,1026 @@
+{
+  "dataset_id": "english-technical-pdf-v2",
+  "processing_version": "processing-v1",
+  "processing_limits": {
+    "max_bytes": 524288,
+    "max_text_characters": 524288,
+    "max_pages": 100
+  },
+  "schema_version": "technical-evaluation-v1",
+  "workload": "Separate published technical-PDF extraction diagnostic; not pooled with technical-v1 quality scores",
+  "annotation_status": "ai-reviewed-awaiting-independent-review",
+  "sources": [
+    {
+      "source_id": "python311:pdf:tutorial",
+      "path": "tutorial.pdf",
+      "format": "pdf",
+      "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+      "processed_text_sha256": "4b321429d0a915cfa4acc14296e515757d61bf29ee27b8e43f633ed88e5c2fd0",
+      "group": "pdf-venv",
+      "provenance": "public-published-layout-excerpt",
+      "upstream_url": "https://docs.python.org/3.11/archives/python-3.11.0-docs-pdf-a4.zip",
+      "upstream_archive_sha256": "7dfccd4af7410d1dc1bfa41d6b49827379a0b49a65b253756b51ad658b2d0eac",
+      "upstream_member": "docs-pdf/tutorial.pdf",
+      "upstream_member_sha256": "0629e8518433dfbc07d12a90e920fcfee427b3106a90111a51645523ce8a1a65",
+      "upstream_pages_one_based": [
+        101,
+        102,
+        103
+      ],
+      "license": "CPYTHON-LICENSE.txt",
+      "extraction": "Original page objects copied with pypdf; no text reflow or re-authored layout."
+    },
+    {
+      "source_id": "python311:pdf:howto-argparse",
+      "path": "howto-argparse.pdf",
+      "format": "pdf",
+      "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+      "processed_text_sha256": "e16687094382a15a26b5f6888ed3be91c8606252001eb1b34b8aebaaed202664",
+      "group": "pdf-argparse",
+      "provenance": "public-published-layout-excerpt",
+      "upstream_url": "https://docs.python.org/3.11/archives/python-3.11.0-docs-pdf-a4.zip",
+      "upstream_archive_sha256": "7dfccd4af7410d1dc1bfa41d6b49827379a0b49a65b253756b51ad658b2d0eac",
+      "upstream_member": "docs-pdf/howto-argparse.pdf",
+      "upstream_member_sha256": "5872b1d67d5632a9b251939feaeb9ac6628adbe235bf2d54f6e7f265ea7f9632",
+      "upstream_pages_one_based": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "license": "CPYTHON-LICENSE.txt",
+      "extraction": "Original page objects copied with pypdf; no text reflow or re-authored layout."
+    }
+  ],
+  "queries": [
+    {
+      "query_id": "pdf-venv-isolation",
+      "text": "How do the tutorial virtual environments resolve applications requiring conflicting package versions?",
+      "split": "development",
+      "group": "pdf-venv",
+      "category": "paraphrase",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-venv-isolation-1",
+          "reference_fact": "Separate virtual environments let applications use different package versions; upgrading one application’s environment does not change the other’s packages.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-venv-isolation-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 819,
+                  "end_offset": 1189
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-venv-isolation-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 819,
+              "end_offset": 1189
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "retained",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-venv-module",
+      "text": "Which Python module creates virtual environments, and which Python installation does it usually use?",
+      "split": "development",
+      "group": "pdf-venv",
+      "category": "exact_api",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-venv-module-1",
+          "reference_fact": "Use venv. The tutorial describes the usual Python as the most recent available one and says a specific version can be selected by invoking that interpreter.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-venv-module-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 1223,
+                  "end_offset": 1485
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-venv-module-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 1223,
+              "end_offset": 1485
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "retained",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-venv-activation",
+      "text": "What does activating a virtual environment change about the shell and the python command?",
+      "split": "development",
+      "group": "pdf-venv",
+      "category": "paraphrase",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-venv-activation-1",
+          "reference_fact": "Activation changes the shell prompt to identify the environment and makes the python command use that environment’s Python installation.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-venv-activation-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 2456,
+                  "end_offset": 2668
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-venv-activation-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 2456,
+              "end_offset": 2668
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "retained",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-pip-version",
+      "text": "How does pip select an exact package version and upgrade it to the latest version in the tutorial?",
+      "split": "development",
+      "group": "pdf-venv",
+      "category": "multi_span",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-pip-version-1",
+          "reference_fact": "Pin a package version using python -m pip install package==version (the example uses requests==2.6.0).",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-pip-version-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 3656,
+                  "end_offset": 3828
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirement_id": "pdf-pip-version-2",
+          "reference_fact": "Use python -m pip install --upgrade package to upgrade it to the latest version.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-pip-version-2",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 3983,
+                  "end_offset": 4210
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-pip-version-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 3656,
+              "end_offset": 3828
+            }
+          ]
+        },
+        {
+          "evidence_id": "pdf-pip-version-2",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 3983,
+              "end_offset": 4210
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "corrected",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples.",
+          "Included the exact-version installation command as concrete support for the expected installation syntax."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-pip-freeze",
+      "text": "How does pip freeze format its package list, and how is that requirements file installed?",
+      "split": "development",
+      "group": "pdf-venv",
+      "category": "multi_span",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-pip-freeze-1",
+          "reference_fact": "pip freeze emits installed packages in requirements-compatible format, illustrated as package==version, and can write that list to requirements.txt.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-pip-freeze-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 5249,
+                  "end_offset": 5589
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirement_id": "pdf-pip-freeze-2",
+          "reference_fact": "Install the packages listed in requirements.txt using python -m pip install -r requirements.txt.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-pip-freeze-2",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 5590,
+                  "end_offset": 5796
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-pip-freeze-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 5249,
+              "end_offset": 5589
+            }
+          ]
+        },
+        {
+          "evidence_id": "pdf-pip-freeze-2",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 5590,
+              "end_offset": 5796
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "corrected",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples.",
+          "Included the full install command and requirements filename, not only the abbreviated install -r prose.",
+          "Added the package==version example to establish what requirements-compatible output looks like."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-pip-show-list",
+      "text": "Which pip commands show one package’s information and all installed packages?",
+      "split": "development",
+      "group": "pdf-venv",
+      "category": "exact_api",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-pip-show-list-1",
+          "reference_fact": "python -m pip show displays information about one package.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-pip-show-list-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 4659,
+                  "end_offset": 4724
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirement_id": "pdf-pip-show-list-2",
+          "reference_fact": "python -m pip list displays all packages installed in the environment.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-pip-show-list-2",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:tutorial",
+                  "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+                  "start_offset": 5056,
+                  "end_offset": 5135
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-pip-show-list-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 4659,
+              "end_offset": 4724
+            }
+          ]
+        },
+        {
+          "evidence_id": "pdf-pip-show-list-2",
+          "spans": [
+            {
+              "source_id": "python311:pdf:tutorial",
+              "content_sha256": "bb4acc124833bd5470b2f507097e1774f7260d2f75e5f332b52c212a905c6557",
+              "start_offset": 5056,
+              "end_offset": 5135
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "retained",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-argparse-help",
+      "text": "Which help option is available without adding it explicitly in the argparse tutorial?",
+      "split": "held_out",
+      "group": "pdf-argparse",
+      "category": "exact_api",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-argparse-help-1",
+          "reference_fact": "The --help option, also available as -h, is supplied automatically.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-help-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 3413,
+                  "end_offset": 3624
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-argparse-help-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 3413,
+              "end_offset": 3624
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "retained",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-argparse-positional",
+      "text": "What does add_argument specify and what data does parse_args return in the echo example?",
+      "split": "held_out",
+      "group": "pdf-argparse",
+      "category": "multi_span",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-argparse-positional-1",
+          "reference_fact": "add_argument declares the command-line arguments the program accepts.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-positional-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 4093,
+                  "end_offset": 4268
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirement_id": "pdf-argparse-positional-2",
+          "reference_fact": "parse_args returns parsed argument values; the example accesses the echo value through args.echo.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-positional-2",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 4320,
+                  "end_offset": 4408
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-argparse-positional-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 4093,
+              "end_offset": 4268
+            }
+          ]
+        },
+        {
+          "evidence_id": "pdf-argparse-positional-2",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 4320,
+              "end_offset": 4408
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "retained",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-argparse-optional",
+      "text": "What value is assigned to the optional verbosity argument if it is omitted?",
+      "split": "held_out",
+      "group": "pdf-argparse",
+      "category": "paraphrase",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-argparse-optional-1",
+          "reference_fact": "The omitted optional verbosity argument receives None.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-optional-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 7110,
+                  "end_offset": 7365
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-argparse-optional-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 7110,
+              "end_offset": 7365
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "retained",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-argparse-store-true",
+      "text": "What are the verbose variable values when a store_true flag is present or absent?",
+      "split": "held_out",
+      "group": "pdf-argparse",
+      "category": "exact_api",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-argparse-store-true-1",
+          "reference_fact": "action=store_true sets args.verbose to True when the flag is present and False when absent.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-store-true-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 8325,
+                  "end_offset": 8529
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-argparse-store-true-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 8325,
+              "end_offset": 8529
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "corrected",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples.",
+          "Included the store_true action identity so the True/False explanation is self-contained."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-argparse-count",
+      "text": "Why does the count example need default zero after replacing equality tests with greater-than-or-equal tests?",
+      "split": "held_out",
+      "group": "pdf-argparse",
+      "category": "multi_span",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-argparse-count-2",
+          "reference_fact": "Without the count flag, verbosity is None; comparing it with an integer using >= raises TypeError.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-count-2",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 13448,
+                  "end_offset": 13518
+                },
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 14534,
+                  "end_offset": 14605
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirement_id": "pdf-argparse-count-3",
+          "reference_fact": "Setting default=0 gives an integer even when the flag is absent, so integer verbosity-threshold comparisons work.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-count-3",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 15224,
+                  "end_offset": 15475
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-argparse-count-2",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 13448,
+              "end_offset": 13518
+            },
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 14534,
+              "end_offset": 14605
+            }
+          ]
+        },
+        {
+          "evidence_id": "pdf-argparse-count-3",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 15224,
+              "end_offset": 15475
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "corrected",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples.",
+          "Replaced the unrelated str exponentiation TypeError with the NoneType/integer comparison error, and added the explanation of why default=0 fixes it.",
+          "Removed the incidental count-action definition from the required answer; the question asks about None/default=0, not what count means."
+        ]
+      }
+    },
+    {
+      "query_id": "pdf-argparse-exclusive",
+      "text": "Why can the tutorial’s verbose and quiet options not be used together?",
+      "split": "held_out",
+      "group": "pdf-argparse",
+      "category": "paraphrase",
+      "answerable": true,
+      "requirements": [
+        {
+          "requirement_id": "pdf-argparse-exclusive-1",
+          "reference_fact": "The verbose and quiet flags are added to the same mutually exclusive argument group.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-exclusive-1",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 17733,
+                  "end_offset": 17896
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirement_id": "pdf-argparse-exclusive-2",
+          "reference_fact": "The program allows either flag but forbids specifying both together.",
+          "alternatives": [
+            {
+              "evidence_id": "pdf-argparse-exclusive-2",
+              "spans": [
+                {
+                  "source_id": "python311:pdf:howto-argparse",
+                  "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+                  "start_offset": 19556,
+                  "end_offset": 19679
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "pdf-argparse-exclusive-1",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 17733,
+              "end_offset": 17896
+            }
+          ]
+        },
+        {
+          "evidence_id": "pdf-argparse-exclusive-2",
+          "spans": [
+            {
+              "source_id": "python311:pdf:howto-argparse",
+              "content_sha256": "efe920f4b9f535c3c5be7bd936b72dcff25cf03effad196567c76b3990453455",
+              "start_offset": 19556,
+              "end_offset": 19679
+            }
+          ]
+        }
+      ],
+      "review": {
+        "status": "draft",
+        "author": "Codex",
+        "reviewer": null,
+        "notes": "Independent semantic review pending."
+      },
+      "ai_review": {
+        "status": "reviewed",
+        "reviewer": "Codex",
+        "reviewer_kind": "ai-self-review",
+        "date": "2026-10-12",
+        "decision": "retained",
+        "checks": [
+          "answerability",
+          "required-fact completeness",
+          "canonical PDF context",
+          "support alternatives",
+          "source revision",
+          "split/group consistency"
+        ],
+        "notes": [
+          "Checked the question, all reference facts and labelled spans against the full canonical PDF page text and surrounding examples."
+        ]
+      }
+    }
+  ],
+  "review_revision": {
+    "parent_manifest": "dataset.json",
+    "parent_sha256": "ce89682465a2e3ac69c7563be7d9dc7288872b7b5b843b38b3677df13fd9fc61",
+    "date": "2026-10-12",
+    "kind": "ai-self-review",
+    "note": "Published page bytes, extraction, questions, groups and splits unchanged. Independent review is not claimed."
+  }
+}
