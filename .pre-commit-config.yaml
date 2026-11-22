@@ -10,6 +10,11 @@ repos:
     rev: v1.18.2
     hooks:
       - id: mypy
+        additional_dependencies:
+          - "fastapi>=0.162,<1"
+          - "httpx>=0.28"
+          - "python-multipart>=0.0.32"
+          - "uvicorn>=0.52"
 
   - repo: local
     hooks:

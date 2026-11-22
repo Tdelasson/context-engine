@@ -187,13 +187,44 @@ Embedded and HTTP interfaces must expose the same underlying semantics.
 
 The adapters must not implement independent business logic.
 
-The initial service API will use HTTP and JSON with versioned endpoints:
+## 4.4 Implemented core application facade
+
+The domain API exists as `ContextEngineApplication` in `context_engine.core`. It is the
+embedded Python API and the object future HTTP adapters call.
 
 ```text
-/api/v1/...
+context_engine.core
+├── application   ContextEngineApplication: runs, sources, system description
+├── composition   build_live_application: wires local embeddings, Qdrant, retrieval, tools, Ollama
+├── runs          RunRecord, RunStatus, RunRegistry
+├── settings      ApplicationSettings (environment-backed)
+├── sources       DocumentCatalog, upload validation and limits
+└── prompts       system prompt and prompt presets
 ```
 
-Streaming support may be added later.
+- **Runs.** `start_run(prompt)` starts a run on a worker thread and returns a `RunRecord`;
+  `run_prompt(prompt)` starts one and waits. A record is a structured snapshot: status,
+  runtime result, tool results, tool traces and the run events recorded so far
+  (section 11.1). It carries no display text.
+- **One active run.** Runs are held in memory for the life of the process, and only one run
+  may be active; a second start raises `RunAlreadyActiveError`. There is no persistence and
+  no cross-process coordination.
+- **Live events.** `wait_for_run_events(run_id, after_sequence=...)` returns events newer
+  than a sequence number and whether the run has finished, so a consumer can replay and then
+  follow a run.
+- **Status.** A run that produced a response after any tool error is reported as failed,
+  never as successful.
+- **Sources and system.** The facade prepares the corpus, lists, ingests, deletes and clears
+  sources, recovers the source index, and describes the effective settings, registered tools,
+  prompt presets and composition-time dependency states.
+
+The facade imports no web framework. The FastAPI adapter (`context_engine.api`) is a thin
+adapter over the facade and serves HTTP and JSON under `/api/v1`, with run events as
+server-sent events. The React app (`frontend/`) is its client and derives lifecycle and
+evidence views from the structured run data. The earlier Streamlit workbench was removed once
+the React app reached parity (#93).
+See [the HTTP API reference](../api/http-api.md) and
+[ADR-016](decisions/ADR-016-http-api-and-react-frontend.md).
 
 ---
 
@@ -870,6 +901,34 @@ The event log supports:
 
 An agent execution should be reconstructable from its recorded runtime events and associated telemetry.
 
+## 11.1 Implemented run events
+
+The Agent and Tool runtimes emit typed run events through an optional `RunEventEmitter`
+from `context_engine.observability`. One emitter is created per run and shared by both
+runtimes, so every event carries the same run id and one increasing sequence number.
+
+```text
+run_started
+state_transitioned        (every applied transition, start → terminal)
+model_call_started
+model_call_completed      (duration, finish reason, token usage when reported, error)
+tool_proposed
+tool_validated
+tool_policy_decided
+tool_approval_requested
+tool_approval_resolved
+tool_call_finished        (status, executed, duration)
+run_finished              (outcome, terminal status, iterations)
+```
+
+Each started run ends with exactly one `run_finished` event, including runs that fail or
+raise. Events hold primitive values only and are provider-independent. The emitter contains
+sink failures, so telemetry cannot change a run. Events are held in memory by whichever sink
+the application supplies; persistence, OpenTelemetry export and retrieval-stage events are
+not implemented. The core application facade (section 4.4) creates an emitter for every run
+and keeps the events on the run record. See
+[ADR-015](decisions/ADR-015-runtime-run-events.md).
+
 ---
 
 # 12. Observability
@@ -1244,6 +1303,12 @@ SQLite
 Vector storage:
 Qdrant
 
+Local LLM serving (current adapter):
+Ollama
+
+Embedding model (initial default, M4 benchmark):
+sentence-transformers/all-MiniLM-L6-v2
+
 Artifacts:
 Local filesystem
 
@@ -1263,11 +1328,11 @@ Local development
 ### Not yet locked
 
 ```text
-LLM provider
-Embedding model
-Reranker
-Local inference runtime
-HTTP framework
+Default LLM
+Default retrieval strategy (dense today; lexical and hybrid are optional)
+Reranker adoption (an optional local cross-encoder exists; disabled by default)
+Local inference runtime beyond the current Ollama adapter
+HTTP framework (FastAPI selected, ADR-016)
 Sandbox implementation
 Production database
 Production object storage
@@ -1348,10 +1413,12 @@ overlap, and exact model-compatible embedding token accounting.
 
 Applications can map whole processed sources or individual chunks to the existing
 retrieval `Document` contract. `Ingestor` embeds and upserts those values; `Retriever`
-coordinates search through the existing tool policy boundary. The workbench retains
-whole-document indexing until chunk ingestion lifecycle is integrated. Chunk processing
-is synchronous and local; asynchronous orchestration and index migrations remain future work.
+coordinates search through the existing tool policy boundary. The workbench indexes
+chunks through the durable source ingestion lifecycle (ADR-009), which handles source
+replacement, deletion, and restart recovery. Chunk processing is synchronous and local;
+asynchronous orchestration and index migrations remain future work.
 
 See [embedding/retrieval architecture](embedding-and-retrieval.md),
-[ADR-007](decisions/ADR-007-pdf-text-extraction.md), and
-[ADR-008](decisions/ADR-008-structure-aware-document-chunking.md).
+[ADR-007](decisions/ADR-007-pdf-text-extraction.md),
+[ADR-008](decisions/ADR-008-structure-aware-document-chunking.md), and
+[ADR-009](decisions/ADR-009-source-index-lifecycle.md).

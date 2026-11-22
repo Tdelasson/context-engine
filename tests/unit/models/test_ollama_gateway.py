@@ -21,6 +21,7 @@ from context_engine.models import (
     normalize_messages,
     normalize_model_tools,
 )
+from context_engine.models.tool_serialization import render_tool_output
 
 
 class _FakeHTTPResponse:
@@ -455,3 +456,65 @@ def test_ollama_gateway_maps_unknown_done_reason_to_other(
     )
 
     assert response.finish_reason is ModelFinishReason.OTHER
+
+
+def test_ollama_gateway_rejects_tool_output_that_the_shared_renderer_cannot_render(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_urlopen(request: object, timeout: float) -> _FakeHTTPResponse:
+        raise AssertionError("an unrenderable tool output must not be sent")
+
+    monkeypatch.setattr("context_engine.models.ollama.urlopen", fake_urlopen)
+    gateway = OllamaModelGateway()
+
+    with pytest.raises(ModelGatewayRequestError, match="tool output"):
+        gateway.generate(
+            ModelRequest(
+                model_id="llama3.2",
+                messages=(
+                    ModelMessage(role=ModelRole.USER, content="Measure it."),
+                    ModelMessage(
+                        role=ModelRole.TOOL,
+                        tool_result=ModelToolResult.success(
+                            tool_name="measure",
+                            output={"value": float("nan")},
+                            tool_call_id="call-1",
+                        ),
+                    ),
+                ),
+            )
+        )
+
+
+def test_ollama_gateway_sends_tool_output_as_the_exact_bytes_evidence_selection_counts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sent_messages: list[dict[str, object]] = []
+
+    def fake_urlopen(request: object, timeout: float) -> _FakeHTTPResponse:
+        del timeout
+        sent_messages.extend(json.loads(getattr(request, "data").decode("utf-8"))["messages"])
+        return _FakeHTTPResponse(
+            json.dumps({"message": {"content": "done"}, "done_reason": "stop"}).encode("utf-8")
+        )
+
+    monkeypatch.setattr("context_engine.models.ollama.urlopen", fake_urlopen)
+    output = {"results": [{"content": "Café ünïcode", "score": 0.5}], "query": "q"}
+    OllamaModelGateway().generate(
+        ModelRequest(
+            model_id="llama3.2",
+            messages=(
+                ModelMessage(role=ModelRole.USER, content="Search."),
+                ModelMessage(
+                    role=ModelRole.TOOL,
+                    tool_result=ModelToolResult.success(
+                        tool_name="search_documents", output=output, tool_call_id="call-1"
+                    ),
+                ),
+            ),
+        )
+    )
+
+    content = sent_messages[-1]["content"]
+    assert isinstance(content, str)
+    assert content.startswith('{"output": ' + render_tool_output(output) + ', "status": ')

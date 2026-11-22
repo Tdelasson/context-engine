@@ -47,7 +47,7 @@ def store() -> Iterator[FaultStore]:
         MemorySourceStore(fixture_chunker()).collection_config,
         collection_name=f"context-engine-source-it-{uuid4().hex}",
     )
-    actual = FaultStore(config, url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333"))
+    actual = FaultStore(config, url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333"))
     try:
         yield actual
     finally:
@@ -66,7 +66,7 @@ def ingestion(store: QdrantVectorStore) -> SourceIngestionCoordinator:
 
 def reopen(store: QdrantVectorStore) -> QdrantVectorStore:
     return QdrantVectorStore(
-        store.collection_config, url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333")
+        store.collection_config, url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333")
     )
 
 
@@ -102,7 +102,7 @@ def test_live_source_revision_replacement_restart_and_delete(store: FaultStore) 
         with pytest.raises(VectorStoreCompatibilityError):
             QdrantVectorStore(
                 replace(store.collection_config, index_configuration_id="incompatible"),
-                url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333"),
+                url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333"),
             )
         with pytest.raises(VectorStoreCompatibilityError):
             QdrantVectorStore(
@@ -111,7 +111,7 @@ def test_live_source_revision_replacement_restart_and_delete(store: FaultStore) 
                     index_version="m4-documents-v1",
                     index_configuration_id=None,
                 ),
-                url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333"),
+                url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333"),
             )
     finally:
         reopened._client.close()

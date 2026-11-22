@@ -44,7 +44,7 @@ def test_native_hybrid_local_reranking_runtime() -> None:
                 chunker, embedding_identity="fixture-v1"
             ),
         ),
-        url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333"),
+        url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333"),
     )
     try:
         coordinator = SourceIngestionCoordinator(

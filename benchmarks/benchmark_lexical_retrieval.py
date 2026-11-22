@@ -25,7 +25,7 @@ from context_engine.retrieval.qdrant_lexical_index import QdrantBM25ChunkStore, 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model-reference", required=True)
-    parser.add_argument("--qdrant-url", default="http://localhost:6333")
+    parser.add_argument("--qdrant-url", default="http://127.0.0.1:6333")
     parser.add_argument("--chunk-tokens", type=int, default=128)
     parser.add_argument("--overlap-tokens", type=int, default=16)
     parser.add_argument("--output", type=Path, required=True)

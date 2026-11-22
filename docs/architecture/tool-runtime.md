@@ -101,7 +101,29 @@ The approval request contains the proposed invocation and relevant policy evalua
 - If approval is required but no resolver exists, execution fails explicitly and the tool is not executed.
 - The original tool-call identity and invocation arguments are preserved.
 
-Interactive UI, asynchronous suspension/resumption, persistence, and external approval services are intentionally out of scope for the current runtime foundation.
+The runtime itself stays synchronous. Persistence and external approval services are out of scope.
+
+### Interactive approval in the core application
+
+`ContextEngineApplication` composes a `ToolNamePolicy` from the read-only
+`approval_required_tools` setting (empty by default, which keeps `AllowAllToolPolicy`) and a
+`RunApprovalResolver` that blocks the run's worker thread until a person decides:
+
+```text
+tool_approval_requested event  -> run status awaiting_approval, pending_approval set
+resolve_approval(run_id, approved | rejected, reason)
+tool_approval_resolved event   -> run status running (or the tool call fails if rejected)
+no decision within approval_timeout_seconds -> resolved as rejected ("timed out")
+```
+
+- The registry publishes the pending request in the same step that records the event, so a
+  client that sees the event can always answer it.
+- One decision is accepted per request; a decision for a run that is not awaiting approval, or
+  a second decision, raises `NoPendingApprovalError`.
+- Rejection and timeout follow the existing `ToolApprovalRejectedError` path, so the trace
+  records the policy and approval decisions and the run is reported as failed.
+- Configured names must be registered tools; the model cannot change the set or the timeout.
+- A run holds the single active-run slot while it awaits approval.
 
 ## 6. Tool Errors
 
@@ -115,6 +137,7 @@ Examples include:
 - approval rejection
 - approval required but unresolved
 - tool execution failure
+- tool output or diagnostics that are not a mapping (`ToolOutputValidationError`)
 
 This allows the Agent Runtime to feed tool outcomes back into the model loop without coupling the model to Python exceptions or provider-specific behavior.
 
@@ -129,10 +152,30 @@ A trace preserves relevant information such as:
 - policy decision
 - approval decision when applicable
 - result status
-- output
+- output: the model output, identical to `ToolResult.output`
+- diagnostics: runtime-only tool diagnostics, when the tool returned any
 - error information
 
 The trace is currently in-memory runtime state. It is not yet a persistent telemetry system or external observability backend.
+
+### Run events
+
+`ToolRuntime` accepts an optional `RunEventEmitter` (`context_engine.observability`). When one
+is supplied, each invocation also emits ordered events as it passes through the boundary:
+
+| Event | Emitted when |
+| --- | --- |
+| `tool_validated` | Registry lookup and schema validation finish, accepted or rejected |
+| `tool_policy_decided` | The policy returns `allow`, `deny` or `require_approval` |
+| `tool_approval_requested` | The approval resolver is about to be called |
+| `tool_approval_resolved` | The approval resolver returned `approved` or `rejected` |
+| `tool_call_finished` | The invocation ends, with status, `executed` and the execution duration |
+
+`tool_call_finished` is emitted exactly once per invocation. `executed` is false when
+validation, policy or approval stopped the invocation before tool code ran. Events are
+additive: the trace and `ToolResult` are unchanged, and with no emitter the runtime behaves as
+before. A failing sink never changes a result. See
+[ADR-015](decisions/ADR-015-runtime-run-events.md).
 
 ## 8. Agent Runtime Integration
 
@@ -268,10 +311,19 @@ These are later concerns and should not be conflated with the deterministic runt
 ## Search evidence accounting and UI diagnostics
 
 Optional search_documents selection preserves the normal runtime policy/execution boundary.
-The reserved `selection_diagnostics` output field is retained in ToolResult/traces for UI
-inspection and removed before model history via `model_visible_tool_output`. Ollama applies
-that projection to direct ModelToolResults too. All other evidence fields and original
-ranking diagnostics are model-visible. `render_tool_output` defines the sorted JSON output
-object counted by selection, matching the object's serialization inside Ollama's envelope.
-The surrounding provider tool wrapper and chat template are outside the evidence budget.
-See ADR-014; this does not impose a full request or global conversation budget.
+
+A tool's output has two parts (ADR-017):
+
+- **Model output** is what the model sees. A tool returns it as a plain mapping, or as
+  `ToolOutput.model`. It becomes `ToolResult.output` and the tool result in model history.
+- **Tool diagnostics** are runtime-only. A tool returns them as `ToolOutput.diagnostics`, and
+  `ToolRuntime` keeps them on `ToolExecutionTrace.diagnostics` only, so they never reach the
+  model. The HTTP API exposes them as `traces[].diagnostics`.
+
+search_documents records its selection report as `diagnostics["selection"]`. All evidence
+fields and original ranking diagnostics are model output. `render_tool_output` is the one
+JSON rendering of tool output: selection counts tokens on it, and the Ollama gateway renders
+its tool-message envelope with it, so the counted output text is byte-identical to what is
+sent. The surrounding provider tool wrapper and chat template are outside the evidence
+budget. See ADR-014 and ADR-017; this does not impose a full request or global conversation
+budget.

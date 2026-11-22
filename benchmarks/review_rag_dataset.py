@@ -10,7 +10,9 @@ from benchmarks.technical_dataset import DEFAULT_TECHNICAL_DATASET, load_technic
 def review_packet(path: Path = DEFAULT_TECHNICAL_DATASET) -> str:
     dataset = load_technical_dataset(path)
     sources = {s.provenance.source_id: s for s in dataset.corpus.processed_sources}
-    raw_queries = {q["query_id"]: q for q in json.loads(path.read_text())["queries"]}
+    raw_queries = {
+        q["query_id"]: q for q in json.loads(path.read_text(encoding="utf-8"))["queries"]
+    }
     lines = [
         "# English technical-workbench annotation review",
         "",
@@ -91,7 +93,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(review_packet(args.dataset))
+    args.output.write_text(review_packet(args.dataset), encoding="utf-8")
 
 
 if __name__ == "__main__":

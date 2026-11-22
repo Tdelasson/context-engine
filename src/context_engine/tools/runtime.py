@@ -5,6 +5,15 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
+from context_engine.observability import (
+    RunEventEmitter,
+    RunEventPayload,
+    ToolApprovalRequested,
+    ToolApprovalResolved,
+    ToolCallFinished,
+    ToolPolicyDecided,
+    ToolValidated,
+)
 from context_engine.tools.approval import (
     ToolApprovalDecision,
     ToolApprovalRequest,
@@ -15,8 +24,8 @@ from context_engine.tools.errors import (
     ToolApprovalRejectedError,
     ToolApprovalRequiredError,
     ToolInputValidationError,
+    ToolOutputValidationError,
     ToolPolicyDeniedError,
-    ToolRuntimeError,
     UnknownToolError,
 )
 from context_engine.tools.policy import (
@@ -108,6 +117,18 @@ class ToolInvocation:
         return dict(self.arguments)
 
 
+@dataclass(frozen=True, slots=True)
+class ToolOutput:
+    """Tool output split into what the model sees and what only the runtime records.
+
+    ``model`` becomes the tool result sent to the model. ``diagnostics`` is kept on the
+    execution trace for observability and is never sent to the model.
+    """
+
+    model: Mapping[str, object]
+    diagnostics: Mapping[str, object] | None = None
+
+
 @runtime_checkable
 class Tool(Protocol):
     """Provider-independent typed tool contract."""
@@ -116,8 +137,12 @@ class Tool(Protocol):
     description: str
     input_schema: ToolInputSchema
 
-    def execute(self, invocation: ToolInvocation) -> Mapping[str, object]:
-        """Execute a tool invocation and return structured output."""
+    def execute(self, invocation: ToolInvocation) -> Mapping[str, object] | ToolOutput:
+        """Execute a tool invocation.
+
+        Return a mapping when every output field is for the model, or a ``ToolOutput``
+        to keep runtime-only diagnostics out of the model's view.
+        """
 
 
 class ToolResultStatus(StrEnum):
@@ -159,10 +184,45 @@ class ToolExecutionTrace:
     status: ToolResultStatus
     output: tuple[tuple[str, object], ...] | None = None
     error: ToolExecutionErrorDetails | None = None
+    diagnostics: tuple[tuple[str, object], ...] | None = None
 
     def output_as_mapping(self) -> dict[str, object]:
         """Return traced output payload as a dictionary."""
         return {} if self.output is None else dict(self.output)
+
+    def diagnostics_as_mapping(self) -> dict[str, object]:
+        """Return runtime-only tool diagnostics as a dictionary."""
+        return {} if self.diagnostics is None else dict(self.diagnostics)
+
+
+def _normalize_tool_output(
+    tool_name: str, returned: object
+) -> tuple[tuple[tuple[str, object], ...], tuple[tuple[str, object], ...] | None]:
+    """Split a tool's return value into normalized model output and diagnostics.
+
+    Raises ``ToolOutputValidationError`` when either part is not a mapping, so a malformed
+    return ends as a traced error result instead of escaping the runtime.
+    """
+    # Tools are only structurally typed, so both parts are checked at runtime.
+    model: object
+    diagnostics: object
+    if isinstance(returned, ToolOutput):
+        model, diagnostics = returned.model, returned.diagnostics
+    else:
+        model, diagnostics = returned, None
+    if not isinstance(model, Mapping):
+        raise ToolOutputValidationError(
+            f"Tool {tool_name} returned model output that is not a mapping: {type(model).__name__}."
+        )
+    if diagnostics is not None and not isinstance(diagnostics, Mapping):
+        raise ToolOutputValidationError(
+            f"Tool {tool_name} returned diagnostics that are not a mapping: "
+            f"{type(diagnostics).__name__}."
+        )
+    return (
+        normalize_tool_arguments(model),
+        None if diagnostics is None else normalize_tool_arguments(diagnostics),
+    )
 
 
 class ToolRegistry:
@@ -197,10 +257,12 @@ class ToolRuntime:
         registry: ToolRegistry,
         policy: ToolPolicy | None = None,
         approval_resolver: ToolApprovalResolver | None = None,
+        events: RunEventEmitter | None = None,
     ) -> None:
         self._registry = registry
         self._policy = policy or AllowAllToolPolicy()
         self._approval_resolver = approval_resolver
+        self._events = events
         self._execution_traces: list[ToolExecutionTrace] = []
 
     def list_tools(self) -> tuple[Tool, ...]:
@@ -216,12 +278,32 @@ class ToolRuntime:
         """Resolve, validate, and execute one invocation deterministically."""
         policy_decision: ToolPolicyDecision | None = None
         approval_decision: ToolApprovalDecision | None = None
+        output: tuple[tuple[str, object], ...] = ()
+        diagnostics: tuple[tuple[str, object], ...] | None = None
+        validated = False
+        started: float | None = None
         try:
             tool = self._registry.get(invocation.tool_name)
             arguments = invocation.arguments_as_mapping()
             tool.input_schema.validate(arguments)
+            validated = True
+            self._emit(
+                ToolValidated(
+                    tool_name=invocation.tool_name,
+                    accepted=True,
+                    invocation_id=invocation.invocation_id,
+                )
+            )
             policy_evaluation = self._policy.evaluate(invocation)
             policy_decision = policy_evaluation.decision
+            self._emit(
+                ToolPolicyDecided(
+                    tool_name=invocation.tool_name,
+                    decision=policy_decision.value,
+                    invocation_id=invocation.invocation_id,
+                    reason=policy_evaluation.reason,
+                )
+            )
             if policy_evaluation.decision is ToolPolicyDecision.DENY:
                 raise ToolPolicyDeniedError(
                     policy_evaluation.reason
@@ -233,6 +315,14 @@ class ToolRuntime:
                         "Tool invocation requires explicit human approval, "
                         "but no approval resolver is configured."
                     )
+                self._emit(
+                    ToolApprovalRequested(
+                        tool_name=invocation.tool_name,
+                        arguments=invocation.arguments,
+                        invocation_id=invocation.invocation_id,
+                        reason=policy_evaluation.reason,
+                    )
+                )
                 approval_resolution = self._approval_resolver.resolve(
                     ToolApprovalRequest(
                         invocation=invocation,
@@ -240,66 +330,91 @@ class ToolRuntime:
                     )
                 )
                 approval_decision = approval_resolution.decision
+                self._emit(
+                    ToolApprovalResolved(
+                        tool_name=invocation.tool_name,
+                        decision=approval_decision.value,
+                        invocation_id=invocation.invocation_id,
+                        reason=approval_resolution.reason,
+                    )
+                )
                 if approval_resolution.decision is ToolApprovalDecision.REJECTED:
                     raise ToolApprovalRejectedError(
                         approval_resolution.reason
                         or f"Tool invocation rejected by human approval: {invocation.tool_name}"
                     )
-            output = tool.execute(invocation)
-        except ToolRuntimeError as exc:
-            result = ToolResult(
-                invocation=invocation,
-                status=ToolResultStatus.ERROR,
-                error=ToolExecutionErrorDetails(
-                    error_type=type(exc).__name__,
-                    message=str(exc),
-                ),
-            )
-            self._execution_traces.append(
-                ToolExecutionTrace(
-                    invocation=invocation,
-                    policy_decision=policy_decision,
-                    approval_decision=approval_decision,
-                    status=result.status,
-                    output=result.output,
-                    error=result.error,
-                )
-            )
-            return result
+            started = self._monotonic()
+            returned = tool.execute(invocation)
+            output, diagnostics = _normalize_tool_output(invocation.tool_name, returned)
         except Exception as exc:
-            result = ToolResult(
-                invocation=invocation,
-                status=ToolResultStatus.ERROR,
-                error=ToolExecutionErrorDetails(
-                    error_type=type(exc).__name__,
-                    message=str(exc),
-                ),
-            )
-            self._execution_traces.append(
-                ToolExecutionTrace(
-                    invocation=invocation,
-                    policy_decision=policy_decision,
-                    approval_decision=approval_decision,
-                    status=result.status,
-                    output=result.output,
-                    error=result.error,
+            error = ToolExecutionErrorDetails(error_type=type(exc).__name__, message=str(exc))
+            if not validated:
+                self._emit(
+                    ToolValidated(
+                        tool_name=invocation.tool_name,
+                        accepted=False,
+                        invocation_id=invocation.invocation_id,
+                        error_type=error.error_type,
+                        error_message=error.message,
+                    )
                 )
+            return self._finish(
+                ToolResult(invocation=invocation, status=ToolResultStatus.ERROR, error=error),
+                policy_decision=policy_decision,
+                approval_decision=approval_decision,
+                started=started,
             )
-            return result
 
-        result = ToolResult(
-            invocation=invocation,
-            status=ToolResultStatus.SUCCESS,
-            output=normalize_tool_arguments(output),
+        return self._finish(
+            ToolResult(
+                invocation=invocation,
+                status=ToolResultStatus.SUCCESS,
+                output=output,
+            ),
+            policy_decision=policy_decision,
+            approval_decision=approval_decision,
+            started=started,
+            diagnostics=diagnostics,
         )
+
+    def _finish(
+        self,
+        result: ToolResult,
+        *,
+        policy_decision: ToolPolicyDecision | None,
+        approval_decision: ToolApprovalDecision | None,
+        started: float | None,
+        diagnostics: tuple[tuple[str, object], ...] | None = None,
+    ) -> ToolResult:
+        """Record the trace and the terminal event for one invocation."""
+        duration = None if started is None else max(0.0, self._monotonic() - started)
         self._execution_traces.append(
             ToolExecutionTrace(
-                invocation=invocation,
+                invocation=result.invocation,
                 policy_decision=policy_decision,
                 approval_decision=approval_decision,
                 status=result.status,
                 output=result.output,
                 error=result.error,
+                diagnostics=diagnostics,
+            )
+        )
+        self._emit(
+            ToolCallFinished(
+                tool_name=result.invocation.tool_name,
+                status=result.status.value,
+                executed=started is not None,
+                invocation_id=result.invocation.invocation_id,
+                duration_seconds=duration,
+                error_type=None if result.error is None else result.error.error_type,
+                error_message=None if result.error is None else result.error.message,
             )
         )
         return result
+
+    def _emit(self, payload: RunEventPayload) -> None:
+        if self._events is not None:
+            self._events.emit(payload)
+
+    def _monotonic(self) -> float:
+        return 0.0 if self._events is None else self._events.monotonic()

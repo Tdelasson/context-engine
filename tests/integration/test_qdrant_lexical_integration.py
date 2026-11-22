@@ -51,7 +51,7 @@ def setup_store() -> Generator[StoreFixture]:
         index_version="m5-chunks-v1",
         index_configuration_id=indexing_configuration_id(chunker, embedding_identity="fixture-v1"),
     )
-    url = os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333")
+    url = os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333")
     store = QdrantBM25ChunkStore(config, url=url)
     coordinator = SourceIngestionCoordinator(
         chunker=chunker,

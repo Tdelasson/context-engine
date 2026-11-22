@@ -53,5 +53,5 @@ identity includes tokenizer/config/weights digest; optional revision is forwarde
 See [ADR-012](../architecture/decisions/ADR-012-local-cross-encoder-reranking.md).
 
 When the upstream strategy is hybrid, its final result ceiling must cover the configured
-reranking candidate budget. `WorkbenchSettings` rejects incompatible enabled settings
+reranking candidate budget. `ApplicationSettings` (`context_engine.core.settings`) rejects incompatible enabled settings
 before model loading. The hybrid and reranker keep native scores in separate diagnostics.

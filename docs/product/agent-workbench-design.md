@@ -2,7 +2,10 @@
 
 **Issue:** #53  
 **Status:** Implemented in PR #57
-**Scope:** Local interface for M3/M4 agent execution and retrieval
+**Scope:** Local interface for agent execution and retrieval
+
+This is the original M4 design brief, updated where M5 changed behavior. Current setup and
+configuration are in the [workbench guide](agent-workbench.md).
 
 ## Design brief
 
@@ -12,14 +15,15 @@ Tool runtimes validate, authorize, execute, and trace that proposal; then the mo
 structured result and produces the final response.
 
 The workbench is deliberately an application-composition and presentation layer. It does not
-access provider payloads or Qdrant directly from rendering code, and it does not implement
-automatic context assembly, chunking, reranking, hybrid search, or other M5/M6 behavior.
+access provider payloads or Qdrant directly from rendering code. Chunking, lexical and hybrid
+retrieval, reranking, and evidence selection are composed from the core packages through
+application settings, not implemented in the workbench. Automatic context assembly is M6 work.
 
 ## Integrated-flow wireframe
 
 ```text
 +--------------------------------------------------------------------------------+
-| Context Engine Agent Workbench                 LIVE | LOCAL | M3 + M4          |
+| Context Engine Agent Workbench      LIVE | LOCAL | tools + chunked retrieval   |
 | Tool-mediated retrieval is live; automatic context assembly is future work.    |
 +---------------------------+----------------------------------------------------+
 | DOCUMENTS                 | ASK THE AGENT                                      |
@@ -29,9 +33,9 @@ automatic context assembly, chunking, reranking, hybrid search, or other M5/M6 b
 |  - roadmap.md             |                                      [ Run agent ] |
 |  - demo-guide.txt         |                                                    |
 |                           | FINAL RESPONSE                                     |
-| Upload .txt/.md           | [ response grounded in the structured tool result ]|
+| Upload .txt/.md/.pdf      | [ response grounded in the structured tool result ]|
 | [ choose files ]          |                                                    |
-| Limits: 5 × 256 KiB       | LIVE EXECUTION LIFECYCLE                           |
+| Limits: 5 files           | LIVE EXECUTION LIFECYCLE                           |
 | [ Clear uploads ]         | 1 User prompt                         complete     |
 |                           | 2 Model proposal                      complete     |
 | DEPENDENCIES              | 3 Registry + schema validation        complete     |
@@ -52,9 +56,10 @@ automatic context assembly, chunking, reranking, hybrid search, or other M5/M6 b
 
 - Presets only populate the same editable prompt field used by free-form prompts; both execute
   through the same application method.
-- Preloaded project documents are ingested idempotently on application preparation. Uploaded files are one
-  document each and receive deterministic IDs plus `source_kind=uploaded` metadata.
-- Clearing uploads deletes only IDs tracked as uploaded by this workbench. Preloaded document IDs
+- Preloaded project documents are ingested idempotently on application preparation. Each uploaded file is one
+  source, split into chunks that carry `source_kind=uploaded` metadata. A same-name upload
+  replaces the previous revision.
+- Clearing uploads deletes only sources tracked as uploaded by this workbench. Preloaded sources
   are never included in that delete operation.
 - Initialization, upload, ingestion, model, malformed-proposal, retrieval, tool, timeout, and
   runtime failures are displayed as failures with a phase and message. They are never rendered as

@@ -35,6 +35,7 @@ all original metadata/citations and model-visible ranking diagnostics. Re-encode
 JSON object for every trial; fragment token counts are not assumed additive. Empty envelope
 over budget is an explicit accounting failure. Empty/no-fit outcomes and original ranks,
 scores, exclusions, final count, counter/configuration identities are typed runtime reports.
+_Superseded by ADR-017: the selection report is now tool diagnostics on the trace._
 `selection_diagnostics` is a reserved UI/tracing-only field in search_documents output.
 AgentRuntime filters it before building model history; Ollama applies the same projection
 for direct calls. Other output and all original ranking diagnostics remain model-visible.

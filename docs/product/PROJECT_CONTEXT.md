@@ -8,21 +8,21 @@ The first reference application will be Context-Aware DJ.
 
 ## Current milestone
 
-M1–M4 complete. Next: M5 — Modern RAG.
+M1–M4 complete. M5 — Modern RAG is in progress: the retrieval pipeline is merged and the
+broader RAG evaluation (#77–#80) remains. Next: M6 — Context Engine.
 
 ## Development workflow
 
 Issue
-→ GitHub AI Agent
+→ AI coding agent
 → Feature Branch
 → PR
 → CI
 → Human review
 → Merge
 
-Cursor is used as the primary local AI IDE.
-
-GitHub AI Agents are used for issue-driven implementation.
+AI coding agents are used for issue-driven implementation and must follow `AGENTS.md`.
+Pull requests receive automated review before human review.
 
 ## Source of truth
 
@@ -99,7 +99,7 @@ M4 delivered embedding contracts, direct local inference, Qdrant-backed storage 
 simple ingestion, retrieval, the model-independent benchmark, and the `search_documents` tool.
 
 The integrated Agent Workbench (#53, PR #57) is merged. It supports live local model proposals,
-deterministic document search/calculation, uploads, evidence, and execution traces through Streamlit.
+deterministic document search/calculation, uploads, evidence, and execution traces, first through a Streamlit workbench and now through the React app (the Streamlit workbench was removed in #93).
 See `docs/product/agent-workbench.md` for setup, behavior, failure guidance, and live verification.
 
 M5 processing, PDF extraction, chunking, and durable source ingestion (#59–#62) are implemented.

@@ -46,7 +46,7 @@ def test_pinned_broader_corpus_and_review_status() -> None:
     ],
 )
 def test_invalid_annotations_rejected(tmp_path: Path, mutation: str) -> None:
-    raw = json.loads(DEFAULT_TECHNICAL_DATASET.read_text())
+    raw = json.loads(DEFAULT_TECHNICAL_DATASET.read_text(encoding="utf-8"))
     for source in raw["sources"]:
         target = tmp_path / source["path"]
         target.write_bytes((DEFAULT_TECHNICAL_DATASET.parent / source["path"]).read_bytes())
@@ -68,7 +68,7 @@ def test_invalid_annotations_rejected(tmp_path: Path, mutation: str) -> None:
     if mutation == "canonical":
         first["requirements"][0]["alternatives"][0]["evidence_id"] = "changed"
     path = tmp_path / "dataset.json"
-    path.write_text(json.dumps(raw))
+    path.write_text(json.dumps(raw), encoding="utf-8")
     with pytest.raises(ValueError):
         load_technical_dataset(path)
 
@@ -117,7 +117,7 @@ def test_group_bootstrap_is_reproducible_and_paired() -> None:
 def test_published_pdf_diagnostic_pins_layout_and_canonical_spans() -> None:
     path = DEFAULT_TECHNICAL_DATASET.parent.parent / "technical-pdf-v1/dataset.json"
     dataset = load_technical_dataset(path)
-    raw = json.loads(path.read_text())
+    raw = json.loads(path.read_text(encoding="utf-8"))
     assert len(dataset.corpus.sources) == 2 and len(dataset.queries) == 12
     assert all(s["provenance"] == "public-published-layout-excerpt" for s in raw["sources"])
     assert all(len(s["upstream_archive_sha256"]) == 64 for s in raw["sources"])
@@ -129,8 +129,8 @@ def test_published_pdf_diagnostic_pins_layout_and_canonical_spans() -> None:
 def test_ai_review_preserves_original_corpus_and_does_not_claim_independence() -> None:
     for folder in ("technical-v1", "technical-pdf-v1"):
         directory = DEFAULT_TECHNICAL_DATASET.parent.parent / folder
-        before = json.loads((directory / "dataset.json").read_text())
-        after = json.loads((directory / "dataset-v2.json").read_text())
+        before = json.loads((directory / "dataset.json").read_text(encoding="utf-8"))
+        after = json.loads((directory / "dataset-v2.json").read_text(encoding="utf-8"))
         assert before["dataset_id"] != after["dataset_id"]
         assert before["sources"] == after["sources"]
         assert len(before["queries"]) == len(after["queries"])

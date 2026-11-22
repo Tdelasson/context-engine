@@ -426,7 +426,7 @@ def ollama_identity(base_url: str, model_id: str) -> dict[str, Any]:
 
 
 def load_history(path: Path) -> tuple[ModelMessage, ...]:
-    raw = json.loads(path.read_text())
+    raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, list):
         raise ValueError("History must be an array of explicit user/assistant messages.")
     messages = []

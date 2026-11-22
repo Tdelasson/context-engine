@@ -33,7 +33,7 @@ def test_real_dense_evidence_path(backend: str) -> None:
         embedding_identity=provider.indexing_identity,
         chunk_config=ChunkingConfig(provider.model_id, 160, 24),
         backend=backend,
-        qdrant_url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://localhost:6333"),
+        qdrant_url=os.getenv("CONTEXT_ENGINE_QDRANT_URL", "http://127.0.0.1:6333"),
     )
     approval = next(row for row in run["queries"] if row["query_id"] == "dev-approval")
     assert approval["metrics"]["recall_at_k"][10] == 1

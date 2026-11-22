@@ -38,7 +38,7 @@ class QdrantVectorStore(VectorStore):
         self,
         config: VectorStoreCollectionConfig,
         *,
-        url: str = "http://localhost:6333",
+        url: str = "http://127.0.0.1:6333",
         api_key: str | None = None,
         timeout_seconds: float = 10.0,
     ) -> None:

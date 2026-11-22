@@ -45,7 +45,7 @@ class QdrantBM25ChunkStore(QdrantVectorStore):
         config: VectorStoreCollectionConfig,
         *,
         lexical_config: LexicalIndexConfig | None = None,
-        url: str = "http://localhost:6333",
+        url: str = "http://127.0.0.1:6333",
         timeout_seconds: float = 10.0,
         allow_remote_server: bool = False,
     ) -> None:

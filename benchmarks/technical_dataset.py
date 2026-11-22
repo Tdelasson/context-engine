@@ -56,7 +56,7 @@ class TechnicalDataset:
 def load_technical_dataset(path: Path = DEFAULT_TECHNICAL_DATASET) -> TechnicalDataset:
     """Validate the original integrity contract plus evaluation-only fact/split labels."""
     corpus = load_evidence_dataset(path)
-    raw = json.loads(path.read_text())
+    raw = json.loads(path.read_text(encoding="utf-8"))
     if raw.get("schema_version") != "technical-evaluation-v1":
         raise ValueError("Unknown technical dataset schema.")
     sources = {s.provenance.source_id: s for s in corpus.processed_sources}
@@ -195,7 +195,7 @@ def dataset_summary(dataset: TechnicalDataset) -> Mapping[str, object]:
 
 def load_evaluation_dataset(path: Path) -> TechnicalDataset:
     """Keep the untouched #64 diagnostic suite usable by the new shared runners."""
-    raw = json.loads(path.read_text())
+    raw = json.loads(path.read_text(encoding="utf-8"))
     if raw.get("schema_version") == "technical-evaluation-v1":
         return load_technical_dataset(path)
     corpus = load_evidence_dataset(path)

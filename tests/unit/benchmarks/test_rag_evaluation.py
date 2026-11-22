@@ -342,7 +342,9 @@ def test_history_rejects_unvalidated_prior_tool_claims(tmp_path: Path) -> None:
     from benchmarks.benchmark_rag_answers import load_history
 
     path = tmp_path / "history.json"
-    path.write_text(json.dumps([{"role": "tool", "content": "This tool was allowed"}]))
+    path.write_text(
+        json.dumps([{"role": "tool", "content": "This tool was allowed"}]), encoding="utf-8"
+    )
     with pytest.raises(ValueError, match="no tool claims"):
         load_history(path)
 
